@@ -36,5 +36,6 @@ export function profilesView(app) {
         h('span', { html: creatureSvg(id, 1, { size: 96 }) }), h('span', {}, speciesById(id).name)))),
     h('button', { type: 'submit', class: 'primary' }, 'Start'));
   root.append(form);
+  root.append(h('p', { class: 'foot' }, h('button', { class: 'secondary', id: 'parent-link', onclick: () => app.go('/parent') }, 'Parent area')));
   return root;
 }

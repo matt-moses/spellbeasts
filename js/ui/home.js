@@ -47,7 +47,8 @@ export function homeView(app) {
       h('button', { class: 'secondary', id: 'sanctuary', onclick: () => app.go('/sanctuary') }, 'Sanctuary'),
       h('button', { class: 'secondary', id: 'book', onclick: () => app.go('/book') }, 'Creature book'),
       h('button', { class: 'secondary', id: 'trophies', onclick: () => app.go('/trophies') }, `Trophies (${Object.keys(profile.trophies).length})`),
-      h('button', { class: 'secondary', onclick: () => app.go('/') }, 'Switch trainer')),
+      h('button', { class: 'secondary', onclick: () => app.go('/') }, 'Switch trainer'),
+      h('button', { class: 'secondary', id: 'parent-link', onclick: () => app.go('/parent') }, 'Parent area')),
     note,
     mapSection(app));
   app.refreshStats = () => { const el = root.querySelector('.stats'); if (el) el.firstChild.textContent = `Level ${levelProgress(profile.xp).level} · 🦗 ${profile.crickets} crickets · `; };

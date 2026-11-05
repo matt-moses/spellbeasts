@@ -9,6 +9,7 @@ import { practiceView } from './ui/practice.js';
 import { summaryView } from './ui/summary.js';
 import { trophiesView } from './ui/trophies.js';
 import { nestView, sanctuaryView, bookView } from './ui/collection.js';
+import { parentView } from './ui/parent.js';
 
 const store = createStore();
 store.load();
@@ -19,11 +20,13 @@ const app = {
   audio: createAudio({ getSettings: () => store.state.settings }),
   get profile() { return store.state.profiles[this.profileId]; },
   today: () => localDateString(),
+  parentUnlocked: false,
+  render: () => render(),
   go(route) { location.hash = `#${route}`; },
   choose(id) { this.profileId = id; this.go('/home'); },
 };
 
-const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, nest: nestView, sanctuary: sanctuaryView, book: bookView };
+const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView };
 const root = document.getElementById('app');
 
 function banners() {
@@ -37,7 +40,8 @@ function render() {
   app.cleanup.splice(0).forEach((fn) => fn());
   let [name, arg] = location.hash.replace(/^#\/?/, '').split('/');
   if (!(name in routes)) name = '';
-  if (name !== '' && !app.profile) { app.go('/'); return; }
+  if (name !== '' && name !== 'parent' && !app.profile) { app.go('/'); return; }
+  if (name !== 'parent') app.parentUnlocked = false;
   if (name === 'practice' && !app.session) name = 'home';
   const route = name === '' ? '/' : `/${name}`;
   root.replaceChildren(...banners(), routes[name](app, arg));
