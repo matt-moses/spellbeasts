@@ -79,6 +79,7 @@ export function memoryGame({ app, creature, root, exit, result, restart }) {
   const grid = h('div', { class: 'memory-grid', role: 'group', 'aria-label': 'Memory cards' });
   const moves = h('span', { class: 'pill gold', id: 'memory-moves' }, 'Moves 0');
   const draw = () => {
+    const had = grid.contains(document.activeElement) ? document.activeElement.dataset.index : null;   // the cards are rebuilt on every flip: keep the keyboard player's place
     moves.textContent = `Moves ${g.moves}`;
     grid.replaceChildren(...g.cards.map((c) => {
       const open = c.state !== 'down';
@@ -88,13 +89,14 @@ export function memoryGame({ app, creature, root, exit, result, restart }) {
       if (open) { b.dataset.species = c.id; b.innerHTML = creatureSvg(c.id, 1, { size: 64 }); } else b.textContent = '?';
       return b;
     }));
+    if (had != null) grid.querySelector(`.mem-card[data-index="${had}"]`)?.focus();
   };
   function pick(i) {
     const r = flip(g, i);
     if (r === 'ignored') return;
     audio.play(r === 'match' ? 'chime' : 'pop');
     draw();
-    if (r === 'mismatch') timer = setTimeout(() => { settle(g); draw(); grid.querySelector('.mem-card')?.focus?.(); }, reduceMotion() ? 500 : 800);
+    if (r === 'mismatch') timer = setTimeout(() => { settle(g); draw(); }, reduceMotion() ? 500 : 800);
     if (g.done) {
       const paid = finishGame(profile, creature, app.today(), 0, memPrize(g));
       setTimeout(() => result({ title: 'You found them all!', lines: [`It took ${g.moves} moves.`], ...paid, again: restart }), 500);

@@ -72,12 +72,13 @@ test('a creature happy on every meter gives a one-a-day cricket gift; meters dri
   await page.clock.runFor(30000);                                               // the player never moves: few berries caught
   await page.waitForSelector('#game-result');
   assert.match(await page.textContent('#game-result'), /Sparkling!.*\+3 crickets/s);
-  assert.equal((await saved(page)).crickets, 10 - 3 + 3);                       // game cost 3 (no refund for a poor game), gift +3
+  const refund = /you got 1 back/.test(await page.textContent('#game-result')) ? 1 : 0;   // the berries fall at random: an idle player now and then has a great game
+  assert.equal((await saved(page)).crickets, 10 - 3 + refund + 3);              // game cost 3 (maybe 1 back), gift +3
   await page.click('#game-back'); await page.waitForSelector('#care-feed');
   assert.deepEqual(await meters(page), { fed: 4, clean: 5, loved: 4, fun: 5 });
   assert.equal(await page.getAttribute('.pill.mood', 'data-mood'), 'sparkling');
   await page.click('#care-love');                                               // a second activity the same day: no second gift
-  assert.equal((await saved(page)).crickets, 10);
+  assert.equal((await saved(page)).crickets, 10 + refund);
 
   await page.clock.setSystemTime(new Date('2026-11-06T10:00:00'));
   await page.goto(`${env.server.url}#/home`);
