@@ -26,6 +26,7 @@ It is a static site (vanilla JS modules, no build step, no runtime dependencies)
 - **Care and play:** feed berries, give a bath, pet, and play Berry Catch. Creatures stay happy day to day, and a sparkling creature leaves a small gift. Tap any character for a random animation, sound, effect or speech bubble.
 - **Trophies:** 44 to earn, from first hatch to word master.
 - **Parent area** (behind a grown-up check: choose the year you were born, which is never saved): load your own word list, see per-word stats and the most-missed words, manage trainers, and back up or restore everything as JSON.
+- **Works offline, and installs like an app:** after one visit the whole game is cached by a service worker, so it runs with no connection. In Chrome or Edge choose *Install* (or on a phone, *Add to Home screen*). A small "new version" bar appears when an update is available.
 - **Help for kids:** a round **?** button on every screen opens a pop-up of plain-language FAQs (how to play, crickets, creatures, the map, what to do if there is no sound). Opening it never interrupts a practice session.
 - **Accessible by design:** large text, full keyboard use, visible focus, reduced-motion support, encouraging wording, and spellcheck/autocorrect off on the answer box.
 
@@ -35,6 +36,10 @@ Open **Parent area → Word lists** and paste one word per line: `word | part of
 
 **Copyright rule:** the repository ships only a small sample list written for this project. Real study lists (such as the Scripps Two Bee words) must never be committed. Local word files (`*.words.*`, `private/`) are git-ignored, and `npm run hygiene` scans for franchise names and for any words you list in `tools/denylist.local.txt` (git-ignored).
 
+## Privacy
+
+Everything you do stays in your browser. The live site counts visits with [Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics/) (the same Cloudflare site as brow-guess, since both live on `matt-moses.github.io`; the dashboard tells them apart by path): it is cookieless and anonymous, recording only page views, referrer, country and device type. It has no custom events, so it never sees words, answers, scores or names. It loads only on the live site (never locally or in tests), is skipped when your browser sends Do Not Track, and offline launches are simply not counted.
+
 ## Development
 
 ```sh
@@ -42,6 +47,7 @@ npm install              # dev tooling only: playwright-core for the browser tes
 bash tools/serve.sh      # serve the site at http://localhost:8000
 npm run check            # hygiene scan + all unit and end-to-end tests
 npm run screenshots      # regenerate the images above
+npm run icons            # regenerate the app icons
 ```
 
 - Game rules live in pure modules under `js/logic/` and are unit-tested with `node --test`, with no browser.

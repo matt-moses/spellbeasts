@@ -15,6 +15,7 @@ import { careView, playView } from './ui/care.js';
 import { settingsView } from './ui/settings.js';
 import { startUpdateWatch } from './ui/update.js';
 import { BUILD_VERSION } from './logic/build.js';
+import { loadAnalytics } from './platform/analytics.js';
 
 const store = createStore();
 store.load();
@@ -55,6 +56,10 @@ function render() {
   if (route !== '/practice') first?.setAttribute('tabindex', '-1');
 }
 window.addEventListener('hashchange', render);
+loadAnalytics();
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is a bonus: the game works without it */ });
+}
 const foot = h('p', { class: 'version', id: 'version-stamp' }, `Version ${BUILD_VERSION}`);
 document.body.append(foot);
 startUpdateWatch((v) => {

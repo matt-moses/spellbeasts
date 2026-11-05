@@ -11,7 +11,7 @@ export function summaryView(app) {
   const stars = s.misses === 0 ? 3 : s.misses <= 2 ? 2 : 1;
   const buddy = h('div', { class: 'summary-buddy', html: companionSvg(app.profile, { size: 120 }) });
   const buddyPet = makeInteractive(buddy, app, { name: app.profile.name, speak: true, label: 'Tap your practice buddy' });
-  setTimeout(() => buddy.isConnected && buddy.classList.add('pet-hop'), 200);
+  if (!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) setTimeout(() => buddy.isConnected && buddy.classList.add('pet-hop'), 200);
   const root = h('section', { class: 'screen summary' },
     h('h1', {}, s.misses === 0 ? 'Perfect flight!' : 'Great practice!'),
     buddy,

@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-node tools/stamp-version.mjs >/dev/null && git add version.json js/logic/build.js
+node tools/stamp-version.mjs >/dev/null && git add version.json js/logic/build.js sw-assets.js
