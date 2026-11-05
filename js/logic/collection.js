@@ -5,6 +5,11 @@ import { evaluateTrophies } from './trophies.js';
 import { isMastered } from './leitner.js';
 
 export const masteredCount = (profile) => Object.values(profile.wordStats[profile.activeListId] ?? {}).filter(isMastered).length;
+// The words this trainer has mastered in the active list, in list order (words removed from the list are skipped).
+export const masteredWords = (profile, list) => {
+  const stats = profile.wordStats[profile.activeListId] ?? {};
+  return list.words.filter((w) => isMastered(stats[w.word])).map((w) => w.word);
+};
 export const ownedSpecies = (profile) => new Set(profile.creatures.map((c) => c.species));
 const newId = (prefix, profile) => `${prefix}${Date.now().toString(36)}${profile.creatures.length}${profile.eggs.length}${Math.floor(Math.random() * 1e6)}`;
 

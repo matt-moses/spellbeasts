@@ -102,3 +102,13 @@ test('evolution needs feeding AND level / mastery; reaching stage 3 earns Fully 
   assert.ok(r.trophies.includes('fully-evolved'));
   assert.equal(evolveHint(p, c), 'Fully evolved!');
 });
+
+test('masteredWords lists mastered words of the active list in list order', async () => {
+  const { masteredWords } = await import('../../js/logic/collection.js');
+  const p = mk({ activeListId: 'sample' });
+  const stat = (n) => ({ correctDays: Array.from({ length: n }, (_, i) => `2026-11-0${i + 1}`) });
+  p.wordStats.sample = { b: stat(3), a: stat(2), c: stat(4) };
+  const list = { words: [{ word: 'a' }, { word: 'b' }, { word: 'c' }, { word: 'd' }] };
+  assert.deepEqual(masteredWords(p, list), ['b', 'c']);
+  assert.deepEqual(masteredWords(mk({ activeListId: 'other' }), list), []);
+});
