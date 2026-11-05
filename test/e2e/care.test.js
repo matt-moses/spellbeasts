@@ -146,3 +146,122 @@ test('practice sessions and treasure stars give berries; the summary says so', {
   assert.equal((await saved(page)).berries, 3);
   await context.close();
 });
+
+// ---------------------------------------------------------------- drag and drop, rubbing
+const centre = async (page, sel) => { const b = await page.locator(sel).first().boundingBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; };
+async function openMotion(patch) {
+  const st = seededState(); patch(st.profiles.p1, st);
+  const context = await env.browser.newContext({ reducedMotion: 'no-preference', viewport: { width: 900, height: 1000 } });
+  const errors = [];
+  await prepare(context, { state: st, errors });
+  await context.clock.setFixedTime(new Date('2026-11-05T10:00:00'));
+  const page = await context.newPage();
+  await page.goto(env.server.url);
+  await page.click('.card'); await page.waitForSelector('#practice');
+  await openCare(page);
+  return { page, context, errors };
+}
+
+test('berries sit in a tray: drag one onto the creature to feed it; a drop anywhere else just returns it', { skip }, async () => {
+  const { page, context, errors } = await openMotion(() => {});
+  assert.equal(await page.locator('.berry-item').count(), 3);
+  assert.match(await page.textContent('.tray-label'), /Drag a berry onto your creature/);
+  const berry = await centre(page, '.berry-item'), target = await centre(page, '.care-creature');
+
+  // a wrong drop: nothing is spent, the berry comes back, and the hint says where to drop it
+  await page.mouse.move(berry.x, berry.y); await page.mouse.down();
+  await page.mouse.move(40, 900, { steps: 6 });
+  assert.equal(await page.locator('.berry-ghost').count(), 1);
+  assert.equal(await page.locator('.care-stage.drop-hot').count(), 0);
+  await page.mouse.up();
+  await page.waitForFunction(() => !document.querySelector('.berry-ghost'));
+  assert.match(await page.textContent('.care-msg'), /Drop the berry on your creature/);
+  assert.equal(await page.locator('.berry-item').count(), 3);
+  assert.equal((await saved(page)).berries, 3);
+
+  // the real drop: the creature lights up while the berry is over it
+  const again = await centre(page, '.berry-item');
+  await page.mouse.move(again.x, again.y); await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 8 });
+  assert.equal(await page.locator('.care-stage.drop-hot').count(), 1, 'drop target is highlighted');
+  await page.mouse.up();
+  await page.waitForFunction(() => /Yum/.test(document.querySelector('.care-msg').textContent));
+  assert.equal(await page.locator('.berry-item').count(), 2);
+  assert.match(await page.textContent('#berry-count'), /2 berries/);
+  assert.deepEqual(await meters(page), { fed: 5, clean: 3, loved: 3, fun: 3 });
+  assert.ok(await page.locator('.meter-row[data-meter=fed] .pip.pop').count() >= 1, 'newly filled pips pop');
+  assert.equal(await page.locator('.berry-ghost').count(), 0);
+  const p = await saved(page);
+  assert.deepEqual([p.berries, p.care.berriesFed], [2, 1]);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('berry tray: Enter feeds from the keyboard, a full creature refuses, empty and overflowing trays read well', { skip }, async () => {
+  const a = await openMotion((p) => { p.creatures[0].care = { fed: 1, clean: 3, loved: 3, fun: 3, petTicks: 0, day: '2026-11-05', sparkleDay: null }; });
+  assert.match(await a.page.getAttribute('.berry-item', 'aria-label'), /Drag it onto your creature, or press Enter/);
+  await a.page.focus('.berry-item'); await a.page.keyboard.press('Enter');
+  await a.page.waitForFunction(() => /Yum/.test(document.querySelector('.care-msg').textContent));
+  assert.equal((await meters(a.page)).fed, 3);
+  assert.equal((await saved(a.page)).berries, 2);
+  await a.context.close();
+
+  const full = await openMotion(() => {});                                       // fed is 3: one berry fits, then it is full
+  await full.page.focus('.berry-item'); await full.page.keyboard.press('Enter');
+  await full.page.waitForFunction(() => /Yum/.test(document.querySelector('.care-msg').textContent));
+  await full.page.focus('.berry-item'); await full.page.keyboard.press('Space');
+  await full.page.waitForFunction(() => /Too full/.test(document.querySelector('.care-msg').textContent));
+  assert.equal((await saved(full.page)).berries, 2);
+  await full.context.close();
+
+  const none = await openMotion((p) => { p.berries = 0; });
+  assert.equal(await none.page.locator('.berry-item').count(), 0);
+  assert.match(await none.page.textContent('.tray-label'), /No berries left/);
+  await none.context.close();
+
+  const many = await openMotion((p) => { p.berries = 9; });
+  assert.equal(await many.page.locator('.berry-item').count(), 6);
+  assert.match(await many.page.textContent('.berry-tray .pill'), /\+3/);
+  await many.context.close();
+});
+
+test('rubbing the creature pets it: hearts follow the pointer, every 90px is a pet, and the rub is not also a tap', { skip }, async () => {
+  const { page, context, errors } = await openMotion(() => {});
+  const c = await centre(page, '.care-creature');
+  await page.mouse.move(c.x - 45, c.y); await page.mouse.down();
+  const xs = [-15, 15, 45, 15, -15, -45, -15, 15, 45, 15, -15, -45];          // twelve 30px strokes = 360px
+  let sawHearts = 0, sawBurst = 0;
+  for (const dx of xs) {
+    await page.mouse.move(c.x + dx, c.y);
+    sawHearts = Math.max(sawHearts, await page.locator('.float-heart').count());
+    sawBurst = Math.max(sawBurst, await page.locator('.love-burst').count());
+  }
+  await page.mouse.up();
+  assert.ok(sawHearts > 0, 'hearts appeared while rubbing');
+  assert.ok(sawBurst >= 1, 'a big heart pulses when the loved meter fills a notch');
+  const p = await saved(page);
+  assert.equal(p.care.pets, 4, 'four strokes of 90px, and the release did not add a tap');
+  assert.equal((await meters(page)).loved, 4);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('a bath can be scrubbed by rubbing over the creature, with bubbles', { skip }, async () => {
+  const { page, context } = await openMotion(() => {});
+  await page.click('#care-bath');
+  assert.equal(await page.locator('.dirt').count(), 6);
+  const c = await centre(page, '.care-creature');
+  await page.mouse.move(c.x - 45, c.y); await page.mouse.down();
+  let sawBubbles = 0;
+  for (let i = 0; i < 18; i++) {                                              // 18 x 30px = 540px = six scrubs
+    await page.mouse.move(c.x + [-15, 15, 45, 15, -15, -45][i % 6], c.y);
+    sawBubbles = Math.max(sawBubbles, await page.locator('.float-heart.bubble').count());
+  }
+  await page.mouse.up();
+  await page.waitForSelector('#care-bath');
+  assert.match(await page.textContent('.care-msg'), /Squeaky clean/);
+  assert.ok(sawBubbles > 0);
+  assert.equal((await meters(page)).clean, 5);
+  assert.equal((await saved(page)).care.pets, 0, 'scrubbing is not petting');
+  await context.close();
+});

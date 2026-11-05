@@ -28,7 +28,7 @@ button {
   cursor:pointer; border:0; border-radius:16px; padding:.55rem 1.1rem; color:var(--ink); font-weight:bold;
   background:#fff; box-shadow:0 5px 0 var(--lip); transition:transform .08s, box-shadow .08s; display:inline-flex; align-items:center; gap:.45rem; justify-content:center;
 }
-button:hover:not(:disabled) { transform:translateY(-1px); }
+button:hover:not(:disabled) { filter:brightness(1.05); }   /* never move the button on hover: a pointer on its edge would make it flicker */
 button:active:not(:disabled) { transform:translateY(4px); box-shadow:0 1px 0 var(--lip); }
 button.primary { background:var(--green); color:#fff; box-shadow:0 5px 0 var(--green-d); text-shadow:0 1px 0 rgba(0,0,0,.2); }
 button.primary:active:not(:disabled) { box-shadow:0 1px 0 var(--green-d); }
@@ -300,3 +300,27 @@ details.faq { background:#f4f9ff; border-radius:16px; margin:.4rem 0; padding:.5
 details.faq summary { font-weight:bold; cursor:pointer; }
 details.faq[open] { background:#fffbe8; box-shadow:0 3px 0 #f0d98a; }
 details.faq p { margin:.5rem 0 .2rem; font-size:1.05rem; }
+
+/* ---------- berry tray, drag and drop, hearts ---------- */
+.berry-tray { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; background:#fff7e6; border-radius:20px; padding:.5rem .9rem; box-shadow:0 4px 0 #f0d9a8; margin:.4rem 0; min-height:62px; }
+.tray-label { font-weight:bold; margin-right:.4rem; }
+.berry-item { display:inline-flex; cursor:grab; padding:2px; border-radius:50%; transition:transform .12s; touch-action:none; user-select:none; }
+.berry-item:hover { transform:scale(1.15) rotate(-6deg); }
+.berry-item .ico svg { width:44px; height:44px; filter:drop-shadow(0 3px 0 rgba(0,0,0,.18)); }
+.berry-item.dragging { opacity:.25; }
+.berry-ghost { position:fixed; z-index:60; pointer-events:none; transform:translate(-50%,-50%) scale(1.25) rotate(-8deg); }
+.berry-ghost .ico svg { width:58px; height:58px; filter:drop-shadow(0 8px 6px rgba(0,0,0,.3)); }
+.berry-ghost.flying { transition:left .25s ease-in, top .25s ease-in, transform .25s ease-in; transform:translate(-50%,-50%) scale(.6); }
+.care-stage.drop-hot::before { box-shadow:0 9px 0 #d97e00, 0 0 0 8px rgba(255,255,255,.7), 0 0 26px 10px #ffe27a; }
+.care-stage.drop-hot .care-creature { animation:pet-grow .6s ease-in-out infinite; }
+.float-heart { position:absolute; margin:-14px 0 0 -14px; animation:floatup 1.4s ease-out forwards; pointer-events:none; z-index:3; }
+.float-heart .ico svg { width:30px; height:30px; }
+.float-heart.crumb .ico svg, .float-heart.bubble .ico svg { width:22px; height:22px; }
+@keyframes floatup { 0% { transform:translate(0,0) scale(.6); opacity:1; } 100% { transform:translate(var(--dx,0px),-130px) scale(1.15); opacity:0; } }
+.love-burst { position:absolute; left:50%; top:42%; z-index:4; pointer-events:none; animation:pulse-heart .9s ease-out forwards; }
+.love-burst .ico svg { width:120px; height:120px; filter:drop-shadow(0 6px 0 rgba(180,40,70,.25)); }
+@keyframes pulse-heart { 0% { transform:translate(-50%,-50%) scale(.2); opacity:0; } 35% { transform:translate(-50%,-60%) scale(1.15); opacity:1; } 100% { transform:translate(-50%,-90%) scale(1.5); opacity:0; } }
+.pip.pop { animation:pip-pop .6s ease-out; }
+@keyframes pip-pop { 0% { transform:scale(.4); } 50% { transform:scale(1.5); filter:brightness(1.3); } 100% { transform:scale(1); } }
+.care-stage { touch-action:pan-y; user-select:none; }
+@media (prefers-reduced-motion: reduce) { .love-burst, .float-heart, .pip.pop, .care-stage.drop-hot .care-creature { animation:none !important; } .love-burst { display:none; } }
