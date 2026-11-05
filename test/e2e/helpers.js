@@ -29,7 +29,7 @@ export async function prepare(context, { state = null, errors = [] } = {}) {
     const voice = { voiceURI: 'fake', lang: 'en-US', name: 'Fake' };
     window.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: { getVoices: () => [voice], cancel() {}, speak(u) { window.__spoken.push({ text: u.text, rate: u.rate }); } } });
-    if (state && !localStorage.getItem('spellbeasts.v1')) localStorage.setItem('spellbeasts.v1', JSON.stringify(state));
+    try { if (state && !localStorage.getItem('spellbeasts.v1')) localStorage.setItem('spellbeasts.v1', JSON.stringify(state)); } catch { /* about:blank etc. */ }
   }, { state });
   context.on('page', (p) => { p.on('pageerror', (e) => errors.push(String(e))); p.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); }); });
 }
