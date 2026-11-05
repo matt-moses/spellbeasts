@@ -3,6 +3,10 @@
 export const GRAVITY = 250, JUMP_V = 110;
 export const PLAYER_X0 = 14, PLAYER_X1 = 19;        // the creature's hitbox (field is 100 units wide)
 export const START_SPEED = 30, MAX_SPEED = 55;
+export const GROUND_Y = 46, SPRITE_SIZE = 20, FEET = 0.96, HOP_SCALE = 0.55;   // field units: where the grass starts, creature size, feet position inside its box, y -> screen
+// Where to translate the creature art so its feet stand exactly on the grass, and how far a hop of height y lifts it.
+export const spriteTop = (size = SPRITE_SIZE) => GROUND_Y - size * FEET;
+export const hopLift = (y) => y * HOP_SCALE;
 export const HEARTS = 3, SAFE_TIME = 1.0;
 export const BERRY_EVERY = 200;                     // one berry prize per this many points, up to 5
 

@@ -2,7 +2,7 @@
 // ctx.result({...}) shows the shared result screen.
 import { h, icon, fill } from './dom.js';
 import { creatureSvg } from './art.js';
-import { createRunner, stepRunner, jump, score, prizeFor as runPrize, HEARTS, PLAYER_X0 } from '../logic/runner.js';
+import { createRunner, stepRunner, jump, score, prizeFor as runPrize, HEARTS, PLAYER_X0, SPRITE_SIZE, GROUND_Y, HOP_SCALE, spriteTop, hopLift } from '../logic/runner.js';
 import { createMemory, flip, settle, prizeFor as memPrize } from '../logic/memory.js';
 import { finishGame } from '../logic/care.js';
 import { SPECIES, STARTER_IDS } from '../logic/species.js';
@@ -23,7 +23,7 @@ export function runnerGame({ app, creature, root, exit, result, restart, art }) 
       <rect width="100" height="60" fill="url(#rsky)"/><circle cx="86" cy="10" r="6" fill="#ffe27a"/>
       <g class="hills"><path d="M0 40Q20 28 40 40T80 38T120 40V50H0Z" fill="#45b84d"/></g>
       <rect y="46" width="100" height="14" fill="#4fc254"/><rect y="46" width="100" height="2.5" fill="#3fb350"/>
-      <g class="stripes"></g><g class="obstacles"></g><g class="runner"><g class="runner-art"><g transform="translate(${PLAYER_X0 - 6} -12)">${art(20)}</g></g></g></svg>` }),
+      <g class="stripes"></g><g class="obstacles"></g><g class="runner"><g class="runner-art"><g transform="translate(${PLAYER_X0 - 6} ${spriteTop()})">${art(SPRITE_SIZE)}</g></g></g></svg>` }),
     h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'run-jump', type: 'button' }, icon('play'), 'Hop!')),
     h('p', { class: 'small' }, 'Space, ↑ or a tap to hop. Hold on, you have 3 hearts!'));
   const svg = root.querySelector('.run-field'), obsLayer = svg.querySelector('.obstacles'), me = svg.querySelector('.runner'), stripes = svg.querySelector('.stripes');
@@ -42,15 +42,15 @@ export function runnerGame({ app, creature, root, exit, result, restart, art }) 
     if (last == null) last = ts;
     const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
     stepRunner(g, dt);
-    me.setAttribute('transform', `translate(0 ${-g.y * 0.55})`);
+    me.setAttribute('transform', `translate(0 ${-hopLift(g.y)})`);
     me.classList.toggle('bumped', g.safe > 0);
     stripes.innerHTML = Array.from({ length: 6 }, (_, i) => `<rect x="${((i * 22 - (g.dist * 0.9) % 22) + 100) % 110 - 5}" y="52" width="9" height="1.6" rx=".8" fill="#3fb350"/>`).join('');
     obsLayer.replaceChildren(...g.obstacles.map((o) => {
       const el = document.createElementNS(SVGNS, 'g'); el.setAttribute('class', `obstacle ${o.kind}`); el.dataset.x = o.x.toFixed(1);
-      const y = 46 - o.h * 0.55, w = o.w, hh = o.h * 0.55;
+      const y = GROUND_Y - hopLift(o.h), w = o.w, hh = hopLift(o.h);
       el.innerHTML = o.kind === 'rock'
-        ? `<path d="M${o.x} 46 L${o.x + w * 0.2} ${y + 2} L${o.x + w * 0.6} ${y} L${o.x + w} 46Z" fill="#8c8aa0" stroke="#1d2433" stroke-width=".7" stroke-linejoin="round"/>`
-        : `<rect x="${o.x}" y="${46 - hh}" width="${w}" height="${hh}" rx="1.6" fill="#a8693a" stroke="#1d2433" stroke-width=".7"/><path d="M${o.x + 1} ${46 - hh * 0.5}H${o.x + w - 1}" stroke="#7a4a24" stroke-width=".7"/>`;
+        ? `<path d="M${o.x} ${GROUND_Y} L${o.x + w * 0.2} ${y + 2} L${o.x + w * 0.6} ${y} L${o.x + w} ${GROUND_Y}Z" fill="#8c8aa0" stroke="#1d2433" stroke-width=".7" stroke-linejoin="round"/>`
+        : `<rect x="${o.x}" y="${GROUND_Y - hh}" width="${w}" height="${hh}" rx="1.6" fill="#a8693a" stroke="#1d2433" stroke-width=".7"/><path d="M${o.x + 1} ${GROUND_Y - hh * 0.5}H${o.x + w - 1}" stroke="#7a4a24" stroke-width=".7"/>`;
       return el;
     }));
     if (g.hearts !== lastHearts) { lastHearts = g.hearts; hearts(); audio.play('gentle'); }
