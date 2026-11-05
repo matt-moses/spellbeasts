@@ -329,3 +329,6 @@ details.faq p { margin:.5rem 0 .2rem; font-size:1.05rem; }
 .speed.on { background:var(--blue); color:#fff; box-shadow:0 5px 0 var(--blue-d); }
 .toggle { display:flex; align-items:center; gap:.5rem; margin:.5rem 0; font-weight:bold; }
 .toggle input { width:26px; height:26px; }
+
+.version { text-align:center; font-size:.8rem; color:rgba(255,255,255,.85); margin:0 0 1rem; }
+.update-bar { position:fixed; left:50%; bottom:1rem; transform:translateX(-50%); z-index:50; background:#fff; border-radius:999px; padding:.4rem .5rem .4rem 1.1rem; font-weight:bold; box-shadow:0 5px 0 var(--lip), 0 10px 20px rgba(20,40,80,.3); }

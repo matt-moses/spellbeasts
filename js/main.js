@@ -13,6 +13,8 @@ import { nestView, sanctuaryView, bookView } from './ui/collection.js';
 import { parentView } from './ui/parent.js';
 import { careView, playView } from './ui/care.js';
 import { settingsView } from './ui/settings.js';
+import { startUpdateWatch } from './ui/update.js';
+import { BUILD_VERSION } from './logic/build.js';
 
 const store = createStore();
 store.load();
@@ -53,4 +55,10 @@ function render() {
   if (route !== '/practice') first?.setAttribute('tabindex', '-1');
 }
 window.addEventListener('hashchange', render);
+const foot = h('p', { class: 'version', id: 'version-stamp' }, `Version ${BUILD_VERSION}`);
+document.body.append(foot);
+startUpdateWatch((v) => {
+  document.body.append(h('div', { class: 'update-bar', role: 'status', id: 'update-bar' }, 'A new version is ready! ',
+    h('button', { class: 'primary', id: 'update-reload', onclick: () => location.reload() }, 'Reload')));
+});
 render();

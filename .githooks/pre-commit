@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+node tools/stamp-version.mjs >/dev/null && git add version.json js/logic/build.js
