@@ -183,6 +183,7 @@ test('get ready: the first word waits a moment, shows a cue, and Say again or an
   const b = await run();                                                    // Say again: speaks now, and the wait is cancelled
   await b.page.click('#say-again');
   assert.equal(await spoken(b.page), 1);
+  assert.equal(await b.page.evaluate(() => document.activeElement.id), 'answer', 'focus stays in the answer box after a clue button');
   assert.equal(await b.page.locator('.get-ready').count(), 0);
   await b.page.waitForTimeout(1600);
   assert.equal(await spoken(b.page), 1, 'the pending wait did not speak a second time');

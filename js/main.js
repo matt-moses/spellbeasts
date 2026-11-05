@@ -58,12 +58,24 @@ function render() {
 window.addEventListener('hashchange', render);
 loadAnalytics();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
-  navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is a bonus: the game works without it */ });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => { /* offline support is a bonus: the game works without it */ });
 }
 const foot = h('p', { class: 'version', id: 'version-stamp' }, `Version ${BUILD_VERSION}`);
 document.body.append(foot);
+// The offline cache serves the old version on a plain reload, so first let the new service worker install and take over.
+async function applyUpdate() {
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration();
+    if (reg) {
+      const swap = new Promise((res) => { navigator.serviceWorker.addEventListener('controllerchange', res, { once: true }); });
+      await reg.update();
+      await Promise.race([swap, new Promise((res) => setTimeout(res, 4000))]);
+    }
+  } catch { /* fall through to a plain reload */ }
+  location.reload();
+}
 startUpdateWatch((v) => {
   document.body.append(h('div', { class: 'update-bar', role: 'status', id: 'update-bar' }, 'A new version is ready! ',
-    h('button', { class: 'primary', id: 'update-reload', onclick: () => location.reload() }, 'Reload')));
+    h('button', { class: 'primary', id: 'update-reload', onclick: applyUpdate }, 'Reload')));
 });
 render();

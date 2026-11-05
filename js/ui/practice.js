@@ -35,7 +35,10 @@ export function practiceView(app) {
     h('button', { type: 'button', id: 'say-def', class: 'c-pink', onclick: () => { clue.textContent = `Definition: ${cur.definition}`; speaker.speak(cur.definition); } }, icon('book'), 'Definition'),
     h('button', { type: 'button', id: 'say-pos', class: 'c-purple', onclick: () => { clue.textContent = `Part of speech: ${cur.partOfSpeech}`; speaker.speak(cur.partOfSpeech); } }, icon('tag'), 'Part of speech'),
     h('button', { type: 'button', id: 'say-sentence', class: 'c-blue', onclick: () => speaker.speak(spokenSentence(cur)) }, icon('chat'), 'Sentence'));
-  const sentenceBtn = buttons.querySelector('#say-sentence');
+  // Clue buttons must not steal focus from the answer box: keep typing after a click or tap.
+buttons.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+buttons.addEventListener('click', () => input.focus());
+const sentenceBtn = buttons.querySelector('#say-sentence');
 
   function refresh() {
     const p = s.progress;
