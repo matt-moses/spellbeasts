@@ -2,6 +2,7 @@ import { h, icon } from './dom.js';
 import { companionSvg } from './art.js';
 import { mapSection } from './map.js';
 import { makeInteractive } from './pet.js';
+import { helpButton } from './help.js';
 import { readyEggs } from '../logic/collection.js';
 import { isDue } from '../logic/leitner.js';
 import { levelProgress } from '../logic/rewards.js';
@@ -41,6 +42,7 @@ export function homeView(app) {
   const buddy = h('span', { class: `podium${hungry ? ' hungry-pet' : ''}`, html: companionSvg(profile, { size: 110, mood: hungry ? 'sad' : 'happy' }) });
   makeInteractive(buddy, app, { name: profile.name, speak: true, label: 'Tap your practice buddy' });
   return h('section', { class: 'screen home' },
+    helpButton(app, 'floating'),
     h('div', { class: 'hero' },
       buddy,
       h('div', {},

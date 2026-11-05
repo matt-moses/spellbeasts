@@ -1,4 +1,5 @@
 import { h } from './dom.js';
+import { helpButton } from './help.js';
 import { creatureSvg, companionSvg } from './art.js';
 import { freshProfile } from '../logic/storage-schema.js';
 import { addStarter } from '../logic/collection.js';
@@ -7,7 +8,7 @@ import { STARTER_IDS, speciesById } from '../logic/species.js';
 export function profilesView(app) {
   const { store } = app;
   const profiles = Object.entries(store.state.profiles);
-  const root = h('section', { class: 'screen profiles' }, h('h1', {}, 'Spellbeasts'), h('p', { class: 'lead' }, 'Who is practicing today?'));
+  const root = h('section', { class: 'screen profiles' }, helpButton(app, 'floating'), h('h1', {}, 'Spellbeasts'), h('p', { class: 'lead' }, 'Who is practicing today?'));
 
   const cards = h('div', { class: 'cards' });
   for (const [id, p] of profiles) {

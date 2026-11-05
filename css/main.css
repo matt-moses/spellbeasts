@@ -285,3 +285,18 @@ progress::-moz-progress-bar { background:var(--green); border-radius:999px; }
 .pet-wrap:focus-visible { outline:4px solid #ff9f1a; outline-offset:4px; border-radius:20px; }
 @media (prefers-reduced-motion: reduce) { .pet-wrap > svg { animation:none !important; } .pet-fx { display:none; } }
 .companion.pet-wrap { display:block; }
+
+/* ---------- help ---------- */
+.chrome-right { display:flex; align-items:center; gap:.6rem; }
+.help-btn { width:56px; height:56px; padding:0; border-radius:50%; background:var(--yellow); color:#5a3a00; font-size:1.9rem; font-weight:900; border:5px solid #fff; box-shadow:0 5px 0 #d9a400, 0 8px 14px rgba(20,40,80,.25); }
+.help-btn:active:not(:disabled) { box-shadow:0 1px 0 #d9a400; }
+.screen.home, .screen.profiles { position:relative; }
+.help-btn.floating { position:absolute; top:0; right:0; z-index:5; }
+.help-overlay { position:fixed; inset:0; background:rgba(20,28,50,.72); display:flex; align-items:flex-start; justify-content:center; z-index:40; padding:1rem; overflow:auto; }
+.help-card { background:#fff; border-radius:28px; width:100%; max-width:660px; padding:1.1rem 1.4rem 1.4rem; margin:auto; box-shadow:0 10px 0 var(--yellow); }
+.help-card h2 { font-size:2rem; margin:.2rem 0; }
+.faq-group h3 { margin:1.1rem 0 .3rem; color:var(--blue-d); }
+details.faq { background:#f4f9ff; border-radius:16px; margin:.4rem 0; padding:.55rem 1rem; box-shadow:0 3px 0 #dbe8fa; }
+details.faq summary { font-weight:bold; cursor:pointer; }
+details.faq[open] { background:#fffbe8; box-shadow:0 3px 0 #f0d98a; }
+details.faq p { margin:.5rem 0 .2rem; font-size:1.05rem; }
