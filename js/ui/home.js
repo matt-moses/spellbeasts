@@ -3,7 +3,7 @@ import { companionSvg } from './art.js';
 import { mapSection } from './map.js';
 import { makeInteractive } from './pet.js';
 import { helpButton } from './help.js';
-import { readyEggs } from '../logic/collection.js';
+import { readyEggs, companionOf } from '../logic/collection.js';
 import { isDue } from '../logic/leitner.js';
 import { levelProgress } from '../logic/rewards.js';
 import { startSession } from '../logic/session.js';
@@ -61,9 +61,11 @@ export function homeView(app) {
     note,
     mapSection(app),
     h('div', { class: 'tiles' },
+      h('button', { class: 'tile t-pink', id: 'care-tile', onclick: () => { const c = companionOf(profile); app.go(c ? `/care/${c.id}` : '/sanctuary'); } }, icon('heart'), 'Care & play'),
       h('button', { class: 'tile t-yellow', id: 'sanctuary', onclick: () => app.go('/sanctuary') }, icon('paw'), 'Sanctuary'),
       h('button', { class: 'tile t-blue', id: 'book', onclick: () => app.go('/book') }, icon('book'), 'Creature book'),
       h('button', { class: 'tile t-pink', id: 'trophies', onclick: () => app.go('/trophies') }, icon('trophy'), `Trophies (${Object.keys(profile.trophies).length})`),
+      h('button', { class: 'tile t-grey', id: 'settings-link', onclick: () => app.go('/settings') }, icon('speaker'), 'Settings'),
       h('button', { class: 'tile t-grey', id: 'parent-link', onclick: () => app.go('/parent') }, icon('lock'), 'Parent area'),
       h('button', { class: 'tile t-grey', onclick: () => app.go('/') }, icon('home'), 'Switch trainer')));
 }

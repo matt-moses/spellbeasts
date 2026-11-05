@@ -324,3 +324,8 @@ details.faq p { margin:.5rem 0 .2rem; font-size:1.05rem; }
 @keyframes pip-pop { 0% { transform:scale(.4); } 50% { transform:scale(1.5); filter:brightness(1.3); } 100% { transform:scale(1); } }
 .care-stage { touch-action:pan-y; user-select:none; }
 @media (prefers-reduced-motion: reduce) { .love-burst, .float-heart, .pip.pop, .care-stage.drop-hot .care-creature { animation:none !important; } .love-burst { display:none; } }
+
+/* ---------- settings ---------- */
+.speed.on { background:var(--blue); color:#fff; box-shadow:0 5px 0 var(--blue-d); }
+.toggle { display:flex; align-items:center; gap:.5rem; margin:.5rem 0; font-weight:bold; }
+.toggle input { width:26px; height:26px; }

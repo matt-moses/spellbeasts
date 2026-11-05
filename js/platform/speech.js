@@ -5,8 +5,34 @@ export const DEFAULT_RATE = 0.9;
 export function pickVoice(voices, voiceURI) {
   if (!voices?.length) return null;
   if (voiceURI) { const m = voices.find((v) => v.voiceURI === voiceURI); if (m) return m; }
-  return voices.find((v) => v.lang === 'en-US') ?? voices.find((v) => /^en[-_]/i.test(v.lang)) ?? voices[0];
+  return rankVoices(voices)[0] ?? voices[0];
 }
+
+// Voices that usually sound the most natural come first. Names vary by system, so this is a heuristic:
+// neural/online/premium/enhanced voices beat plain ones, and robotic-sounding legacy voices go last.
+const NATURAL = /(natural|neural|online|premium|enhanced|siri|google|samantha|ava|allison|zoe|aria|jenny|guy|libby|sonia|daniel)/i;
+const ROBOTIC = /(espeak|compact|fred|zarvox|trinoids|whisper|bad news|bells|boing|cellos|organ|bubbles|junior|ralph|albert|bahh|deranged|good news|hysterical|superstar|wobble)/i;
+export function voiceScore(v) {
+  let n = 0;
+  if (/^en[-_]us$/i.test(v.lang)) n += 30; else if (/^en[-_]/i.test(v.lang)) n += 20;
+  if (NATURAL.test(v.name ?? '')) n += 25;
+  if (/(natural|neural|online)/i.test(v.name ?? '')) n += 15;
+  if (ROBOTIC.test(v.name ?? '')) n -= 40;
+  if (v.localService === false) n += 5;     // cloud-backed voices are usually smoother
+  return n;
+}
+// English voices only, best first (stable for ties). Returns [] if there are none.
+export function rankVoices(voices = []) {
+  return voices.map((v, i) => [v, i]).filter(([v]) => /^en[-_]/i.test(v.lang))
+    .sort(([a, i], [b, j]) => voiceScore(b) - voiceScore(a) || i - j).map(([v]) => v);
+}
+export function voiceLabel(v) {
+  const tags = [];
+  if (/(natural|neural|online)/i.test(v.name ?? '')) tags.push('natural');
+  return `${v.name} (${v.lang})${tags.length ? ' ★' : ''}`;
+}
+export const PREVIEW_TEXT = 'Hello! Can you spell the word laughter?';
+export const RATES = [0.6, 0.75, 0.9, 1.0, 1.15];
 
 export function rateFor(slow, rate = DEFAULT_RATE) {
   return slow ? Math.min(SLOW_RATE, rate) : rate;

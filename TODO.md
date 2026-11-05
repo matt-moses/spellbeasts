@@ -34,7 +34,8 @@ How we will know it is done (the same autonomous loop as the other phases):
 
 ## Known gaps and open questions
 
-- [ ] **Settings screen** (PRD §10.1): sound and music toggles, voice picker and speech speed. The data is already stored in `settings`, but there is no screen for it yet.
+- [x] **Settings screen** (PRD §10.1): voice picker (natural voices first, with preview), speed, sound and music. Done.
+- [ ] **Per-word pronunciation respelling** (e.g. say "laffter" for laughter), editable in the Parent area and kept only in the browser.
 - [ ] **Final names** for the game, the creatures and the lands, and the three starters (PRD open question 2). Current names are placeholders.
 - [ ] **"Practice only missed words"** button on the map (PRD open question 3). Bonus review covers part of this.
 - [ ] **Default voice**: try the available Chromebook voices (PRD open question 4).
