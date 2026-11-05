@@ -17,17 +17,22 @@ function confirmButton(label, onConfirm, { cls = 'secondary', sure = 'Yes, do it
 }
 
 function gateView(app) {
-  let gate = P.makeGate();
-  const q = h('strong', { id: 'gate-q' }, gate.question);
-  const input = h('input', { id: 'gate-answer', type: 'text', inputmode: 'numeric', autocomplete: 'off', 'aria-labelledby': 'gate-q' });
-  const msg = h('p', { class: 'note', role: 'alert' });
+  const thisYear = Number(app.today().slice(0, 4));
+  const select = h('select', { id: 'gate-year', autocomplete: 'off', 'aria-label': 'The year you were born' },
+    h('option', { value: '', selected: true, disabled: true }, 'Choose a year'),
+    P.birthYearChoices(thisYear).map((y) => h('option', { value: String(y) }, String(y))));
+  const msg = h('p', { class: 'note', role: 'alert', id: 'gate-msg' });
   const form = h('form', { class: 'panel gate', onsubmit: (e) => {
     e.preventDefault();
-    if (P.checkGate(gate, input.value)) { app.parentUnlocked = true; app.render(); return; }
-    gate = P.makeGate(); q.textContent = gate.question; input.value = ''; msg.textContent = 'Not quite. Here is a new one.'; input.focus();
-  } }, h('h1', {}, 'Parent area'), h('p', {}, 'This part is for grown-ups. To continue, solve: '), h('p', { class: 'gate-q' }, q, ' = ', input),
-    h('button', { class: 'primary', type: 'submit' }, 'Continue'), ' ', h('button', { class: 'secondary', type: 'button', onclick: () => leave(app) }, 'Back'), msg);
-  queueMicrotask(() => input.focus());
+    const year = select.value;
+    select.value = '';                                                  // never kept: cleared straight away
+    if (P.isAdultBirthYear(year, thisYear)) { app.parentUnlocked = true; app.render(); return; }
+    msg.textContent = 'The Parent area is for grown-ups. Please ask a grown-up to open it.';
+    select.focus();
+  } }, h('h1', {}, 'Parent area'), h('p', {}, 'This part is for grown-ups. To continue, please select the year you were born. It is not saved.'),
+    h('p', {}, select), h('button', { class: 'primary', id: 'gate-continue', type: 'submit' }, 'Continue'), ' ',
+    h('button', { class: 'secondary', type: 'button', onclick: () => leave(app) }, 'Back'), msg);
+  queueMicrotask(() => select.focus());
   return h('section', { class: 'screen parent' }, form);
 }
 

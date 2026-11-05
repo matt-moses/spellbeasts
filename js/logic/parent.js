@@ -6,12 +6,15 @@ import { isMastered } from './leitner.js';
 import { SCHEMA_VERSION } from './version.js';
 import { SAMPLE_LIST_ID, SAMPLE_LIST_NAME, SAMPLE_WORDS } from '../../data/sample-words.js';
 
-// ---- adult gate: a multi-digit multiplication question, not a password
-export function makeGate(rng = Math.random) {
-  const a = 12 + Math.floor(rng() * 88), b = 12 + Math.floor(rng() * 88);
-  return { question: `${a} × ${b}`, answer: a * b };
+// ---- adult gate: pick the year you were born. Nothing is stored; the year is only compared, in memory.
+export const ADULT_AGE = 18;
+// A birth year alone can't say whether the birthday has passed, so require ADULT_AGE + 1 whole years of difference:
+// that guarantees the person really is at least ADULT_AGE.
+export function isAdultBirthYear(year, currentYear) {
+  const y = Number(year);
+  return Number.isInteger(y) && y <= currentYear && y >= currentYear - 120 && currentYear - y >= ADULT_AGE + 1;
 }
-export const checkGate = (gate, typed) => { const t = String(typed ?? '').trim(); return t !== '' && /^\d+$/.test(t) && Number(t) === gate.answer; };
+export const birthYearChoices = (currentYear, span = 100) => Array.from({ length: span + 1 }, (_, i) => currentYear - i);
 
 // ---- per-word stats
 export function statsRows(profile, list) {

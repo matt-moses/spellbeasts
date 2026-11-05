@@ -3,7 +3,7 @@
 // Nothing here imports game logic: the oracle below re-derives every number from the PRD.
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { hasBrowser, launch, prepare } from './helpers.js';
+import { hasBrowser, launch, prepare, unlockParent } from './helpers.js';
 
 const skip = hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
 let env;
@@ -396,9 +396,7 @@ test('whole game: two weeks of play checked against an independent model, with z
   assert.match(await page.textContent('.book p'), new RegExp(`${o.species.size} of 27 discovered`));
 
   await page.goto(`${env.server.url}#/parent`);
-  await page.waitForSelector('#gate-answer');
-  const [a, b] = (await page.textContent('#gate-q')).split(' × ').map(Number);
-  await page.fill('#gate-answer', String(a * b)); await page.press('#gate-answer', 'Enter');
+  await unlockParent(page);
   await page.click('.tab[data-tab=stats]');
   for (const w of Object.keys(o.stats)) {
     const row = await page.$$eval(`.stats-table tr[data-word=${w}] td`, (c) => c.map((x) => x.textContent));

@@ -25,7 +25,7 @@ It is a static site (vanilla JS modules, no build step, no runtime dependencies)
 - **27 original creatures, 3 stages each:** drawn in inline SVG. Buy eggs in each land's nest, warm them with correct answers, feed and evolve creatures (evolving ties to level and mastery).
 - **Care and play:** feed berries, give a bath, pet, and play Berry Catch. Creatures stay happy day to day, and a sparkling creature leaves a small gift. Tap any character for a random animation, sound, effect or speech bubble.
 - **Trophies:** 44 to earn, from first hatch to word master.
-- **Parent area** (behind a grown-up math question): load your own word list, see per-word stats and the most-missed words, manage trainers, and back up or restore everything as JSON.
+- **Parent area** (behind a grown-up check: choose the year you were born, which is never saved): load your own word list, see per-word stats and the most-missed words, manage trainers, and back up or restore everything as JSON.
 - **Help for kids:** a round **?** button on every screen opens a pop-up of plain-language FAQs (how to play, crickets, creatures, the map, what to do if there is no sound). Opening it never interrupts a practice session.
 - **Accessible by design:** large text, full keyboard use, visible focus, reduced-motion support, encouraging wording, and spellcheck/autocorrect off on the answer box.
 

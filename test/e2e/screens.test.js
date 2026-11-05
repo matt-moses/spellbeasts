@@ -1,6 +1,6 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { hasBrowser, launch, prepare, seededState, playSession } from './helpers.js';
+import { hasBrowser, launch, prepare, seededState, playSession, unlockParent } from './helpers.js';
 
 const skip = hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
 let env;
@@ -49,10 +49,9 @@ test('no screen shows null/undefined/NaN or drops a graphic, in any state', { sk
   await page.goto(`${env.server.url}#/nest/r1`); await page.waitForSelector('.hatch');
   await page.click('.hatch'); await page.waitForSelector('.reveal'); await clean(page, 'hatch reveal');
 
-  await page.goto(`${env.server.url}#/parent`); await page.waitForSelector('#gate-answer');
+  await page.goto(`${env.server.url}#/parent`); await page.waitForSelector('#gate-year');
   await clean(page, 'parent gate');
-  const [a, b] = (await page.textContent('#gate-q')).split(' × ').map(Number);
-  await page.fill('#gate-answer', String(a * b)); await page.press('#gate-answer', 'Enter'); await page.waitForSelector('.tabs');
+  await unlockParent(page);
   for (const t of ['words', 'stats', 'trainers', 'backup']) { await page.click(`.tab[data-tab=${t}]`); await clean(page, `parent ${t}`); }
   assert.deepEqual(errors, []);
   await context.close();

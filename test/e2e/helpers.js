@@ -36,6 +36,15 @@ export async function prepare(context, { state = null, errors = [] } = {}) {
   context.on('page', (p) => { p.on('pageerror', (e) => errors.push(String(e))); p.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); }); });
 }
 
+// Opens the Parent area's adult gate by choosing a birth year 35 years ago (the year is never stored by the game).
+export async function unlockParent(page) {
+  await page.waitForSelector('#gate-year');
+  const year = await page.evaluate(() => new Date().getFullYear() - 35);
+  await page.selectOption('#gate-year', String(year));
+  await page.click('#gate-continue');
+  await page.waitForSelector('.tabs');
+}
+
 export const lastSpoken = (page) => page.evaluate(() => window.__spoken.at(-1)?.text);
 
 // Answer every word correctly until the summary appears.

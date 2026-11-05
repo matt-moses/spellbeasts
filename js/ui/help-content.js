@@ -30,6 +30,6 @@ export const FAQ = [
   { group: 'Trouble?', items: [
     { q: 'What if I cannot hear the word?', a: 'Ask a grown-up to check that the sound is on and the volume is up. Your device also needs an English voice turned on.' },
     { q: 'Why are my creatures hungry?', a: 'They are hungry on days you have not practiced yet. Do a practice and they will perk right up!' },
-    { q: 'How do I change my word list?', a: 'That is for grown-ups. They can open the Parent area from the home screen and solve a math problem to get in.' },
+    { q: 'How do I change my word list?', a: 'That is for grown-ups. They can open the Parent area from the home screen. It asks the year they were born, to check they are grown up.' },
   ] },
 ];

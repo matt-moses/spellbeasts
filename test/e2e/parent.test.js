@@ -1,7 +1,7 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { hasBrowser, launch, prepare, seededState, playSession, lastSpoken } from './helpers.js';
+import { hasBrowser, launch, prepare, seededState, playSession, lastSpoken, unlockParent } from './helpers.js';
 
 const skip = hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
 let env;
@@ -19,32 +19,41 @@ async function open(patch = () => {}, { unlocked = true, words } = {}) {
   await page.click('.card');
   await page.waitForSelector('#practice');
   await page.click('#parent-link');
-  await page.waitForSelector('#gate-answer');
+  await page.waitForSelector('#gate-year');
   if (unlocked) await unlock(page);
   return { page, context, errors, requests };
 }
-async function unlock(page) {
-  const [a, b] = (await page.textContent('#gate-q')).split(' × ').map(Number);
-  await page.fill('#gate-answer', String(a * b)); await page.press('#gate-answer', 'Enter');
-  await page.waitForSelector('.tabs');
-}
+const unlock = unlockParent;
 const tab = (page, id) => page.click(`.tab[data-tab=${id}]`);
 const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('spellbeasts.v1')));
 const LIST = 'kettle | noun | a pot for boiling water | The kettle whistled.\n|noun|no word on this line\nlantern | noun | a light you can carry\n# a comment line\n';
 
-test('adult gate: wrong answers get a new question, the right one opens it, and it locks again on leaving', { skip }, async () => {
+test('adult gate: only a grown-up birth year opens it, nothing is saved, and it locks again on leaving', { skip }, async () => {
   const { page, context } = await open(() => {}, { unlocked: false });
-  const q1 = await page.textContent('#gate-q');
-  await page.fill('#gate-answer', '1'); await page.press('#gate-answer', 'Enter');
-  await page.waitForFunction((q) => document.querySelector('#gate-q').textContent !== q, q1);
-  assert.equal(await page.locator('.tabs').count(), 0);
-  assert.match(await page.textContent('.gate .note'), /Not quite/);
-  await unlock(page);
+  const now = await page.evaluate(() => new Date().getFullYear());
+  const before = await page.evaluate(() => localStorage.getItem('spellbeasts.v1'));
+  // children's years and "too close to call" years are refused, with a friendly message
+  for (const y of [now, now - 9, now - 14, now - 18]) {
+    await page.selectOption('#gate-year', String(y)); await page.click('#gate-continue');
+    assert.match(await page.textContent('#gate-msg'), /for grown-ups/, `year ${y}`);
+    assert.equal(await page.locator('.tabs').count(), 0, `year ${y} must not unlock`);
+    assert.equal(await page.inputValue('#gate-year'), '', 'the choice is cleared after every try');
+  }
+  assert.equal(await page.locator('#gate-year option').count(), 102);                 // placeholder + 101 years
+  await page.selectOption('#gate-year', String(now - 19)); await page.click('#gate-continue');   // 19+ whole years: certainly 18+
+  await page.waitForSelector('.tabs');
   assert.equal(await page.locator('.tab').count(), 4);
+
+  // the year is not saved or persisted anywhere
+  assert.equal(await page.evaluate(() => localStorage.getItem('spellbeasts.v1')), before);
+  assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length, document.cookie]), [1, 0, ''], 'no new storage keys or cookies');
+  assert.doesNotMatch(await page.evaluate(() => JSON.stringify([localStorage, sessionStorage, location.href, document.cookie])), new RegExp(String(now - 19)));
+
   await page.click('#parent-back');
   await page.waitForSelector('#practice');
   await page.click('#parent-link');
-  await page.waitForSelector('#gate-answer');                                   // locked again
+  await page.waitForSelector('#gate-year');                                           // locked again
+  assert.equal(await page.inputValue('#gate-year'), '');
   await context.close();
 });
 

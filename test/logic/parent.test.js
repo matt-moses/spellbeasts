@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeGate, checkGate, statsRows, sortRows, mostMissed, previewImport, importIntoList, createListFromImport, renameList, editWord, deleteWord, resetSampleList, setActiveList, renameProfile, deleteProfile, resetProgress, exportJson, parseBackup } from '../../js/logic/parent.js';
+import { isAdultBirthYear, birthYearChoices, statsRows, sortRows, mostMissed, previewImport, importIntoList, createListFromImport, renameList, editWord, deleteWord, resetSampleList, setActiveList, renameProfile, deleteProfile, resetProgress, exportJson, parseBackup } from '../../js/logic/parent.js';
 import { freshState, freshProfile } from '../../js/logic/storage-schema.js';
 import { addStarter } from '../../js/logic/collection.js';
 import { applyAttempt } from '../../js/logic/leitner.js';
@@ -16,14 +16,21 @@ function world() {
 const T = '2026-11-05';
 const attempt = (p, word, correct, day = T, firstTry = true) => { const ws = (p.wordStats.sample ??= {}); ws[word] = applyAttempt(ws[word], { correct, firstTry, today: day }); };
 
-test('adult gate: multi-digit multiplication, exact numeric answer only', () => {
-  const g = makeGate(rng(4));
-  assert.match(g.question, /^\d{2} × \d{2}$/);
-  const [a, b] = g.question.split(' × ').map(Number);
-  assert.equal(g.answer, a * b);
-  assert.equal(checkGate(g, String(g.answer)), true);
-  assert.equal(checkGate(g, ` ${g.answer} `), true);
-  for (const bad of ['', 'abc', String(g.answer + 1), '1e3', '-5', undefined]) assert.equal(checkGate(g, bad), false, String(bad));
+test('adult gate: a birth year counts only if the person is certainly 18 or older', () => {
+  assert.equal(isAdultBirthYear(2007, 2026), true);          // 19 years apart: at least 18 whatever the birthday
+  assert.equal(isAdultBirthYear(1980, 2026), true);
+  assert.equal(isAdultBirthYear(2008, 2026), false);         // 18 apart: might not have had the birthday yet
+  assert.equal(isAdultBirthYear(2015, 2026), false);
+  assert.equal(isAdultBirthYear(2026, 2026), false);
+  assert.equal(isAdultBirthYear(2030, 2026), false);         // future
+  assert.equal(isAdultBirthYear(1800, 2026), false);         // implausibly old
+  for (const bad of ['', 'abc', null, undefined, NaN, 1990.5, '19 90']) assert.equal(isAdultBirthYear(bad, 2026), false, String(bad));
+  assert.equal(isAdultBirthYear('1990', 2026), true);        // the select hands over a string
+});
+test('birth year choices run from this year back 100 years', () => {
+  const c = birthYearChoices(2026);
+  assert.equal(c.length, 101);
+  assert.deepEqual([c[0], c.at(-1)], [2026, 1926]);
 });
 
 test('stats rows: attempts, accuracy, box, due, mastered, last missed; unseen words are blank', () => {
