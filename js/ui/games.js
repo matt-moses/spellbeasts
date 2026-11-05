@@ -57,9 +57,8 @@ export function runnerGame({ app, creature, root, exit, result, restart, art }) 
     root.querySelector('#run-score').textContent = `Distance ${score(g)}`;
     if (g.over) {
       stopAll();
-      const prize = runPrize(g);
-      finishGame(profile, creature, app.today(), 0, prize);
-      return result({ title: 'Great run!', lines: [`You ran ${score(g)} steps!`], prize, again: restart });
+      const paid = finishGame(profile, creature, app.today(), 0, runPrize(g));
+      return result({ title: 'Great run!', lines: [`You ran ${score(g)} steps!`], ...paid, again: restart });
     }
     raf = requestAnimationFrame(frame);
   }
@@ -97,9 +96,8 @@ export function memoryGame({ app, creature, root, exit, result, restart }) {
     draw();
     if (r === 'mismatch') timer = setTimeout(() => { settle(g); draw(); grid.querySelector('.mem-card')?.focus?.(); }, reduceMotion() ? 500 : 800);
     if (g.done) {
-      const prize = memPrize(g);
-      finishGame(profile, creature, app.today(), 0, prize);
-      setTimeout(() => result({ title: 'You found them all!', lines: [`It took ${g.moves} moves.`], prize, again: restart }), 500);
+      const paid = finishGame(profile, creature, app.today(), 0, memPrize(g));
+      setTimeout(() => result({ title: 'You found them all!', lines: [`It took ${g.moves} moves.`], ...paid, again: restart }), 500);
     }
   }
   fill(root,

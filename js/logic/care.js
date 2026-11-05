@@ -1,11 +1,16 @@
 // Creature care (fun extras): four meters per creature that drift down a little each day and go up when you
 // feed berries, give a bath, pet, or play. All low-stakes: nothing ever gets sick or is lost.
 import { daysBetween } from './leitner.js';
+import { playedToday } from './streak.js';
 
 export const MEASURES = ['fed', 'clean', 'loved', 'fun'];
 export const METER_MAX = 5, METER_START = 3, MAX_DAILY_DRIFT = 3;
 export const BERRY_FEED = 2, BATH_GAIN = 3, GAME_GAIN = 3, PETS_PER_HEART = 3, SPARKLE_CRICKETS = 3, SESSION_BERRIES = 2, STAR_BERRIES = 1, START_BERRIES = 3;
-export const GAME_BERRIES_PER = 4;                                   // one berry prize for every 4 caught
+export const GAME_BERRIES_PER = 4;                                   // a game's score tier: one point for every 4 caught
+// Games are paid for with spelling: playing costs crickets (taken when a game is finished, so leaving early is free),
+// and a great game (tier 2 or better) gives one back. Games no longer hand out berries.
+export const GAME_COST = 3, GAME_REFUND = 1, GREAT_TIER = 2;
+export const canPlay = (profile) => (profile.crickets ?? 0) >= GAME_COST;
 
 export const freshCareStats = () => ({ games: 0, baths: 0, pets: 0, berriesFed: 0, sparkles: 0 });
 const clamp = (n) => Math.max(0, Math.min(METER_MAX, n));
@@ -53,19 +58,24 @@ export function finishBath(profile, creature, today) {
   return { ok: true };
 }
 
-// `prizeOverride` lets a game decide its own berry prize; otherwise one berry per GAME_BERRIES_PER caught.
-export function finishGame(profile, creature, today, caught, prizeOverride) {
+// `tierOverride` lets a game decide its own score tier; otherwise one point per GAME_BERRIES_PER caught.
+// Costs GAME_COST crickets (never below 0) and refunds GAME_REFUND for a great game.
+export function finishGame(profile, creature, today, caught, tierOverride) {
   const c = careOf(creature, today);
   c.fun = clamp(c.fun + GAME_GAIN); stats(profile).games += 1;
-  const prize = prizeOverride ?? Math.floor(caught / GAME_BERRIES_PER);
-  profile.berries = (profile.berries ?? 0) + prize;
-  return { prize };
+  const tier = tierOverride ?? Math.floor(caught / GAME_BERRIES_PER);
+  const refund = tier >= GREAT_TIER ? GAME_REFUND : 0;
+  const cost = Math.min(GAME_COST, profile.crickets ?? 0);
+  profile.crickets = (profile.crickets ?? 0) - cost + refund;
+  return { cost, refund };
 }
 
-// A creature that is happy on every meter brings a small gift, once per creature per day.
+// A creature that is happy on every meter brings a small gift, once per creature per day, and only once the
+// trainer has practiced words today (care alone never earns crickets).
 export function claimSparkle(profile, creature, today) {
   const c = careOf(creature, today);
   if (moodOf(c) !== 'sparkling' || c.sparkleDay === today) return { ok: false };
+  if (!playedToday(profile.streak, today)) return { ok: false, reason: 'no-practice' };
   c.sparkleDay = today; profile.crickets += SPARKLE_CRICKETS; stats(profile).sparkles += 1;
   return { ok: true, crickets: SPARKLE_CRICKETS };
 }

@@ -1,13 +1,14 @@
 // Care screen + Berry Catch game: feed berries, give a bath, pet, play. All gentle, nothing can go wrong.
 import { h, icon, fill } from './dom.js';
 import { creatureSvg } from './art.js';
-import { careOf, moodOf, giveBerry, pet, finishBath, finishGame, claimSparkle, MEASURES, METER_MAX, SPARKLE_CRICKETS } from '../logic/care.js';
+import { careOf, moodOf, giveBerry, pet, finishBath, finishGame, claimSparkle, canPlay, MEASURES, METER_MAX, SPARKLE_CRICKETS, GAME_COST, GAME_REFUND } from '../logic/care.js';
 import { createCatchGame, stepCatchGame, maxScore, FIELD, CATCH_Y, HALF_WIDTH } from '../logic/minigame.js';
 import { awardTrophies } from '../logic/collection.js';
 import { TROPHIES } from '../logic/trophies.js';
 import { stageName } from '../logic/species.js';
 import { makeInteractive } from './pet.js';
 import { runnerGame, memoryGame } from './games.js';
+import { startSession } from '../logic/session.js';
 
 const LABELS = { fed: 'Fed', clean: 'Clean', loved: 'Loved', fun: 'Fun' };
 const trophyNames = (ids) => ids.map((id) => TROPHIES.find((t) => t.id === id).name).join(', ');
@@ -16,11 +17,12 @@ const TRAY_SHOWN = 6;                       // berries drawn in the tray (the co
 const STROKE_PX = 90;                       // rubbing this far over the creature counts as one pet
 
 // After any activity: hand out the daily sparkle gift if earned, then any trophies. Returns text to show.
-export function afterCare(app, creature) {
+export function afterCare(app, creature, { hint = false } = {}) {
   const { store } = app, profile = app.profile, today = app.today();
   const bits = [];
   const gift = claimSparkle(profile, creature, today);
   if (gift.ok) bits.push(`Sparkling! ${stageName(creature.species, creature.stage)} is so happy it left you a gift: +${SPARKLE_CRICKETS} crickets.`);
+  else if (hint && gift.reason === 'no-practice') bits.push(`${stageName(creature.species, creature.stage)} is sparkling! Practice some words today and it will leave you a gift.`);
   const won = awardTrophies(profile, today);
   if (won.length) bits.push(`New trophy: ${trophyNames(won)}!`);
   store.save();
@@ -183,13 +185,13 @@ export function careView(app, creatureId) {
           h('button', { class: 'tile t-pink', id: 'care-feed', onclick: (e) => feedFrom(root.querySelector('.berry-item') ?? e.currentTarget) }, icon('berry'), 'Give a berry'),
           h('button', { class: 'tile t-blue', id: 'care-bath', onclick: startBath }, icon('bath'), 'Bath time'),
           h('button', { class: 'tile t-yellow', id: 'care-love', onclick: () => love() }, icon('heart'), 'Give love'),
-          h('button', { class: 'tile t-grey', id: 'care-play', onclick: () => app.go(`/play/${creature.id}`) }, icon('gamepad'), 'Play a game')),
+          h('button', { class: 'tile t-grey', id: 'care-play', onclick: () => app.go(`/play/${creature.id}`) }, icon('gamepad'), `Play a game (${GAME_COST} 🦗)`)),
       h('div', { class: 'actions' }, h('button', { class: 'secondary', onclick: () => app.go('/sanctuary') }, 'Back to Sanctuary')));
     shown = { ...care };
   }
   draw();
   critter.classList.add('pet-hop');
-  say(''); const first = afterCare(app, creature); if (first) { say(first); draw(); }
+  say(''); const first = afterCare(app, creature, { hint: true }); if (first) { say(first); draw(); }
   return root;
 }
 
@@ -206,10 +208,16 @@ export function playView(app, creatureId) {
 
   function menu() {
     stop(); stop = () => {};
-    const card = (id, title, text, art, on) => h('button', { class: 'game-card', id, type: 'button', onclick: on }, h('span', { class: 'game-art' }, art), h('strong', {}, title), h('span', { class: 'small' }, text));
+    const ok = canPlay(profile);
+    const card = (id, title, text, art, on) => h('button', { class: 'game-card', id, type: 'button', disabled: ok ? null : '', onclick: on }, h('span', { class: 'game-art' }, art), h('strong', {}, title), h('span', { class: 'small' }, text));
     fill(root,
       h('h1', {}, `Play with ${name}`),
-      h('p', { class: 'lead' }, 'Pick a game!'),
+      h('p', { class: 'lead' }, ok ? 'Pick a game!' : 'Spell some words to play!'),
+      h('p', { class: 'small', id: 'game-cost' }, ok
+        ? `Each game costs ${GAME_COST} crickets when you finish it (a great game gives ${GAME_REFUND} back). You have ${profile.crickets} 🦗.`
+        : `Games cost ${GAME_COST} crickets and you have ${profile.crickets}. Practice some words to earn more crickets!`),
+      ok ? null : h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'game-practice', onclick: practiceFirst }, icon('play'), 'Practice words')),
+      h('p', { class: 'note', id: 'game-note', role: 'status' }),
       h('div', { class: 'game-cards' },
         card('game-catch', 'Berry Catch', 'Slide to catch falling berries.', icon('berry'), () => berryIntro()),
         card('game-run', 'Hop Run', 'Hop over logs and rocks as you run.', icon('flame'), () => start(runnerGame)),
@@ -217,16 +225,25 @@ export function playView(app, creatureId) {
       h('div', { class: 'actions' }, h('button', { class: 'secondary', id: 'game-pet', onclick: toCare }, `Back to ${name}`)));
   }
 
+  // Out of crickets: jump into a normal practice session (or a bonus review when nothing is due).
+  function practiceFirst() {
+    const list = app.store.state.wordLists[profile.activeListId] ?? app.store.state.wordLists.sample;
+    const today = app.today();
+    const s = startSession({ profile, list, today }) ?? startSession({ profile, list, today, bonus: true });
+    if (!s) { const n = root.querySelector('#game-note'); if (n) n.textContent = 'There are no words to practice right now. Come back later!'; return; }
+    stop(); app.session = s; app.go('/practice');
+  }
+
   // Shared result screen. Exit and "choose another" never lose anything; only finishing pays out.
-  function result({ title, lines, prize, again }) {
+  function result({ title, lines, cost, refund, again }) {
     stop(); stop = () => {};
-    const extra = afterCare(app, creature);
+    const extra = afterCare(app, creature, { hint: true });
     audio.play('levelup');
     fill(root, h('h1', {}, title),
       h('div', { class: 'panel', id: 'game-result' }, lines.map((l) => h('p', { class: 'lead' }, l)),
-        h('p', {}, prize ? `You won ${prize} berr${prize === 1 ? 'y' : 'ies'} to keep.` : 'Play again to win berries to keep.'),
+        h('p', { id: 'game-spent' }, refund ? `That game cost ${cost} crickets, and you got ${refund} back for playing so well!` : `That game cost ${cost} crickets. Play really well to get one back!`),
         h('p', {}, `${name} had so much fun!`), extra ? h('p', { class: 'bubble' }, extra) : null),
-      h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'game-again', onclick: again }, icon('play'), 'Play again'),
+      h('div', { class: 'actions' }, canPlay(profile) ? h('button', { class: 'primary big', id: 'game-again', onclick: again }, icon('play'), 'Play again') : h('button', { class: 'primary big', id: 'game-practice', onclick: practiceFirst }, icon('play'), 'Practice words to play more'),
         h('button', { class: 'secondary', id: 'game-menu', onclick: menu }, 'Choose another game'),
         h('button', { class: 'secondary', id: 'game-back', onclick: toCare }, `Back to ${name}`)));
   }
@@ -295,8 +312,8 @@ export function playView(app, creatureId) {
       if (g.done) {
         stopAll();
         const best = maxScore(g);
-        const { prize } = finishGame(profile, creature, app.today(), g.caught);
-        return result({ title: g.caught >= best ? 'Perfect catch!' : 'Great game!', lines: [`You caught ${g.caught} of ${best} berries!`], prize, again: () => start(berryCatch) });
+        const paid = finishGame(profile, creature, app.today(), g.caught);
+        return result({ title: g.caught >= best ? 'Perfect catch!' : 'Great game!', lines: [`You caught ${g.caught} of ${best} berries!`], ...paid, again: () => start(berryCatch) });
       }
       raf = requestAnimationFrame(frame);
     }

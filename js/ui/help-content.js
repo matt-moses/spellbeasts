@@ -17,8 +17,9 @@ export const FAQ = [
   { group: 'Creatures', items: [
     { q: 'How do I get a new creature?', a: 'Tap an egg nest on the map and buy an egg with crickets. Right answers warm the egg up. When it is ready, tap Hatch!' },
     { q: 'How do my creatures grow?', a: 'Feed them crickets in the Sanctuary. When a creature is full and you have reached the level it needs, tap Evolve to make it bigger!' },
-    { q: 'How do I take care of my creatures?', a: 'Open Care and play. Give berries, a bath, love and games to fill the four meters. A happy creature might leave you a gift!' },
-    { q: 'Where do I get berries?', a: 'You find berries when you finish practice, open treasure stars, and win Berry Catch.' },
+    { q: 'How do I take care of my creatures?', a: 'Open Care and play. Give berries, a bath, love and games to fill the four meters. If you have practiced words today, a creature that is happy on every meter leaves you a gift!' },
+    { q: 'Where do I get berries?', a: 'You find berries when you finish practice and when you open treasure stars. Spelling is how you get them!' },
+    { q: 'Why do games cost crickets?', a: 'Spelling words earns crickets, and crickets let you play. A game costs 3 crickets when you finish it, and a great game gives 1 back. Leaving a game early costs nothing. Out of crickets? Practice some words!' },
     { q: 'What happens when I tap my creature?', a: 'Try it and see! It does something different each time.' },
   ] },
   { group: 'The map', items: [

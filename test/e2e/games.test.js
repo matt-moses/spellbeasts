@@ -8,7 +8,7 @@ before(async () => { if (hasBrowser) env = await launch(); });
 after(async () => { await env?.close(); });
 
 async function open(patch = () => {}) {
-  const st = seededState(); patch(st.profiles.p1);
+  const st = seededState(); st.profiles.p1.crickets = 10; patch(st.profiles.p1);
   const context = await env.browser.newContext({ reducedMotion: 'reduce', viewport: { width: 900, height: 1000 } });
   const errors = [];
   await prepare(context, { state: st, errors });
@@ -30,7 +30,7 @@ test('the games menu offers three games and a way back to the pet', { skip }, as
   await context.close();
 });
 
-test('every game can be exited at any time (button or Escape) without a prize, back to the menu', { skip }, async () => {
+test('every game can be exited at any time (button or Escape) without a cost, back to the menu', { skip }, async () => {
   const { page, context, errors } = await open();
   const before = await saved(page);
   for (const [card, start] of [['#game-catch', '#game-start'], ['#game-run', null], ['#game-memory', null]]) {
@@ -48,13 +48,13 @@ test('every game can be exited at any time (button or Escape) without a prize, b
     await page.waitForSelector('#game-catch');
   }
   const after_ = await saved(page);
-  assert.deepEqual([after_.berries, after_.care.games, after_.creatures[0].care?.fun ?? 3], [before.berries, 0, 3], 'exiting pays nothing and counts nothing');
+  assert.deepEqual([after_.berries, after_.crickets, after_.care.games, after_.creatures[0].care?.fun ?? 3], [before.berries, before.crickets, 0, 3], 'exiting costs nothing and counts nothing');
   assert.deepEqual(errors, []);
   await context.close();
 });
 
-test('Hop Run: hopping over obstacles keeps the hearts; never hopping ends the run, pays berries for distance', { skip }, async () => {
-  const { page, context, errors } = await open((p) => { p.berries = 0; });
+test('Hop Run: hopping over obstacles keeps the hearts; never hopping ends the run, costs crickets', { skip }, async () => {
+  const { page, context, errors } = await open((p) => { p.berries = 3; });
   await page.click('#game-run'); await page.waitForSelector('.run-field');
   // a good player: hop when an obstacle is close (reads the obstacle's position from the screen)
   for (let i = 0; i < 400; i++) {
@@ -74,14 +74,16 @@ test('Hop Run: hopping over obstacles keeps the hearts; never hopping ends the r
   const p = await saved(page);
   assert.equal(p.care.games, 1);
   assert.equal(p.creatures[0].care.fun, 5);
-  assert.equal(p.berries, Number((await page.textContent('#game-result')).match(/won (\d+) berr/)?.[1] ?? 0));
+  const refund = /you got 1 back/.test(await page.textContent('#game-result')) ? 1 : 0;
+  assert.equal(p.crickets, 10 - 3 + refund);
+  assert.equal(p.berries, 3, 'games give no berries');
   await page.click('#game-again'); await page.waitForSelector('.run-field');
   assert.deepEqual(errors, []);
   await context.close();
 });
 
-test('Memory Match: solving it by remembering wins berries, and mismatched cards flip back', { skip }, async () => {
-  const { page, context, errors } = await open((p) => { p.berries = 0; });
+test('Memory Match: solving it by remembering costs crickets, with some back, and mismatched cards flip back', { skip }, async () => {
+  const { page, context, errors } = await open((p) => { p.berries = 3; });
   await page.click('#game-memory'); await page.waitForSelector('.mem-card');
   assert.equal(await page.locator('.mem-card').count(), 12);
   assert.equal(await page.locator('.mem-card[data-state=down]').count(), 12);
@@ -105,10 +107,32 @@ test('Memory Match: solving it by remembering wins berries, and mismatched cards
   await page.waitForSelector('#game-result');
   assert.ok(sawMismatch, 'a mismatch happened and flipped back');
   assert.match(await page.textContent('#game-result'), /It took \d+ moves/);
-  const prize = Number((await page.textContent('#game-result')).match(/won (\d+) berr/)[1]);
-  assert.ok(prize >= 1 && prize <= 3);
-  assert.equal((await saved(page)).berries, prize);
+  const after = await saved(page);
+  assert.ok(after.crickets === 7 || after.crickets === 8, `crickets ${after.crickets}`);   // cost 3, maybe 1 back
+  assert.equal(after.berries, 3, 'games give no berries');
   assert.equal(await matchedCount(), 0);                                       // result screen replaced the board
   assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('with fewer than 3 crickets the games are locked and a practice button explains how to earn more', { skip }, async () => {
+  const { page, context, errors } = await open((p) => { p.crickets = 2; });
+  assert.match(await page.textContent('.play .lead'), /Spell some words to play/);
+  assert.match(await page.textContent('#game-cost'), /cost 3 crickets and you have 2/);
+  for (const id of ['#game-catch', '#game-run', '#game-memory']) assert.equal(await page.isDisabled(id), true);
+  await page.click('#game-practice');
+  await page.waitForSelector('#practice');                                       // lands in a normal practice session
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('after a game the player cannot afford another, the result offers practice instead of Play again', { skip }, async () => {
+  const { page, context } = await open((p) => { p.crickets = 3; });
+  await page.click('#game-run'); await page.waitForSelector('.run-field');
+  await page.clock.runFor(60000);
+  await page.waitForSelector('#game-result');
+  const refund = /you got 1 back/.test(await page.textContent('#game-result'));
+  assert.equal(await page.locator('#game-again').count(), refund ? 1 : 0);
+  assert.equal(await page.locator('#game-practice').count(), refund ? 0 : 1);
   await context.close();
 });

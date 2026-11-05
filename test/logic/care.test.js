@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { careOf, moodOf, average, giveBerry, pet, finishBath, finishGame, claimSparkle, METER_MAX, freshCareStats } from '../../js/logic/care.js';
+import { recordPlay } from '../../js/logic/streak.js';
+import { careOf, moodOf, average, giveBerry, pet, finishBath, finishGame, claimSparkle, canPlay, GAME_COST, GAME_REFUND, METER_MAX, freshCareStats } from '../../js/logic/care.js';
 import { freshProfile } from '../../js/logic/storage-schema.js';
 import { addStarter } from '../../js/logic/collection.js';
 
@@ -56,22 +57,39 @@ test('petting: every third pet fills the loved meter a notch, capped at 5', () =
   assert.equal(c.care.loved, METER_MAX);
   assert.equal(p.care.pets, 15);
 });
-test('bath: +3 clean (capped) and counted; game: +3 fun, one berry prize per 4 caught', () => {
+test('bath: +3 clean (capped) and counted', () => {
   const { p, c } = setup();
   finishBath(p, c, D1);
   assert.deepEqual([c.care.clean, p.care.baths], [5, 1]);
-  assert.deepEqual(finishGame(p, c, D1, 3), { prize: 0 });
-  assert.deepEqual(finishGame(p, c, D1, 11), { prize: 2 });
-  assert.deepEqual([c.care.fun, p.berries, p.care.games], [5, 5, 2]);
 });
-test('sparkle gift: +3 crickets once per creature per day, only when every meter is 4+', () => {
+test('games cost 3 crickets, a great game (tier 2+) refunds 1, fun +3, and games never give berries', () => {
   const { p, c } = setup();
+  p.crickets = 20; const berries = p.berries;
+  assert.deepEqual(finishGame(p, c, D1, 3), { cost: GAME_COST, refund: 0 });          // tier 0: 3 caught
+  assert.equal(p.crickets, 17);
+  assert.deepEqual(finishGame(p, c, D1, 7), { cost: GAME_COST, refund: 0 });          // tier 1
+  assert.deepEqual(finishGame(p, c, D1, 8), { cost: GAME_COST, refund: GAME_REFUND }); // tier 2 = great
+  assert.equal(p.crickets, 20 - 3 - 3 - 3 + 1);
+  assert.deepEqual(finishGame(p, c, D1, 0, 5), { cost: GAME_COST, refund: GAME_REFUND }); // a game's own tier wins
+  assert.deepEqual([c.care.fun, p.berries, p.care.games], [5, berries, 4]);
+});
+test('canPlay needs the cost in crickets, and a game can never push crickets below zero', () => {
+  const { p, c } = setup();
+  p.crickets = 2; assert.equal(canPlay(p), false);
+  p.crickets = 3; assert.equal(canPlay(p), true);
+  p.crickets = 1; assert.deepEqual(finishGame(p, c, D1, 0), { cost: 1, refund: 0 }); assert.equal(p.crickets, 0);
+});
+test('sparkle gift: +3 crickets once per creature per day, only when every meter is 4+ and you practiced today', () => {
+  const { p, c } = setup();
+  p.streak = recordPlay(p.streak, D1);
   assert.deepEqual(claimSparkle(p, c, D1), { ok: false });
   Object.assign(careOf(c, D1), { fed: 4, clean: 5, loved: 4, fun: 4 });
   assert.deepEqual(claimSparkle(p, c, D1), { ok: true, crickets: 3 });
   assert.deepEqual(claimSparkle(p, c, D1), { ok: false });
   assert.deepEqual([p.crickets, p.care.sparkles], [3, 1]);
-  Object.assign(careOf(c, '2026-11-06'), { fed: 4, clean: 4, loved: 4, fun: 4 });   // next day: eligible again
+  Object.assign(careOf(c, '2026-11-06'), { fed: 4, clean: 4, loved: 4, fun: 4 });   // next day: not until you practice again
+  assert.deepEqual(claimSparkle(p, c, '2026-11-06'), { ok: false, reason: 'no-practice' });
+  p.streak = recordPlay(p.streak, '2026-11-06');
   assert.equal(claimSparkle(p, c, '2026-11-06').ok, true);
   assert.equal(p.crickets, 6);
 });

@@ -9,8 +9,8 @@ The PRD (`spelling-bee-creature-game-prd.md`) is the approved starting point. Th
 | Trail | 30 steps per region, flat | Longer each land: 30, 32, 34 ... 46 steps (progressively harder) |
 | Map | One screen | A wide, **scrollable** world (drag, swipe, arrows, keyboard) that follows the token |
 | Trophies | 14 | **44**, including care trophies; star tiles award trophies when opened |
-| Care and play | none | Four meters per creature (fed, clean, loved, fun), berries, bath, petting, the Berry Catch mini-game, a daily "sparkle" gift of 3 crickets |
-| Berries | none | +2 per practice session, +1 per treasure star, prizes from Berry Catch |
+| Care and play | none | Four meters per creature (fed, clean, loved, fun), berries, bath, petting, three mini-games (Berry Catch, Hop Run, Memory Match), a daily "sparkle" gift of 3 crickets. Games cost 3 crickets (1 back for a great game) and the gift needs a practice session that day, so care always leads back to spelling |
+| Berries | none | +2 per practice session, +1 per treasure star. Games no longer pay berries |
 | Characters | decorative | Tap-to-play: every click runs the next action in a shuffled rotation (animation, sound, effect, speech bubble) |
 | Look | plain | A bright park-scene look: chunky buttons, pills, a board-game map with star tiles and a region wheel |
 | Order of unlock and step | unspecified | An answer that unlocks a land can already step the token into it |

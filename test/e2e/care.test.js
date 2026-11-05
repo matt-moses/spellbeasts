@@ -63,7 +63,7 @@ test('care screen: starts at 3 of 5, berries feed (and stop at full), petting an
 test('a creature happy on every meter gives a one-a-day cricket gift; meters drift down overnight', { skip }, async () => {
   const { page, context } = await open((p) => {
     p.creatures[0].care = { fed: 4, clean: 5, loved: 4, fun: 3, petTicks: 0, day: '2026-11-05', sparkleDay: null };
-    p.crickets = 10;
+    p.crickets = 10; p.streak.lastPlayDate = '2026-11-05'; p.streak.current = 1;      // already practiced today
   }, { clock: true });
   await openCare(page);
   assert.equal(await page.locator('.care-msg:not([hidden])').count(), 0);        // fun is only 3: no gift yet
@@ -72,12 +72,12 @@ test('a creature happy on every meter gives a one-a-day cricket gift; meters dri
   await page.clock.runFor(30000);                                               // the player never moves: few berries caught
   await page.waitForSelector('#game-result');
   assert.match(await page.textContent('#game-result'), /Sparkling!.*\+3 crickets/s);
-  assert.equal((await saved(page)).crickets, 13);
+  assert.equal((await saved(page)).crickets, 10 - 3 + 3);                       // game cost 3 (no refund for a poor game), gift +3
   await page.click('#game-back'); await page.waitForSelector('#care-feed');
   assert.deepEqual(await meters(page), { fed: 4, clean: 5, loved: 4, fun: 5 });
   assert.equal(await page.getAttribute('.pill.mood', 'data-mood'), 'sparkling');
   await page.click('#care-love');                                               // a second activity the same day: no second gift
-  assert.equal((await saved(page)).crickets, 13);
+  assert.equal((await saved(page)).crickets, 10);
 
   await page.clock.setSystemTime(new Date('2026-11-06T10:00:00'));
   await page.goto(`${env.server.url}#/home`);
@@ -85,6 +85,17 @@ test('a creature happy on every meter gives a one-a-day cricket gift; meters dri
   const m = await meters(page);
   assert.deepEqual(m, { fed: 3, clean: 4, loved: 3, fun: 4 });                  // each drifted down by one
   assert.equal(await page.getAttribute('.pill.mood', 'data-mood'), 'happy');
+  await context.close();
+});
+
+test('a sparkling creature waits for practice: no gift (and a friendly hint) until you have practiced today', { skip }, async () => {
+  const { page, context } = await open((p) => {
+    p.creatures[0].care = { fed: 5, clean: 5, loved: 5, fun: 5, petTicks: 0, day: '2026-11-05', sparkleDay: null };
+    p.crickets = 10;
+  });
+  await openCare(page);
+  assert.match(await page.textContent('.care-msg'), /Practice some words today and it will leave you a gift/);
+  assert.equal((await saved(page)).crickets, 10);
   await context.close();
 });
 
@@ -99,9 +110,10 @@ test('care trophies are announced: the 10th bath earns Squeaky Clean', { skip },
   await context.close();
 });
 
-test('Berry Catch: a player who follows the berries catches nearly all of them, and wins berries to keep', { skip, timeout: 90000 }, async () => {
-  const { page, context, errors } = await open((p) => { p.berries = 0; }, { clock: true });
+test('Berry Catch: a player who follows the berries catches nearly all of them, and a great game costs only 2 crickets', { skip, timeout: 90000 }, async () => {
+  const { page, context, errors } = await open((p) => { p.crickets = 10; }, { clock: true });
   await openCare(page);
+  assert.match(await page.textContent('#care-play'), /3/);                      // the button shows the price
   await page.click('#care-play');
   await page.click('#game-catch');
   await page.click('#game-start');
@@ -120,10 +132,9 @@ test('Berry Catch: a player who follows the berries catches nearly all of them, 
   const text = await page.textContent('#game-result');
   const caught = Number(text.match(/caught (\d+) of/)[1]);
   assert.ok(caught >= 13, `caught only ${caught}`);
-  const prize = Math.floor(caught / 4);
-  assert.match(text, new RegExp(`won ${prize} berr`));
+  assert.match(text, /cost 3 crickets, and you got 1 back/);
   const p = await saved(page);
-  assert.deepEqual([p.berries, p.care.games, p.creatures[0].care.fun], [prize, 1, 5]);
+  assert.deepEqual([p.berries, p.crickets, p.care.games, p.creatures[0].care.fun], [3, 8, 1, 5]);   // games give no berries
   await page.click('#game-again');                                              // and it can be played again
   await page.waitForSelector('.game-field');
   assert.deepEqual(errors, []);

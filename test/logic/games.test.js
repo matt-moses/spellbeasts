@@ -34,7 +34,7 @@ test('runner: a bump gives a moment of safety, a hop only works from the ground,
   const h = createRunner({ rng: rng(2) }); jump(h); stepRunner(h, 0.05); const y = h.y; jump(h); assert.equal(h.vy < 110, true); assert.ok(y > 0);
   const done = run(createRunner({ rng: rng(3) }), () => false); const snap = JSON.stringify({ ...done, rng: 0 }); stepRunner(done, 1); assert.equal(JSON.stringify({ ...done, rng: 0 }), snap);
 });
-test('runner: berry prizes grow with the distance, capped at 5', () => {
+test('runner: score tiers grow with the distance, capped at 5', () => {
   assert.equal(runPrize({ dist: 150 }), 0); assert.equal(runPrize({ dist: 450 }), 2); assert.equal(runPrize({ dist: 99999 }), 5);
 });
 
