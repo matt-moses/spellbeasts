@@ -7,6 +7,7 @@ import { awardTrophies } from '../logic/collection.js';
 import { TROPHIES } from '../logic/trophies.js';
 import { stageName } from '../logic/species.js';
 import { makeInteractive } from './pet.js';
+import { runnerGame, memoryGame } from './games.js';
 
 const LABELS = { fed: 'Fed', clean: 'Clean', loved: 'Loved', fun: 'Fun' };
 const trophyNames = (ids) => ids.map((id) => TROPHIES.find((t) => t.id === id).name).join(', ');
@@ -15,7 +16,7 @@ const TRAY_SHOWN = 6;                       // berries drawn in the tray (the co
 const STROKE_PX = 90;                       // rubbing this far over the creature counts as one pet
 
 // After any activity: hand out the daily sparkle gift if earned, then any trophies. Returns text to show.
-function afterCare(app, creature) {
+export function afterCare(app, creature) {
   const { store } = app, profile = app.profile, today = app.today();
   const bits = [];
   const gift = claimSparkle(profile, creature, today);
@@ -192,44 +193,77 @@ export function careView(app, creatureId) {
   return root;
 }
 
-// ---------------------------------------------------------------- Berry Catch
+// ---------------------------------------------------------------- Games: a menu, and an Exit in every game
 export function playView(app, creatureId) {
-  const { store, audio } = app;
+  const { audio } = app;
   const profile = app.profile;
   const creature = profile.creatures.find((c) => c.id === creatureId);
   if (!creature) { queueMicrotask(() => app.go('/sanctuary')); return h('div'); }
   const root = h('section', { class: 'screen play', 'data-creature': creature.id });
-  const art = creatureSvg(creature.species, creature.stage, { size: 24 });
-  let g = null, raf = 0, last = null, px = 50, pointerX = null;
-  const keys = new Set();
-  let els = [];
+  const name = stageName(creature.species, creature.stage);
+  let stop = () => {};                                                   // cancels whatever game is running
+  const toCare = () => { stop(); app.go(`/care/${creature.id}`); };
 
-  function field() {
-    return `<svg class="game-field" viewBox="0 0 ${FIELD} ${FIELD}" role="img" aria-label="Berry catch field. Move your creature left and right to catch the falling berries." style="touch-action:none">
+  function menu() {
+    stop(); stop = () => {};
+    const card = (id, title, text, art, on) => h('button', { class: 'game-card', id, type: 'button', onclick: on }, h('span', { class: 'game-art' }, art), h('strong', {}, title), h('span', { class: 'small' }, text));
+    fill(root,
+      h('h1', {}, `Play with ${name}`),
+      h('p', { class: 'lead' }, 'Pick a game!'),
+      h('div', { class: 'game-cards' },
+        card('game-catch', 'Berry Catch', 'Slide to catch falling berries.', icon('berry'), () => berryIntro()),
+        card('game-run', 'Hop Run', 'Hop over logs and rocks as you run.', icon('flame'), () => start(runnerGame)),
+        card('game-memory', 'Memory Match', 'Find the matching creature pairs.', icon('star'), () => start(memoryGame))),
+      h('div', { class: 'actions' }, h('button', { class: 'secondary', id: 'game-pet', onclick: toCare }, `Back to ${name}`)));
+  }
+
+  // Shared result screen. Exit and "choose another" never lose anything; only finishing pays out.
+  function result({ title, lines, prize, again }) {
+    stop(); stop = () => {};
+    const extra = afterCare(app, creature);
+    audio.play('levelup');
+    fill(root, h('h1', {}, title),
+      h('div', { class: 'panel', id: 'game-result' }, lines.map((l) => h('p', { class: 'lead' }, l)),
+        h('p', {}, prize ? `You won ${prize} berr${prize === 1 ? 'y' : 'ies'} to keep.` : 'Play again to win berries to keep.'),
+        h('p', {}, `${name} had so much fun!`), extra ? h('p', { class: 'bubble' }, extra) : null),
+      h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'game-again', onclick: again }, icon('play'), 'Play again'),
+        h('button', { class: 'secondary', id: 'game-menu', onclick: menu }, 'Choose another game'),
+        h('button', { class: 'secondary', id: 'game-back', onclick: toCare }, `Back to ${name}`)));
+  }
+
+  // A running game: draws into root, can be exited at any time, never pays out if exited.
+  function start(game) {
+    const exit = () => { menu(); };
+    const handle = game({ app, creature, root, exit, result, restart: () => start(game), art: (size) => creatureSvg(creature.species, creature.stage, { size }) });
+    stop = handle?.stop ?? (() => {});
+    const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); exit(); } };
+    document.addEventListener('keydown', onKey);
+    const prev = stop; stop = () => { document.removeEventListener('keydown', onKey); prev(); };
+  }
+
+  // ---- Berry Catch (the original game)
+  function berryIntro() {
+    fill(root,
+      h('h1', {}, 'Berry Catch'),
+      h('p', { class: 'lead' }, `Help ${name} catch the falling berries!`),
+      h('p', {}, 'Slide with your mouse or finger, or use the ← and → keys. Golden berries count double. There is no way to lose.'),
+      h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'game-start', onclick: () => start(berryCatch) }, icon('play'), 'Start'),
+        h('button', { class: 'secondary', onclick: menu }, 'Back')));
+  }
+  function berryCatch({ exit }) {
+    const art = creatureSvg(creature.species, creature.stage, { size: 24 });
+    let g = createCatchGame({ rng: Math.random }), raf = 0, last = null, px = 50, pointerX = null;
+    const keys = new Set();
+    fill(root,
+      h('div', { class: 'game-top' }, h('span', { class: 'pill gold', id: 'game-score' }, '🍓', ' 0'), h('span', { class: 'small' }, '← → or drag'),
+        h('button', { class: 'secondary', id: 'game-exit', type: 'button', onclick: exit }, 'Exit game')),
+      h('div', { class: 'game-wrap', html: `<svg class="game-field" viewBox="0 0 ${FIELD} ${FIELD}" role="img" aria-label="Berry catch field. Move your creature left and right to catch the falling berries." style="touch-action:none">
     <defs><linearGradient id="gsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#76d3ff"/><stop offset="1" stop-color="#d4f3ff"/></linearGradient></defs>
     <rect width="${FIELD}" height="${FIELD}" fill="url(#gsky)"/><circle cx="84" cy="14" r="9" fill="#ffe27a"/>
     <path d="M0 80Q25 74 50 80T100 78V100H0Z" fill="#4fc254"/><rect y="94" width="100" height="6" fill="#3fb350"/>
-    <g class="berries"></g><g class="player"><g transform="translate(-12 70)">${art}</g></g></svg>`;
-  }
-
-  function intro() {
-    cancelAnimationFrame(raf); g = null;
-    fill(root,
-      h('h1', {}, 'Berry Catch'),
-      h('p', { class: 'lead' }, `Help ${stageName(creature.species, creature.stage)} catch the falling berries!`),
-      h('p', {}, 'Slide with your mouse or finger, or use the ← and → keys. Golden berries count double. There is no way to lose.'),
-      h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'game-start', onclick: start }, icon('play'), 'Start'),
-        h('button', { class: 'secondary', onclick: () => app.go(`/care/${creature.id}`) }, 'Back')));
-  }
-
-  function start() {
-    g = createCatchGame({ rng: Math.random }); px = 50; pointerX = null; last = null;
-    fill(root,
-      h('div', { class: 'game-top' }, h('span', { class: 'pill gold', id: 'game-score' }, '🍓', ' 0'), h('span', { class: 'small' }, '← → or drag')),
-      h('div', { class: 'game-wrap', html: field() }));
-    const svg = root.querySelector('.game-field');
-    const layer = svg.querySelector('.berries');
-    els = g.items.map((it) => {
+    <g class="berries"></g><g class="player"><g transform="translate(-12 70)">${art}</g></g></svg>` }));
+    const svg = root.querySelector('.game-field'), layer = svg.querySelector('.berries');
+    const els = g.items.map((it) => {
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       el.setAttribute('class', 'berry'); el.dataset.state = 'waiting';
       el.innerHTML = it.golden
@@ -240,48 +274,36 @@ export function playView(app, creatureId) {
     const toX = (e) => { const r = svg.getBoundingClientRect(); return ((e.clientX - r.left) / r.width) * FIELD; };
     svg.addEventListener('pointermove', (e) => { pointerX = toX(e); });
     svg.addEventListener('pointerdown', (e) => { pointerX = toX(e); });
+    const down = (e) => { if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) { keys.add(e.key); pointerX = null; e.preventDefault(); } };
+    const up = (e) => keys.delete(e.key);
+    document.addEventListener('keydown', down); document.addEventListener('keyup', up);
+    const stopAll = () => { cancelAnimationFrame(raf); document.removeEventListener('keydown', down); document.removeEventListener('keyup', up); };
+    function frame(ts) {
+      if (last == null) last = ts;
+      const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
+      if (pointerX != null) px = pointerX;
+      else px += ((keys.has('ArrowRight') || keys.has('d') ? 1 : 0) - (keys.has('ArrowLeft') || keys.has('a') ? 1 : 0)) * 70 * dt;
+      stepCatchGame(g, dt, px); px = g.px;
+      root.querySelector('.player')?.setAttribute('transform', `translate(${px} 0)`);
+      g.items.forEach((it, i) => {
+        const el = els[i];
+        if (el.dataset.state !== it.state) { el.dataset.state = it.state; if (it.state === 'caught') audio.play('chirp'); }
+        if (it.state === 'falling') { el.setAttribute('visibility', 'visible'); el.setAttribute('transform', `translate(${it.x} ${it.y})`); el.dataset.x = it.x.toFixed(1); }
+        else el.setAttribute('visibility', 'hidden');
+      });
+      const score = root.querySelector('#game-score'); if (score) score.replaceChildren(icon('berry'), ` ${g.caught}`);
+      if (g.done) {
+        stopAll();
+        const best = maxScore(g);
+        const { prize } = finishGame(profile, creature, app.today(), g.caught);
+        return result({ title: g.caught >= best ? 'Perfect catch!' : 'Great game!', lines: [`You caught ${g.caught} of ${best} berries!`], prize, again: () => start(berryCatch) });
+      }
+      raf = requestAnimationFrame(frame);
+    }
     raf = requestAnimationFrame(frame);
+    return { stop: stopAll };
   }
-
-  function frame(ts) {
-    if (last == null) last = ts;
-    const dt = Math.min(0.05, (ts - last) / 1000); last = ts;
-    if (pointerX != null) px = pointerX;
-    else px += ((keys.has('ArrowRight') || keys.has('d') ? 1 : 0) - (keys.has('ArrowLeft') || keys.has('a') ? 1 : 0)) * 70 * dt;
-    stepCatchGame(g, dt, px); px = g.px;
-    const player = root.querySelector('.player');
-    if (player) player.setAttribute('transform', `translate(${px} 0)`);
-    g.items.forEach((it, i) => {
-      const el = els[i]; if (!el) return;
-      if (el.dataset.state !== it.state) { el.dataset.state = it.state; if (it.state === 'caught') audio.play('chirp'); }
-      if (it.state === 'falling') { el.setAttribute('visibility', 'visible'); el.setAttribute('transform', `translate(${it.x} ${it.y})`); el.dataset.x = it.x.toFixed(1); }
-      else el.setAttribute('visibility', 'hidden');
-    });
-    const score = root.querySelector('#game-score'); if (score) score.replaceChildren(icon('berry'), ` ${g.caught}`);
-    if (g.done) return finish();
-    raf = requestAnimationFrame(frame);
-  }
-
-  function finish() {
-    const { prize } = finishGame(profile, creature, app.today(), g.caught);
-    audio.play('levelup');
-    const extra = afterCare(app, creature);
-    const best = maxScore(g);
-    fill(root,
-      h('h1', {}, g.caught >= best ? 'Perfect catch!' : 'Great game!'),
-      h('div', { class: 'panel', id: 'game-result' },
-        h('p', { class: 'lead' }, `You caught ${g.caught} of ${best} berries!`),
-        h('p', {}, prize ? `You won ${prize} berr${prize === 1 ? 'y' : 'ies'} to keep.` : 'Catch 4 or more to win berries to keep.'),
-        h('p', {}, `${stageName(creature.species, creature.stage)} had so much fun!`),
-        extra ? h('p', { class: 'bubble' }, extra) : null),
-      h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'game-again', onclick: start }, icon('play'), 'Play again'),
-        h('button', { class: 'secondary', id: 'game-back', onclick: () => app.go(`/care/${creature.id}`) }, 'Back to care')));
-  }
-
-  const down = (e) => { if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) { keys.add(e.key); pointerX = null; e.preventDefault(); } };
-  const up = (e) => keys.delete(e.key);
-  document.addEventListener('keydown', down); document.addEventListener('keyup', up);
-  app.cleanup.push(() => { cancelAnimationFrame(raf); document.removeEventListener('keydown', down); document.removeEventListener('keyup', up); });
-  intro();
+  menu();
+  app.cleanup.push(() => stop());
   return root;
 }

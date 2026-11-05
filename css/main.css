@@ -332,3 +332,16 @@ details.faq p { margin:.5rem 0 .2rem; font-size:1.05rem; }
 
 .version { text-align:center; font-size:.8rem; color:rgba(255,255,255,.85); margin:0 0 1rem; }
 .update-bar { position:fixed; left:50%; bottom:1rem; transform:translateX(-50%); z-index:50; background:#fff; border-radius:999px; padding:.4rem .5rem .4rem 1.1rem; font-weight:bold; box-shadow:0 5px 0 var(--lip), 0 10px 20px rgba(20,40,80,.3); }
+
+/* ---------- games menu, Hop Run, Memory Match ---------- */
+.game-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:.8rem; margin:.8rem 0; }
+.game-card { flex-direction:column; padding:1rem; border-radius:22px; text-align:center; gap:.3rem; }
+.game-card .game-art .ico svg { width:56px; height:56px; }
+.run-field { background:#8fdcff; }
+.runner.bumped { opacity:.55; }
+#run-hearts { display:inline-flex; gap:.15rem; } #run-hearts .ico svg { width:26px; height:26px; } #run-hearts .lost svg { filter:grayscale(1) opacity(.3); }
+.memory-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:.6rem; max-width:520px; margin:.6rem auto; }
+.mem-card { aspect-ratio:1; padding:.2rem; border-radius:18px; font-size:2rem; background:var(--blue); color:#fff; box-shadow:0 5px 0 var(--blue-d); }
+.mem-card.up, .mem-card.matched { background:#fff; box-shadow:0 5px 0 var(--lip); }
+.mem-card.matched { background:#e4f8e9; box-shadow:0 5px 0 #a9dfb8; }
+.mem-card svg { width:100%; height:auto; }

@@ -53,10 +53,11 @@ export function finishBath(profile, creature, today) {
   return { ok: true };
 }
 
-export function finishGame(profile, creature, today, caught) {
+// `prizeOverride` lets a game decide its own berry prize; otherwise one berry per GAME_BERRIES_PER caught.
+export function finishGame(profile, creature, today, caught, prizeOverride) {
   const c = careOf(creature, today);
   c.fun = clamp(c.fun + GAME_GAIN); stats(profile).games += 1;
-  const prize = Math.floor(caught / GAME_BERRIES_PER);
+  const prize = prizeOverride ?? Math.floor(caught / GAME_BERRIES_PER);
   profile.berries = (profile.berries ?? 0) + prize;
   return { prize };
 }

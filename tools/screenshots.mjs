@@ -51,7 +51,7 @@ await shot('sanctuary', { fullPage: true });
 await page.click('.creature-card:first-child .care-link'); await page.waitForSelector('#care-feed');
 await page.waitForTimeout(200);
 await shot('care', { fullPage: true });
-await page.click('#care-play'); await page.click('#game-start'); await page.waitForTimeout(3200);
+await page.click('#care-play'); await page.click('#game-catch'); await page.click('#game-start'); await page.waitForTimeout(3200);
 await shot('berry-catch', { fullPage: true });
 
 await go('book'); await page.waitForSelector('.book');

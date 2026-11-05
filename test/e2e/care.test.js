@@ -67,7 +67,7 @@ test('a creature happy on every meter gives a one-a-day cricket gift; meters dri
   }, { clock: true });
   await openCare(page);
   assert.equal(await page.locator('.care-msg:not([hidden])').count(), 0);        // fun is only 3: no gift yet
-  await page.click('#care-play'); await page.waitForSelector('#game-start');
+  await page.click('#care-play'); await page.click('#game-catch'); await page.waitForSelector('#game-start');
   await page.click('#game-start');
   await page.clock.runFor(30000);                                               // the player never moves: few berries caught
   await page.waitForSelector('#game-result');
@@ -103,6 +103,7 @@ test('Berry Catch: a player who follows the berries catches nearly all of them, 
   const { page, context, errors } = await open((p) => { p.berries = 0; }, { clock: true });
   await openCare(page);
   await page.click('#care-play');
+  await page.click('#game-catch');
   await page.click('#game-start');
   await page.waitForSelector('.game-field');
   const box = await page.locator('.game-field').boundingBox();
