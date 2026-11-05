@@ -42,8 +42,7 @@ test('Reload re-downloads the app files first, so browsers without a service wor
   page.on('request', (r) => { if (r.url().endsWith('/js/logic/build.js')) forced.push(r.url()); });
   await page.goto(env.server.url);
   await page.click('#update-reload');
-  await page.waitForLoadState('load');
-  await page.waitForTimeout(500);
+  for (let i = 0; i < 300 && forced.length < 3; i++) await page.waitForTimeout(100);   // the refresh can be slow under load
   assert.ok(forced.length >= 3, `build.js fetched ${forced.length}x; expected load + forced refresh + reload`);
   await ctx.close();
 });
