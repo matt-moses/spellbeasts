@@ -86,3 +86,13 @@ test('reaching the unlock thresholds mid-session reports the new region', () => 
   assert.ok(sum.level >= 2);
   assert.deepEqual(sum.unlocked, ['r2']);
 });
+
+test('the answer that unlocks a region can already step the token past the old gate', () => {
+  const state = freshState(); const p = mk({ xp: 90, level: 1 }); const list = state.wordLists.sample;
+  p.map.trailStep = STEPS_PER_REGION;                       // waiting at the gate of region 2
+  const s = startSession({ profile: p, list, today: '2026-11-05', rng: rng(5) });
+  const w = s.next();
+  s.submit(w.word);                                          // +10 XP -> level 2 -> region 2 opens
+  assert.deepEqual(p.map.unlockedRegions, ['r1', 'r2']);
+  assert.equal(p.map.trailStep, STEPS_PER_REGION + 1);
+});

@@ -60,6 +60,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
       tally.streak = reward.streak;
       tally.bestRun = Math.max(tally.bestRun, reward.streak);
       resolved += 1;
+      tally.unlocked.push(...updateUnlocks(profile));   // unlock first, so this answer's step can already cross the old gate
       if (res.correct) {
         if (rr.firstTry) tally.correctFirstTry += 1; else tally.correctRetry += 1;
         if (rr.comeback) tally.comebacks += 1;
@@ -72,7 +73,6 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
         if (!tally.missedWords.includes(word)) tally.missedWords.push(word);
         mode = 'correcting';
       }
-      tally.unlocked.push(...updateUnlocks(profile));
       award({ turn: { correct: res.correct, word, comeback: rr.comeback } });
       return { ...res, expected: word, word, reward, firstTry: rr.firstTry, comeback: rr.comeback, newlyMastered, requeued: rr.requeued };
     },
