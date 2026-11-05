@@ -1,0 +1,35 @@
+# Runs the hygiene scan plus all unit and end-to-end tests on every push to main and on pull requests.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dev dependencies (test tooling only; the site itself has none)
+        run: npm ci
+
+      - name: Hygiene (no franchise terms, no word lists)
+        run: npm run hygiene
+
+      - name: Find a Chrome for the browser tests
+        run: echo "CHROMIUM_PATH=$(command -v google-chrome || command -v chromium-browser || command -v chromium)" >> "$GITHUB_ENV"
+
+      - name: Unit tests and end-to-end tests (including the full playthrough)
+        run: npm test
