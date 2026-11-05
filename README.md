@@ -25,7 +25,7 @@ It is a static site (vanilla JS modules, no build step, no runtime dependencies)
 - **27 original creatures, 3 stages each:** drawn in inline SVG. Buy eggs in each land's nest, warm them with correct answers, feed and evolve creatures (evolving ties to level and mastery).
 - **Care and play:** feed berries, give a bath, pet, and play Berry Catch. Creatures stay happy day to day, and a sparkling creature leaves a small gift. Tap any character for a random animation, sound, effect or speech bubble.
 - **Trophies:** 44 to earn, from first hatch to word master.
-- **Parent area** (behind a grown-up check: choose the year you were born, which is never saved): load your own word list, set how any word should be pronounced (for example "laffter"), see per-word stats and the most-missed words, manage trainers, and back up or restore everything as JSON.
+- **Parent area** (behind a grown-up check: choose the year you were born, which is never saved): load your own word lists and **give each trainer their own** (so a younger player can have an easier list, with separate progress), set how any word should be pronounced (for example "laffter"), see per-word stats and the most-missed words, manage trainers, and back up or restore everything as JSON.
 - **Works offline, and installs like an app:** after one visit the whole game is cached by a service worker, so it runs with no connection. In Chrome or Edge choose *Install* (or on a phone, *Add to Home screen*). A small "new version" bar appears when an update is available.
 - **Help for kids:** a round **?** button on every screen opens a pop-up of plain-language FAQs (how to play, crickets, creatures, the map, what to do if there is no sound). Opening it never interrupts a practice session.
 - **Accessible by design:** large text, full keyboard use, visible focus, reduced-motion support, encouraging wording, and spellcheck/autocorrect off on the answer box.
@@ -38,7 +38,7 @@ Open **Parent area → Word lists** and paste one word per line: `word | part of
 
 ## Privacy
 
-Everything you do stays in your browser. The live site counts visits with [Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics/) (the same Cloudflare site as brow-guess, since both live on `matt-moses.github.io`; the dashboard tells them apart by path): it is cookieless and anonymous, recording only page views, referrer, country and device type. It has no custom events, so it never sees words, answers, scores or names. It loads only on the live site (never locally or in tests), is skipped when your browser sends Do Not Track, and offline launches are simply not counted.
+Everything you do stays in your browser. The live site counts visits with [Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics/): it is cookieless and anonymous, recording only page views, referrer, country and device type. It has no custom events, so it never sees words, answers, scores or names. It loads only on the live site (never locally or in tests), is skipped when your browser sends Do Not Track, and offline launches are simply not counted.
 
 ## Development
 
