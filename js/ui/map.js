@@ -260,7 +260,7 @@ export function mapSection(app) {
         store.save(); audio.play('chime');
         const won = awardTrophies(profile, app.today());
         store.save();
-        msg.textContent = `Treasure! You found ${r.crickets} crickets${r.boost ? ' and your egg got warmer!' : '!'}${won.length ? ` New trophy: ${won.map((id) => TROPHIES.find((t) => t.id === id).name).join(', ')}!` : ''}`;
+        msg.textContent = `Treasure! You found ${r.crickets} crickets and a berry${r.boost ? ', and your egg got warmer!' : '!'}${won.length ? ` New trophy: ${won.map((id) => TROPHIES.find((t) => t.id === id).name).join(', ')}!` : ''}`;
         app.refreshStats?.();
         drawLandmarks();
       };

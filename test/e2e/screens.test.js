@@ -41,7 +41,8 @@ test('no screen shows null/undefined/NaN or drops a graphic, in any state', { sk
   if (await page.locator('#levelup-ok').count()) await page.click('#levelup-ok');
   await page.click('#done'); await page.waitForSelector('#practice');
 
-  for (const route of ['trophies', 'sanctuary', 'book', 'nest/r1', 'nest/r2']) {
+  const cid = await page.evaluate(() => Object.values(JSON.parse(localStorage.getItem('spellbeasts.v1')).profiles)[0].creatures[0].id);
+  for (const route of ['trophies', 'sanctuary', 'book', 'nest/r1', 'nest/r2', `care/${cid}`, `play/${cid}`]) {
     await page.goto(`${env.server.url}#/${route}`); await page.waitForSelector('.screen');
     await clean(page, route);
   }

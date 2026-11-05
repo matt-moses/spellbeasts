@@ -44,6 +44,13 @@ export const TROPHIES = [
   { id: 'hearts-5', name: 'Best Friends', desc: 'Earn 5 friendship hearts from duplicates', test: (c) => c.heartsTotal >= 5 },
   { id: 'fully-evolved', name: 'Fully Evolved', desc: 'Evolve a creature to stage 3', test: (c) => c.maxStage >= 3 },
   { id: 'growing-family', name: 'Growing Family', desc: 'Evolve 3 different creatures', test: (c) => c.evolvedCount >= 3 },
+  // looking after your creatures
+  { id: 'berries-25', name: 'Berry Lover', desc: 'Feed your creatures 25 berries', test: (c) => c.berriesFed >= 25 },
+  { id: 'baths-10', name: 'Squeaky Clean', desc: 'Give 10 baths', test: (c) => c.baths >= 10 },
+  { id: 'pets-100', name: 'Cuddle Buddy', desc: 'Pet your creatures 100 times', test: (c) => c.pets >= 100 },
+  { id: 'games-10', name: 'Game On', desc: 'Play 10 games with your creatures', test: (c) => c.games >= 10 },
+  { id: 'sparkle-1', name: 'Sparkling Friend', desc: 'Make a creature happy on all four meters', test: (c) => c.sparkles >= 1 },
+  { id: 'sparkle-7', name: 'Pampered Pals', desc: 'Make creatures sparkle 7 times', test: (c) => c.sparkles >= 7 },
   { id: 'champion', name: 'Champion', desc: 'Win 10 battles', phase: 2, test: (c) => c.battlesWon >= 10 },
 ];
 

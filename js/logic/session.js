@@ -6,6 +6,7 @@ import { turnReward, sessionReward, levelForXp } from './rewards.js';
 import { capSessions } from './storage-schema.js';
 import { awardTrophies, warmEggs } from './collection.js';
 import { advanceTrail, updateUnlocks } from './world.js';
+import { SESSION_BERRIES } from './care.js';
 import { recordPlay } from './streak.js';
 
 export function startSession({ profile, list, today, rng = Math.random, bonus = false }) {
@@ -89,12 +90,13 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
       if (finished) return finished;
       const sr = sessionReward({ firstSessionOfDay });
       gain(sr.crickets, sr.xp);
+      profile.berries = (profile.berries ?? 0) + SESSION_BERRIES;
       profile.sessions.push({ date: today, mode: bonus ? 'bonus' : 'practice', words: built.words.length, correctFirstTry: tally.correctFirstTry, misses: tally.misses });
       capSessions(profile);
       tally.unlocked.push(...updateUnlocks(profile));
       profile.streak = recordPlay(profile.streak, today);
       award({ sessionJustCompleted: true, sessionMisses: tally.misses });
-      finished = { ...tally, sessionCrickets: sr.crickets, sessionXp: sr.xp, firstSessionOfDay, words: built.words.length, bonus, level: profile.level, dayStreak: profile.streak.current };
+      finished = { ...tally, sessionCrickets: sr.crickets, sessionXp: sr.xp, berries: SESSION_BERRIES, firstSessionOfDay, words: built.words.length, bonus, level: profile.level, dayStreak: profile.streak.current };
       return finished;
     },
   };

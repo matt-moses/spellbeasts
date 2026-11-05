@@ -19,6 +19,7 @@ test('each trophy triggers on its condition', () => {
     'explorer-3': { regionsOpen: 3 }, 'explorer-6': { regionsOpen: 6 }, 'explorer-9': { regionsOpen: 9 }, 'walk-50': { trailStep: 50 }, 'walk-150': { trailStep: 150 },
     'stars-5': { starsOpened: 5 }, 'stars-20': { starsOpened: 20 }, 'collector-20': { creaturesCount: 20 }, 'collector-all': { speciesOwned: 27, speciesTotal: 27 },
     'rare-find': { rareOwned: 1 }, 'hearts-5': { heartsTotal: 5 }, 'growing-family': { evolvedCount: 3 },
+    'berries-25': { berriesFed: 25 }, 'baths-10': { baths: 10 }, 'pets-100': { pets: 100 }, 'games-10': { games: 10 }, 'sparkle-1': { sparkles: 1 }, 'sparkle-7': { sparkles: 7 },
   };
   assert.equal(Object.keys(cases).length, TROPHIES.length, 'every trophy has a test case');
   for (const [id, patch] of Object.entries(cases)) assert.ok(evaluateTrophies({ ...base, ...patch }).includes(id), id);
@@ -34,7 +35,7 @@ test('already-earned trophies are never returned again', () => {
 test('trophy ids and names are unique, and there are plenty to earn', () => {
   assert.equal(new Set(TROPHIES.map((t) => t.id)).size, TROPHIES.length);
   assert.equal(new Set(TROPHIES.map((t) => t.name)).size, TROPHIES.length);
-  assert.ok(TROPHIES.length >= 35);
+  assert.ok(TROPHIES.length >= 40);
 });
 test('Word Master needs a list of 10+ words and every word mastered', () => {
   assert.equal(evaluateTrophies({ ...base, wordsInList: 5, masteredCount: 5 }).includes('word-master'), false);

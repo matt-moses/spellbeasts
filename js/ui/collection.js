@@ -5,6 +5,8 @@ import { eggPrice } from '../logic/hatch.js';
 import { buyEgg, hatchEgg, feed, tryEvolve, evolveHint, readyEggs, ownedSpecies, evolveContext } from '../logic/collection.js';
 import { canEvolve, FEED_NEEDED } from '../logic/hatch.js';
 import { playedToday } from '../logic/streak.js';
+import { careOf, moodOf } from '../logic/care.js';
+import { makeInteractive } from './pet.js';
 import { TROPHIES } from '../logic/trophies.js';
 
 const back = (app) => h('button', { class: 'secondary', onclick: () => app.go('/home') }, 'Back to home');
@@ -59,7 +61,7 @@ export function nestView(app, regionId) {
     const sp = speciesById(r.species);
     msg.replaceChildren(h('div', { class: 'reveal panel' },
       h('h2', {}, r.duplicate ? `Another ${sp.name}!` : `A new friend: ${sp.name}!`),
-      h('span', { class: 'bounce', html: creatureSvg(r.species, 1, { size: 140 }) }),
+      (() => { const art = h('span', { class: 'bounce', html: creatureSvg(r.species, 1, { size: 140 }) }); makeInteractive(art, app, { name: profile.name, speak: false, label: `Tap ${sp.name}` }); return art; })(),
       h('p', {}, sp.flavor),
       r.duplicate ? h('p', {}, `You already had one, so it became a friendship heart ❤️ and ${r.bonus} bonus crickets.`) : h('p', {}, 'It moved into your Sanctuary.'),
       trophyLine(r.trophies)));
@@ -87,7 +89,7 @@ export function sanctuaryView(app) {
         const need = FEED_NEEDED[c.stage];
         const evolvable = canEvolve(c, ctx);
         return h('li', { class: 'creature-card', 'data-creature': c.id, 'data-species': c.species },
-          h('span', { class: hungry ? 'hungry-pet' : '', html: creatureSvg(c.species, c.stage, { size: 110, mood: hungry ? 'sad' : 'happy' }) }),
+          (() => { const art = h('span', { class: hungry ? 'hungry-pet' : '', html: creatureSvg(c.species, c.stage, { size: 110, mood: hungry ? 'sad' : 'happy' }) }); makeInteractive(art, app, { name: profile.name, speak: false, label: `Tap ${stageName(c.species, c.stage)}` }); return art; })(),
           h('strong', {}, stageName(c.species, c.stage)),
           c.hearts ? h('span', { class: 'hearts', 'aria-label': `${c.hearts} friendship hearts` }, '❤️'.repeat(Math.min(c.hearts, 5))) : null,
           need ? h('progress', { max: need, value: c.fed, 'aria-label': 'Fed' }) : null,
@@ -99,6 +101,8 @@ export function sanctuaryView(app) {
             const r = tryEvolve(profile, c.id, app.today());
             if (r.ok) { store.save(); audio.play('levelup'); msg.replaceChildren(h('div', { class: 'reveal panel' }, h('h2', {}, `${stageName(c.species, c.stage)} evolved!`), trophyLine(r.trophies))); draw(); }
           } }, 'Evolve!') : (need ? h('small', { class: 'hint' }, evolveHint(profile, c)) : null),
+          h('span', { class: `pill mood mood-${moodOf(careOf(c, app.today()))}`, 'data-mood': moodOf(careOf(c, app.today())) }, `Feeling ${moodOf(careOf(c, app.today()))}`),
+          h('button', { class: 'primary care-link', onclick: () => app.go(`/care/${c.id}`) }, 'Care & play'),
           h('button', { class: 'secondary buddy', 'aria-pressed': String(profile.companion === c.id), onclick: () => { profile.companion = c.id; store.save(); draw(); } },
             profile.companion === c.id ? '⭐ Practice buddy' : 'Make practice buddy'));
       })),
@@ -119,8 +123,10 @@ export function bookView(app) {
     REGIONS.map((r) => h('div', { class: 'panel' }, h('h2', {}, r.name),
       h('div', { class: 'species-row' }, SPECIES.filter((s) => s.region === r.id).map((s) => {
         const stage = best[s.id];
+        const art = h('span', { html: creatureSvg(s.id, stage ?? 1, { size: 96, silhouette: !stage }) });
+        if (stage) makeInteractive(art, app, { name: profile.name, speak: false, label: `Tap ${s.name}` });
         return h('figure', { class: `mini book-entry ${stage ? 'owned' : 'unknown'}`, 'data-species': s.id },
-          h('span', { html: creatureSvg(s.id, stage ?? 1, { size: 96, silhouette: !stage }) }),
+          art,
           h('figcaption', {}, h('strong', {}, stage ? s.name : '???'), h('small', {}, ` ${s.rarity}`),
             stage ? h('div', { class: 'flavor' }, s.flavor) : h('div', { class: 'flavor' }, `Lives in ${r.name}.`)));
       })))),

@@ -1,6 +1,7 @@
 // World map rules (PRD 11A): region unlocks, trail progress, landmark treasure.
 import { REGIONS, regionIndex } from './species.js';
 import { warmEggs, masteredCount } from './collection.js';
+import { STAR_BERRIES } from './care.js';
 
 export const UNLOCKS = [
   { level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 5 },
@@ -63,6 +64,7 @@ export function claimLandmark(profile, id, rng = Math.random) {
   profile.map.claimedLandmarks.push(id);
   const crickets = 5 + Math.floor(rng() * 11);
   profile.crickets += crickets;
+  profile.berries = (profile.berries ?? 0) + STAR_BERRIES;
   let boost = 0;
   if (rng() < 0.2 && warmEggs(profile, 3)) boost = 3;
   return { ok: true, crickets, boost };

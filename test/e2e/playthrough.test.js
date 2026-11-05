@@ -25,7 +25,7 @@ const levelOf = (xp) => { let n = 1, need = 0; for (;;) { need += 50 * (n + 1); 
 
 function newOracle() {
   return { crickets: 0, xp: 0, trail: 0, unlocked: new Set([0]), stats: {}, eggs: [], claimed: new Set(), starter: { stage: 1, fed: 0 }, creatures: 1, species: new Set(['Burrowby']),
-    hatched: 0, hearts: 0, perfect: 0, sessionsDone: 0, sessionDays: new Set(), streak: { cur: 0, last: null, rest: null }, trophies: new Set(), cases: 0, chestOpens: 0, evolves: 0, levelUps: 0 };
+    hatched: 0, hearts: 0, perfect: 0, berries: 3, sessionsDone: 0, sessionDays: new Set(), streak: { cur: 0, last: null, rest: null }, trophies: new Set(), cases: 0, chestOpens: 0, evolves: 0, levelUps: 0 };
 }
 const level = (o) => levelOf(o.xp);
 const mastered = (o) => Object.values(o.stats).filter((s) => s.days.size >= 3).length;
@@ -140,6 +140,7 @@ test('whole game: two weeks of play checked against an independent model, with z
     const p = await me();
     assert.equal(p.crickets, o.crickets, `${label}: crickets`);
     assert.equal(p.xp, o.xp, `${label}: xp`);
+    assert.equal(p.berries, o.berries, `${label}: berries`);
     assert.equal(p.level, level(o), `${label}: level`);
     assert.equal(p.map.trailStep, o.trail, `${label}: trail step`);
     assert.deepEqual([...p.map.unlockedRegions].sort(), [...o.unlocked].map((i) => `r${i + 1}`).sort(), `${label}: unlocked regions`);
@@ -197,7 +198,7 @@ test('whole game: two weeks of play checked against an independent model, with z
       await page.waitForSelector(`.landmark.claimed[data-landmark=L${step}]`);
       const gained = (await me()).crickets - before;
       assert.ok(gained >= 5 && gained <= 15, `chest paid ${gained}`);
-      o.crickets += gained; o.claimed.add(step); o.chestOpens++;
+      o.crickets += gained; o.claimed.add(step); o.chestOpens++; o.berries += 1;     // every star also holds a berry
       const chestTrophies = earnNow(o, {});
       const note = await page.textContent('.world-map .note');
       for (const id of chestTrophies) assert.match(note, new RegExp(TROPHY_NAMES[id]), `${day}: chest note should announce ${id}`);
@@ -291,7 +292,7 @@ test('whole game: two weeks of play checked against an independent model, with z
 
       // ---- finish the session in the model, then check the summary page
       const sessionBonus = 5 + (firstOfDay ? 5 : 0);
-      o.crickets += sessionBonus; o.xp += 15; s.crickets += sessionBonus; s.xp += 15;
+      o.crickets += sessionBonus; o.xp += 15; s.crickets += sessionBonus; s.xp += 15; o.berries += 2;   // a session always finds 2 berries
       const lvlAfter = level(o);
       if (lvlAfter > levelBefore) { s.leveled = true; o.levelUps++; }
       for (const i of refreshUnlocks(o)) s.unlocked.push(i);
@@ -307,6 +308,7 @@ test('whole game: two weeks of play checked against an independent model, with z
       assert.equal(/Steps along the trail/.test(res) ? digits(res, /trail: (\d+)/) : 0, s.steps, `${day}: steps`);
       assert.equal(digits(res, /Crickets earned:\s*(\d+)/), s.crickets, `${day}: crickets earned`);
       assert.equal(digits(res, /XP earned: (\d+)/), s.xp, `${day}: XP earned`);
+      assert.equal(digits(res, /Berries found: (\d+)/), 2, `${day}: berries found`);
       assert.equal(/Newly mastered/.test(res) ? digits(res, /mastered: (\d+)/) : 0, s.newlyMastered.length, `${day}: newly mastered`);
       const summaryText = await page.textContent('.summary');
       assert.equal(digits(summaryText, /(\d+) days? in a row/), o.streak.cur, `${day}: streak`);

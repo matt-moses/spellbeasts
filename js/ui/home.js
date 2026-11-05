@@ -1,6 +1,7 @@
 import { h, icon } from './dom.js';
 import { companionSvg } from './art.js';
 import { mapSection } from './map.js';
+import { makeInteractive } from './pet.js';
 import { readyEggs } from '../logic/collection.js';
 import { isDue } from '../logic/leitner.js';
 import { levelProgress } from '../logic/rewards.js';
@@ -37,13 +38,16 @@ export function homeView(app) {
   fillCrickets();
   app.refreshStats = fillCrickets;
 
+  const buddy = h('span', { class: `podium${hungry ? ' hungry-pet' : ''}`, html: companionSvg(profile, { size: 110, mood: hungry ? 'sad' : 'happy' }) });
+  makeInteractive(buddy, app, { name: profile.name, speak: true, label: 'Tap your practice buddy' });
   return h('section', { class: 'screen home' },
     h('div', { class: 'hero' },
-      h('span', { class: `podium${hungry ? ' hungry-pet' : ''}`, html: companionSvg(profile, { size: 110, mood: hungry ? 'sad' : 'happy' }) }),
+      buddy,
       h('div', {},
         h('h1', {}, `Hi, ${profile.name}!`),
         h('div', { class: 'stats' }, h('span', { class: 'pill level' }, `Level ${lp.level}`), ' ', cricketsPill, ' ',
-          h('span', { class: 'pill streak' }, '🔥', ` ${streak} day${streak === 1 ? '' : 's'} in a row`)),
+          h('span', { class: 'pill streak' }, '🔥', ` ${streak} day${streak === 1 ? '' : 's'} in a row`), ' ',
+          h('span', { class: 'pill berries', id: 'berries-pill' }, '🍓', ` ${profile.berries ?? 0} berries`)),
         h('progress', { class: 'xpbar', max: lp.needed, value: lp.into, 'aria-label': `Experience: ${lp.into} of ${lp.needed}` }),
         h('small', {}, ` ${lp.into}/${lp.needed} XP to level ${lp.level + 1}`))),
     readyEggs(profile).length ? h('p', { class: 'bubble ready-egg', role: 'status' }, '🥚', ' An egg is ready to hatch!') : null,

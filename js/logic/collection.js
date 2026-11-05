@@ -102,6 +102,7 @@ export function trophyContext(profile, extra = {}) {
     rareOwned: [...owned].filter((id) => speciesById(id)?.rarity === 'rare').length,
     heartsTotal: profile.creatures.reduce((n, c) => n + (c.hearts ?? 0), 0),
     evolvedCount: profile.creatures.filter((c) => c.stage >= 2).length,
+    baths: profile.care?.baths ?? 0, berriesFed: profile.care?.berriesFed ?? 0, pets: profile.care?.pets ?? 0, games: profile.care?.games ?? 0, sparkles: profile.care?.sparkles ?? 0,
     wordsInList: Infinity, ...extra,
   };
 }

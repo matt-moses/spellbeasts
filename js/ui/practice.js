@@ -1,5 +1,6 @@
 import { h, icon, fill as setKids } from './dom.js';
 import { companionSvg } from './art.js';
+import { makeInteractive } from './pet.js';
 
 export function practiceView(app) {
   const { speaker, audio, store } = app;
@@ -88,6 +89,7 @@ export function practiceView(app) {
   document.addEventListener('keydown', onKey);
   app.cleanup.push(() => document.removeEventListener('keydown', onKey));
 
+  makeInteractive(companion, app, { name: profile.name, speak: false, focusable: false, label: 'Tap your practice buddy' });
   const root = h('section', { class: 'screen practice' },
     h('div', { class: 'p-top' }, bar, crickets), companion,
     h('div', { class: 'panel prompt-card' }, noVoice, buttons, clue,

@@ -1,5 +1,6 @@
 // State shape, defaults, migration (PRD 13). Pure: no localStorage here.
 import { SCHEMA_VERSION } from './version.js';
+import { freshCareStats, START_BERRIES } from './care.js';
 import { SAMPLE_LIST_ID, SAMPLE_LIST_NAME, SAMPLE_WORDS } from '../../data/sample-words.js';
 
 export const SESSION_HISTORY_CAP = 200;
@@ -18,7 +19,7 @@ export function freshState() {
 export function freshProfile({ name, avatarSpecies, now = new Date().toISOString(), activeListId = SAMPLE_LIST_ID }) {
   return {
     name, avatarSpecies, createdAt: now, activeListId,
-    crickets: 0, xp: 0, level: 1,
+    crickets: 0, xp: 0, level: 1, berries: START_BERRIES, care: freshCareStats(),
     streak: { current: 0, best: 0, lastPlayDate: null, restUsedWeek: null },
     wordStats: {},
     creatures: [], eggs: [],

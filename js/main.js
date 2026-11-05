@@ -11,6 +11,7 @@ import { summaryView } from './ui/summary.js';
 import { trophiesView } from './ui/trophies.js';
 import { nestView, sanctuaryView, bookView } from './ui/collection.js';
 import { parentView } from './ui/parent.js';
+import { careView, playView } from './ui/care.js';
 
 const store = createStore();
 store.load();
@@ -27,7 +28,7 @@ const app = {
   choose(id) { this.profileId = id; this.go('/home'); },
 };
 
-const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView };
+const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView, care: careView, play: playView };
 const root = document.getElementById('app');
 
 function banners() {

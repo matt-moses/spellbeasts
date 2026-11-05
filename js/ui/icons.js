@@ -12,7 +12,12 @@ export const ICONS = {
   heart: I(`<path d="M12 21S3 14.5 3 8.8A4.8 4.8 0 0 1 12 6.5 4.8 4.8 0 0 1 21 8.8C21 14.5 12 21 12 21z" fill="#ef4b5f" ${S}/>`),
   map: I(`<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" fill="#fff6dc" ${S}/><path d="M9 4v14M15 6v14" fill="none" ${S}/>`),
   party: I(`<path d="M3 21l5-13 8 8z" fill="#ffc928" ${S}/><circle cx="15" cy="6" r="1.4" fill="#ef4b5f"/><circle cx="19" cy="11" r="1.4" fill="#2f7df6"/><circle cx="10" cy="3.5" r="1.2" fill="#2bb673"/>`),
+  berry: I(`<path d="M12 21C6 17 3.5 12 5 9c1.2-2.8 5-2.8 7-.8 2-2 5.800-2 7 .8 1.500 3-1 8-7 12z" fill="#ef4b5f" ${S}/><path d="M8 6.500L12 3l4 3.500-4 1.500z" fill="#3fb36b" ${S}/><g fill="#ffe9a8"><circle cx="9.500" cy="12" r=".9"/><circle cx="14.500" cy="12" r=".9"/><circle cx="12" cy="15.500" r=".9"/><circle cx="9.800" cy="17" r=".8"/><circle cx="14.200" cy="17" r=".8"/></g>`),
+  note: I(`<path d="M9 18V6l10-2v12" fill="none" ${S}/><circle cx="6.500" cy="18" r="3" fill="#8b5cf6" ${S}/><circle cx="16.500" cy="16" r="3" fill="#8b5cf6" ${S}/>`),
+  bubble: I('<circle cx="12" cy="12" r="8" fill="#d8f1ff" stroke="#4fb4f0" stroke-width="2"/><circle cx="9" cy="9" r="2" fill="#fff"/>'),
   // UI icons (currentColor)
+  bath: I('<path fill="currentColor" d="M2.500 11.500h19v2.200a6.300 6.300 0 0 1-6.300 6.300H8.800a6.300 6.300 0 0 1-6.300-6.300zM5 11.500V5.800a2.800 2.800 0 0 1 5.600-.3"/><circle cx="15" cy="6" r="1.600" fill="currentColor"/><circle cx="18.500" cy="3.600" r="1.100" fill="currentColor"/><circle cx="19" cy="8" r="1" fill="currentColor"/>'),
+  gamepad: I('<path fill="currentColor" d="M6.500 6.500h11a4.500 4.500 0 0 1 4.500 4.500v3.200a3.200 3.200 0 0 1-5.400 2.300l-.9-.9H8.300l-.9.900A3.200 3.200 0 0 1 2 14.200V11a4.500 4.500 0 0 1 4.500-4.500z"/><path d="M7.500 10v4M5.500 12h4" stroke="#fff" stroke-width="1.800" stroke-linecap="round"/><circle cx="15.500" cy="11" r="1.200" fill="#fff"/><circle cx="18" cy="13" r="1.200" fill="#fff"/>'),
   home: I('<path fill="currentColor" d="M12 2.5L1.8 11.6h2.9V21h5.6v-6.2h3.4V21h5.6v-9.4h2.9z"/>'),
   speaker: I('<path fill="currentColor" d="M3 9v6h4l5 4.5v-15L7 9z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.3 5.7a9 9 0 0 1 0 12.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'),
   turtle: I('<path fill="currentColor" d="M3 16a8 7 0 0 1 16 0z"/><circle fill="currentColor" cx="20.5" cy="13.5" r="2.6"/><rect fill="currentColor" x="5" y="16" width="3" height="4" rx="1.4"/><rect fill="currentColor" x="14" y="16" width="3" height="4" rx="1.4"/>'),
@@ -27,6 +32,6 @@ export const ICONS = {
   eggbook: I('<path fill="currentColor" d="M12 2C16 2 19 9 19 14a7 7 0 0 1-14 0C5 9 8 2 12 2z"/>'),
 };
 
-export const TOKENS = { '🦗': ['cricket', 'crickets'], '🔥': ['flame', 'streak'], '🥚': ['egg', 'egg'], '🏆': ['trophy', 'trophy'], '⭐': ['star', 'star'], '🗺️': ['map', 'map'], '🎉': ['party', 'celebration'], '❤️': ['heart', 'heart'] };
+export const TOKENS = { '🦗': ['cricket', 'crickets'], '🔥': ['flame', 'streak'], '🥚': ['egg', 'egg'], '🏆': ['trophy', 'trophy'], '⭐': ['star', 'star'], '🗺️': ['map', 'map'], '🎉': ['party', 'celebration'], '❤️': ['heart', 'heart'], '🍓': ['berry', 'berries'] };
 export const TOKEN_RE = new RegExp(`(${Object.keys(TOKENS).join('|')})`);
 export const iconHtml = (name) => ICONS[name] ?? '';
