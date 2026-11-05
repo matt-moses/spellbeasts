@@ -1,0 +1,9 @@
+*.words.*
+*.words.txt
+*.words.csv
+private/
+spellbeasts-backup*.json
+tools/denylist.local.txt
+node_modules/
+.DS_Store
+*.swp

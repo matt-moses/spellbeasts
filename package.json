@@ -1,0 +1,10 @@
+{
+  "name": "spellbeasts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\"",
+    "hygiene": "bash tools/hygiene.sh",
+    "check": "bash tools/hygiene.sh && node --test \"test/**/*.test.js\""
+  }
+}
