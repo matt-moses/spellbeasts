@@ -1,0 +1,88 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { UNLOCKS, isUnlocked, unlockRequirement, updateUnlocks, maxStep, advanceTrail, claimLandmark, LANDMARKS, STEPS_PER_REGION, TOTAL_STEPS, regionOfStep } from '../../js/logic/world.js';
+import { startSession } from '../../js/logic/session.js';
+import { freshProfile, freshState } from '../../js/logic/storage-schema.js';
+import { buyEgg } from '../../js/logic/collection.js';
+import { rng } from '../helpers.js';
+
+const mk = (over = {}) => Object.assign(freshProfile({ name: 'T', avatarSpecies: 'x' }), over);
+const mastered = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`w${i}`, { correctDays: ['a', 'b', 'c'] }]));
+
+test('unlock table matches the PRD', () => {
+  assert.deepEqual(UNLOCKS, [{ level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 5 }, { level: 6, mastered: 15 }, { level: 8, mastered: 25 }, { level: 10, mastered: 40 }]);
+});
+test('a region needs BOTH level and mastery', () => {
+  for (let i = 2; i < 6; i++) {
+    const u = UNLOCKS[i];
+    assert.equal(isUnlocked(i, { level: u.level, mastered: u.mastered }), true, `region ${i + 1}`);
+    assert.equal(isUnlocked(i, { level: u.level + 5, mastered: u.mastered - 1 }), false, `region ${i + 1} mastery short`);
+    assert.equal(isUnlocked(i, { level: u.level - 1, mastered: u.mastered + 50 }), false, `region ${i + 1} level short`);
+  }
+  assert.equal(isUnlocked(1, { level: 2, mastered: 0 }), true);
+  assert.equal(isUnlocked(1, { level: 1, mastered: 99 }), false);
+  assert.equal(unlockRequirement(2), 'Reach level 4 and 5 words mastered');
+  assert.equal(unlockRequirement(1), 'Reach level 2');
+});
+test('updateUnlocks adds regions in order and reports only new ones', () => {
+  const p = mk({ level: 4 }); p.wordStats[p.activeListId] = mastered(5);
+  assert.deepEqual(updateUnlocks(p), ['r2', 'r3']);
+  assert.deepEqual(updateUnlocks(p), []);
+  assert.deepEqual(p.map.unlockedRegions, ['r1', 'r2', 'r3']);
+});
+test('the token walks to the gate of the last unlocked region and waits', () => {
+  const p = mk();
+  assert.equal(maxStep(p), STEPS_PER_REGION);
+  for (let i = 0; i < STEPS_PER_REGION; i++) assert.equal(advanceTrail(p).moved, true);
+  const r = advanceTrail(p);
+  assert.deepEqual(r, { moved: false, atGate: true });
+  assert.equal(p.map.trailStep, STEPS_PER_REGION);
+  p.map.unlockedRegions.push('r2');
+  assert.equal(advanceTrail(p).moved, true);
+  assert.equal(regionOfStep(1), 'r1'); assert.equal(regionOfStep(31), 'r2'); assert.equal(regionOfStep(TOTAL_STEPS), 'r6');
+});
+test('landmarks: every 10 steps, claimable once and only when reached', () => {
+  assert.equal(LANDMARKS.length, TOTAL_STEPS / 10);
+  const p = mk();
+  assert.deepEqual(claimLandmark(p, 'L10'), { ok: false });       // not reached yet
+  p.map.trailStep = 10;
+  const r = claimLandmark(p, 'L10', rng(7));
+  assert.equal(r.ok, true);
+  assert.ok(r.crickets >= 5 && r.crickets <= 15);
+  assert.equal(p.crickets, r.crickets);
+  assert.deepEqual(claimLandmark(p, 'L10', rng(7)), { ok: false });
+  assert.equal(p.crickets, r.crickets);
+  assert.deepEqual(claimLandmark(p, 'L20'), { ok: false });
+  assert.deepEqual(claimLandmark(p, 'nope'), { ok: false });
+});
+test('chest reward range over many claims; egg boost only when an egg is waiting', () => {
+  const seen = new Set(); let boosts = 0;
+  for (let seed = 1; seed < 200; seed++) {
+    const p = mk({ crickets: 20 }); buyEgg(p, 'r1'); p.crickets = 0; p.map.trailStep = 10;
+    const r = claimLandmark(p, 'L10', rng(seed));
+    seen.add(r.crickets); if (r.boost) { boosts++; assert.equal(p.eggs[0].progress, 3); }
+  }
+  assert.ok(Math.min(...seen) === 5 && Math.max(...seen) === 15);
+  assert.ok(boosts > 15 && boosts < 70, `boosts ${boosts}`);
+  const noEgg = mk(); noEgg.map.trailStep = 10;
+  for (let seed = 1; seed < 100; seed++) { const q = mk(); q.map.trailStep = 10; assert.equal(claimLandmark(q, 'L10', rng(seed)).boost, 0); }
+  void noEgg;
+});
+test('in a session, only first-try correct answers move the token; misses and retries do not', () => {
+  const state = freshState(); const p = mk(); const list = state.wordLists.sample;
+  p.wordStats.sample = Object.fromEntries(list.words.slice(0, 12).map((w) => [w.word, { box: 1, nextDue: '2026-11-04', correctDays: [], attempts: 1, firstTries: 1, firstTryCorrect: 0, lastMissed: '2026-11-04', lastBoxDate: '2026-11-04' }]));
+  const s = startSession({ profile: p, list, today: '2026-11-05', rng: rng(2) });
+  const w = s.next(); s.submit('zzz'); s.submitCorrection(w.word);       // miss: no step
+  assert.equal(p.map.trailStep, 0);
+  for (let x = s.next(); x; x = s.next()) s.submit(x.word);
+  assert.equal(p.map.trailStep, s.tally.correctFirstTry);                 // retries did not move it
+  assert.equal(s.tally.steps, s.tally.correctFirstTry);
+});
+test('reaching the unlock thresholds mid-session reports the new region', () => {
+  const state = freshState(); const p = mk({ xp: 95 }); const list = state.wordLists.sample;
+  const s = startSession({ profile: p, list, today: '2026-11-05', rng: rng(3) });
+  for (let x = s.next(); x; x = s.next()) s.submit(x.word);
+  const sum = s.finish();
+  assert.ok(sum.level >= 2);
+  assert.deepEqual(sum.unlocked, ['r2']);
+});

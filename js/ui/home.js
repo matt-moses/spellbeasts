@@ -1,6 +1,6 @@
 import { h } from './dom.js';
 import { companionSvg } from './art.js';
-import { REGIONS } from '../logic/species.js';
+import { mapSection } from './map.js';
 import { readyEggs } from '../logic/collection.js';
 import { isDue } from '../logic/leitner.js';
 import { levelProgress } from '../logic/rewards.js';
@@ -32,7 +32,7 @@ export function homeView(app) {
   }
   const bonusBtn = h('button', { class: 'secondary', hidden: true, onclick: () => start(true) }, 'Bonus review');
 
-  return h('section', { class: 'screen home' },
+  const root = h('section', { class: 'screen home' },
     h('div', { class: 'hero' }, h('span', { class: hungry ? 'hungry-pet' : '', html: companionSvg(profile, { size: 110, mood: hungry ? 'sad' : 'happy' }) }),
       h('div', {}, h('h1', {}, `Hi, ${profile.name}!`),
         h('p', { class: 'stats' }, `Level ${lp.level} · 🦗 ${profile.crickets} crickets · `, h('span', { class: 'streak' }, `🔥 ${streak} day${streak === 1 ? '' : 's'} in a row`)),
@@ -48,7 +48,8 @@ export function homeView(app) {
       h('button', { class: 'secondary', id: 'book', onclick: () => app.go('/book') }, 'Creature book'),
       h('button', { class: 'secondary', id: 'trophies', onclick: () => app.go('/trophies') }, `Trophies (${Object.keys(profile.trophies).length})`),
       h('button', { class: 'secondary', onclick: () => app.go('/') }, 'Switch trainer')),
-    h('div', { class: 'nests' }, h('h2', {}, 'Nests'), REGIONS.filter((r) => profile.map.unlockedRegions.includes(r.id)).map((r) =>
-      h('button', { class: 'secondary nest-link', 'data-region': r.id, onclick: () => app.go(`/nest/${r.id}`) }, `🥚 ${r.name}`))),
-    note);
+    note,
+    mapSection(app));
+  app.refreshStats = () => { const el = root.querySelector('.stats'); if (el) el.firstChild.textContent = `Level ${levelProgress(profile.xp).level} · 🦗 ${profile.crickets} crickets · `; };
+  return root;
 }

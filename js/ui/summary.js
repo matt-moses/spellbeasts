@@ -1,6 +1,7 @@
 import { h } from './dom.js';
 import { trophySvg } from './art.js';
 import { TROPHIES } from '../logic/trophies.js';
+import { REGIONS } from '../logic/species.js';
 
 export function summaryView(app) {
   const s = app.lastSummary;
@@ -13,8 +14,10 @@ export function summaryView(app) {
       h('li', {}, `Spelled right on a retry: ${s.correctRetry}`),
       h('li', {}, `Words to practice more: ${s.missedWords.length ? s.missedWords.length : 'none'}`),
       s.masteredNow.length ? h('li', {}, `Newly mastered: ${s.masteredNow.length}`) : null,
+      s.steps ? h('li', {}, `Steps along the trail: ${s.steps}`) : null,
       h('li', {}, `Crickets earned: 🦗 ${s.crickets}`),
       h('li', {}, `XP earned: ${s.xp}`)),
+    s.unlocked.length ? h('p', { class: 'region-unlocked', role: 'status' }, `🗺️ New region unlocked: ${s.unlocked.map((id) => REGIONS.find((r) => r.id === id).name).join(', ')}!`) : null,
     s.trophies.length ? h('div', { class: 'new-trophies' }, h('h2', {}, 'New trophies!'),
       h('ul', { class: 'trophy-grid' }, s.trophies.map((id) => { const t = TROPHIES.find((x) => x.id === id); return h('li', { class: 'trophy-card earned' }, h('span', { html: trophySvg(false) }), h('strong', {}, t.name), h('span', { class: 'cond' }, t.desc)); }))) : null,
     h('p', {}, `🔥 ${s.dayStreak} day${s.dayStreak === 1 ? '' : 's'} in a row`),

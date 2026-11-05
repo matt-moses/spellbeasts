@@ -5,6 +5,7 @@ import { applyAttempt, isMastered } from './leitner.js';
 import { turnReward, sessionReward, levelForXp } from './rewards.js';
 import { capSessions } from './storage-schema.js';
 import { awardTrophies, warmEggs } from './collection.js';
+import { advanceTrail, updateUnlocks } from './world.js';
 import { recordPlay } from './streak.js';
 
 export function startSession({ profile, list, today, rng = Math.random, bonus = false }) {
@@ -16,7 +17,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
   const byWord = Object.fromEntries(list.words.map((w) => [w.word, w]));
   const q = createSessionQueue(built.words);
   const firstSessionOfDay = !profile.sessions.some((s) => s.date === today);
-  const tally = { crickets: 0, xp: 0, streak: 0, bestRun: 0, correctFirstTry: 0, correctRetry: 0, misses: 0, missedWords: [], masteredNow: [], comebacks: 0, leveledUp: false, trophies: [] };
+  const tally = { crickets: 0, xp: 0, streak: 0, bestRun: 0, correctFirstTry: 0, correctRetry: 0, misses: 0, missedWords: [], masteredNow: [], comebacks: 0, leveledUp: false, trophies: [], steps: 0, unlocked: [] };
   let mode = 'idle', current = null, resolved = 0, finished = null;
   const startLevel = profile.level;
 
@@ -64,12 +65,14 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
         if (rr.comeback) tally.comebacks += 1;
         if (newlyMastered) tally.masteredNow.push(word);
         warmEggs(profile);
+        if (rr.firstTry && advanceTrail(profile).moved) tally.steps += 1;
         mode = 'asking';
       } else {
         tally.misses += 1;
         if (!tally.missedWords.includes(word)) tally.missedWords.push(word);
         mode = 'correcting';
       }
+      tally.unlocked.push(...updateUnlocks(profile));
       award({ turn: { correct: res.correct, word, comeback: rr.comeback } });
       return { ...res, expected: word, word, reward, firstTry: rr.firstTry, comeback: rr.comeback, newlyMastered, requeued: rr.requeued };
     },
@@ -88,6 +91,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
       gain(sr.crickets, sr.xp);
       profile.sessions.push({ date: today, mode: bonus ? 'bonus' : 'practice', words: built.words.length, correctFirstTry: tally.correctFirstTry, misses: tally.misses });
       capSessions(profile);
+      tally.unlocked.push(...updateUnlocks(profile));
       profile.streak = recordPlay(profile.streak, today);
       award({ sessionJustCompleted: true, sessionMisses: tally.misses });
       finished = { ...tally, sessionCrickets: sr.crickets, sessionXp: sr.xp, firstSessionOfDay, words: built.words.length, bonus, level: profile.level, dayStreak: profile.streak.current };
