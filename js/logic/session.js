@@ -4,6 +4,8 @@ import { createSessionQueue, nextWord, recordResult, buildSession, buildBonusSes
 import { applyAttempt, isMastered } from './leitner.js';
 import { turnReward, sessionReward, levelForXp } from './rewards.js';
 import { capSessions } from './storage-schema.js';
+import { evaluateTrophies } from './trophies.js';
+import { recordPlay } from './streak.js';
 
 export function startSession({ profile, list, today, rng = Math.random, bonus = false }) {
   const stats = (profile.wordStats[profile.activeListId] ??= {});
@@ -14,7 +16,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
   const byWord = Object.fromEntries(list.words.map((w) => [w.word, w]));
   const q = createSessionQueue(built.words);
   const firstSessionOfDay = !profile.sessions.some((s) => s.date === today);
-  const tally = { crickets: 0, xp: 0, streak: 0, bestRun: 0, correctFirstTry: 0, correctRetry: 0, misses: 0, missedWords: [], masteredNow: [], comebacks: 0, leveledUp: false };
+  const tally = { crickets: 0, xp: 0, streak: 0, bestRun: 0, correctFirstTry: 0, correctRetry: 0, misses: 0, missedWords: [], masteredNow: [], comebacks: 0, leveledUp: false, trophies: [] };
   let mode = 'idle', current = null, resolved = 0, finished = null;
   const startLevel = profile.level;
 
@@ -24,6 +26,16 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
     const lvl = levelForXp(profile.xp);
     if (lvl > profile.level) tally.leveledUp = true;
     profile.level = lvl;
+  };
+
+  const award = (extra) => {
+    const ctx = {
+      eggsHatched: profile.eggsHatched ?? 0, sessionsCompleted: profile.sessions.length, bestRun: tally.bestRun,
+      masteredCount: Object.values(stats).filter(isMastered).length, dayStreak: profile.streak.current,
+      creaturesCount: profile.creatures.length, maxStage: Math.max(1, ...profile.creatures.map((c) => c.stage)),
+      battlesWon: profile.battlesWon ?? 0, ...extra,
+    };
+    for (const id of evaluateTrophies(ctx, profile.trophies)) { profile.trophies[id] = today; tally.trophies.push(id); }
   };
 
   const api = {
@@ -65,6 +77,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
         if (!tally.missedWords.includes(word)) tally.missedWords.push(word);
         mode = 'correcting';
       }
+      award({ turn: { correct: res.correct, word, comeback: rr.comeback } });
       return { ...res, expected: word, word, reward, firstTry: rr.firstTry, comeback: rr.comeback, newlyMastered, requeued: rr.requeued };
     },
 
@@ -82,7 +95,9 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
       gain(sr.crickets, sr.xp);
       profile.sessions.push({ date: today, mode: bonus ? 'bonus' : 'practice', words: built.words.length, correctFirstTry: tally.correctFirstTry, misses: tally.misses });
       capSessions(profile);
-      finished = { ...tally, sessionCrickets: sr.crickets, sessionXp: sr.xp, firstSessionOfDay, words: built.words.length, bonus, level: profile.level };
+      profile.streak = recordPlay(profile.streak, today);
+      award({ sessionJustCompleted: true, sessionMisses: tally.misses });
+      finished = { ...tally, sessionCrickets: sr.crickets, sessionXp: sr.xp, firstSessionOfDay, words: built.words.length, bonus, level: profile.level, dayStreak: profile.streak.current };
       return finished;
     },
   };

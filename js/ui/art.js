@@ -13,3 +13,12 @@ export function blobSvg(color, mood = 'happy') {
   <circle cx="38" cy="48" r="5" fill="#1d2433"/><circle cx="62" cy="48" r="5" fill="#1d2433"/>
   <path d="${mouth}" fill="none" stroke="#1d2433" stroke-width="4" stroke-linecap="round"/></svg>`;
 }
+
+export function trophySvg(locked) {
+  const fill = locked ? '#c9d3e6' : '#f5b301';
+  return `<svg class="trophy ${locked ? 'locked' : 'earned'}" viewBox="0 0 100 100" width="64" height="64" aria-hidden="true">
+  <path d="M28 18h44v22a22 22 0 0 1-44 0z" fill="${fill}" stroke="#1d2433" stroke-width="4"/>
+  <path d="M28 24H14c0 14 6 22 16 24M72 24h14c0 14-6 22-16 24" fill="none" stroke="#1d2433" stroke-width="4"/>
+  <rect x="42" y="62" width="16" height="12" fill="${fill}" stroke="#1d2433" stroke-width="4"/>
+  <rect x="30" y="74" width="40" height="10" rx="3" fill="${fill}" stroke="#1d2433" stroke-width="4"/></svg>`;
+}

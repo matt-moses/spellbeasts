@@ -7,6 +7,7 @@ import { profilesView } from './ui/profiles.js';
 import { homeView } from './ui/home.js';
 import { practiceView } from './ui/practice.js';
 import { summaryView } from './ui/summary.js';
+import { trophiesView } from './ui/trophies.js';
 
 const store = createStore();
 store.load();
@@ -21,7 +22,7 @@ const app = {
   choose(id) { this.profileId = id; this.go('/home'); },
 };
 
-const routes = { '/': profilesView, '/home': homeView, '/practice': practiceView, '/summary': summaryView };
+const routes = { '/': profilesView, '/home': homeView, '/practice': practiceView, '/summary': summaryView, '/trophies': trophiesView };
 const root = document.getElementById('app');
 
 function banners() {

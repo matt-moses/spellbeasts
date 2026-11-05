@@ -79,6 +79,41 @@ test('a full session: word hidden until submit, strict capitalization, correctio
   assert.equal(p.wordStats.sample.Monday.box, 1);
   assert.equal(p.wordStats.sample.garden.box, 2);
   assert.equal(p.sessions.length, 1);
+  assert.match(await page.textContent('.new-trophies'), /Capital Idea/);   // Monday spelled right on retry
+  assert.match(await page.textContent('.summary'), /1 day in a row/);
+
+  await page.click('#done');
+  assert.match(await page.textContent('.stats'), /1 day in a row/);
+  assert.equal(await page.locator('.hungry').count(), 0);                  // practiced today
+  await page.click('#trophies');
+  await page.waitForSelector('.trophy-case');
+  assert.equal(await page.locator('.trophy-card.earned').count(), 2);          // Capital Idea + Comeback
+  assert.match(await page.textContent('[data-trophy=comeback]'), /Comeback/);
+  assert.match(await page.textContent('[data-trophy=capital-idea]'), /Capital Idea/);
+  assert.match(await page.textContent('[data-trophy=busy-bee]'), /To unlock: Complete 5 sessions/);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('new trainer sees the hungry-creatures reminder; level-up celebration appears and is dismissable', { skip }, async () => {
+  const st = seededState(); st.profiles.p1.xp = 95;
+  const { page, context, errors } = await newPage({ state: st });
+  await page.goto(env.server.url);
+  await page.click('.card');
+  await page.waitForSelector('#practice');
+  assert.match(await page.textContent('.hungry'), /hungry/);
+  await page.click('#practice'); await page.waitForSelector('#answer');
+  for (let i = 0; i < 20 && !page.url().endsWith('#/summary'); i++) {
+    const w = await lastSpoken(page), n = await page.evaluate(() => window.__spoken.length);
+    await page.fill('#answer', w); await page.press('#answer', 'Enter');
+    await page.waitForFunction((k) => window.__spoken.length > k || location.hash === '#/summary', n);
+  }
+  await page.waitForSelector('.levelup-overlay');
+  assert.match(await page.textContent('.levelup-overlay h2'), /Level 2/);
+  assert.match(await page.textContent('.new-trophies'), /Perfect Flight/);
+  await page.click('#levelup-ok');
+  await page.waitForSelector('.levelup-overlay', { state: 'detached' });
+  assert.equal(await page.locator('.levelup-overlay').count(), 0);
   assert.deepEqual(errors, []);
   await context.close();
 });

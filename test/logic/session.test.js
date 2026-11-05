@@ -92,3 +92,27 @@ test('returns null when nothing is due or new', () => {
   assert.ok(startSession({ profile, list, today: TODAY, bonus: true }));
   void state;
 });
+
+test('trophies: Capital Idea on a capitalized word, Perfect Flight on a clean session; streak recorded', () => {
+  const { profile, s } = setup(1);   // fresh: 3 words
+  for (let w = s.next(); w; w = s.next()) s.submit(w.word);
+  const sum = s.finish();
+  assert.ok(sum.trophies.includes('perfect-flight'));
+  assert.equal(sum.trophies.includes('capital-idea'), profile.trophies['capital-idea'] === TODAY);
+  assert.equal(profile.streak.current, 1);
+  assert.equal(sum.dayStreak, 1);
+});
+test('trophies are earned once only', () => {
+  const { profile, list, s } = setup(1);
+  for (let w = s.next(); w; w = s.next()) s.submit(w.word);
+  s.finish();
+  const s2 = startSession({ profile, list, today: TODAY, rng: rng(1) });
+  for (let w = s2.next(); w; w = s2.next()) s2.submit(w.word);
+  assert.equal(s2.finish().trophies.includes('perfect-flight'), false);
+});
+test('Comeback trophy after a miss then a correct retry', () => {
+  const { s } = setup(2, { seeded: true });
+  const w = s.next(); s.submit('zzz'); s.submitCorrection(w.word);
+  for (let x = s.next(); x; x = s.next()) s.submit(x.word);
+  assert.ok(s.tally.trophies.includes('comeback'));
+});
