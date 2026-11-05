@@ -8,6 +8,7 @@ import { homeView } from './ui/home.js';
 import { practiceView } from './ui/practice.js';
 import { summaryView } from './ui/summary.js';
 import { trophiesView } from './ui/trophies.js';
+import { nestView, sanctuaryView, bookView } from './ui/collection.js';
 
 const store = createStore();
 store.load();
@@ -22,7 +23,7 @@ const app = {
   choose(id) { this.profileId = id; this.go('/home'); },
 };
 
-const routes = { '/': profilesView, '/home': homeView, '/practice': practiceView, '/summary': summaryView, '/trophies': trophiesView };
+const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, nest: nestView, sanctuary: sanctuaryView, book: bookView };
 const root = document.getElementById('app');
 
 function banners() {
@@ -34,11 +35,12 @@ function banners() {
 
 function render() {
   app.cleanup.splice(0).forEach((fn) => fn());
-  let route = location.hash.replace(/^#/, '') || '/';
-  if (!routes[route]) route = '/';
-  if (route !== '/' && !app.profile) { app.go('/'); return; }
-  if (route === '/practice' && !app.session) route = '/home';
-  root.replaceChildren(...banners(), routes[route](app));
+  let [name, arg] = location.hash.replace(/^#\/?/, '').split('/');
+  if (!(name in routes)) name = '';
+  if (name !== '' && !app.profile) { app.go('/'); return; }
+  if (name === 'practice' && !app.session) name = 'home';
+  const route = name === '' ? '/' : `/${name}`;
+  root.replaceChildren(...banners(), routes[name](app, arg));
   const first = root.querySelector('h1, input');
   document.title = 'Spellbeasts';
   if (route !== '/practice') first?.setAttribute('tabindex', '-1');

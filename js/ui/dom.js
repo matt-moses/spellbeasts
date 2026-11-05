@@ -9,6 +9,14 @@ export function h(tag, props = {}, ...kids) {
     else if (v === true) el.setAttribute(k, '');
     else el.setAttribute(k, v);
   }
-  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  for (const kid of kids.flat()) {
+    if (kid == null || kid === false) continue;
+    if (kid.nodeType) { el.append(kid); continue; }
+    // The cricket emoji is drawn as an inline SVG icon (see .cricket in CSS) so it never depends on an emoji font.
+    String(kid).split('🦗').forEach((part, i) => {
+      if (i > 0) el.append(h('span', { class: 'cricket', role: 'img', 'aria-label': 'crickets' }));
+      if (part) el.append(document.createTextNode(part));
+    });
+  }
   return el;
 }

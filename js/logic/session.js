@@ -4,7 +4,7 @@ import { createSessionQueue, nextWord, recordResult, buildSession, buildBonusSes
 import { applyAttempt, isMastered } from './leitner.js';
 import { turnReward, sessionReward, levelForXp } from './rewards.js';
 import { capSessions } from './storage-schema.js';
-import { evaluateTrophies } from './trophies.js';
+import { awardTrophies, warmEggs } from './collection.js';
 import { recordPlay } from './streak.js';
 
 export function startSession({ profile, list, today, rng = Math.random, bonus = false }) {
@@ -28,15 +28,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
     profile.level = lvl;
   };
 
-  const award = (extra) => {
-    const ctx = {
-      eggsHatched: profile.eggsHatched ?? 0, sessionsCompleted: profile.sessions.length, bestRun: tally.bestRun,
-      masteredCount: Object.values(stats).filter(isMastered).length, dayStreak: profile.streak.current,
-      creaturesCount: profile.creatures.length, maxStage: Math.max(1, ...profile.creatures.map((c) => c.stage)),
-      battlesWon: profile.battlesWon ?? 0, ...extra,
-    };
-    for (const id of evaluateTrophies(ctx, profile.trophies)) { profile.trophies[id] = today; tally.trophies.push(id); }
-  };
+  const award = (extra) => { tally.trophies.push(...awardTrophies(profile, today, { bestRun: tally.bestRun, ...extra })); };
 
   const api = {
     get mode() { return mode; },
@@ -71,6 +63,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
         if (rr.firstTry) tally.correctFirstTry += 1; else tally.correctRetry += 1;
         if (rr.comeback) tally.comebacks += 1;
         if (newlyMastered) tally.masteredNow.push(word);
+        warmEggs(profile);
         mode = 'asking';
       } else {
         tally.misses += 1;

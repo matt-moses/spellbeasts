@@ -1,18 +1,17 @@
 import { h } from './dom.js';
-import { blobSvg, starterById } from './art.js';
+import { companionSvg } from './art.js';
 
 export function practiceView(app) {
   const { speaker, audio, store } = app;
   const s = app.session;
   if (!s) { queueMicrotask(() => app.go('/home')); return h('div'); }
   const profile = app.profile;
-  const color = starterById(profile.avatarSpecies).color;
   let cur = null;
 
   const fill = h('div', { class: 'fill' });
   const bar = h('div', { class: 'bar', role: 'progressbar', 'aria-label': 'Session progress' }, fill);
   const crickets = h('span', { class: 'crickets' });
-  const companion = h('div', { class: 'companion', html: blobSvg(color) });
+  const companion = h('div', { class: 'companion', html: companionSvg(profile, { size: 110 }) });
   const clue = h('p', { class: 'clue', 'aria-live': 'polite' });
   const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
   const toast = h('div', { class: 'toast', role: 'status' });
@@ -37,7 +36,7 @@ export function practiceView(app) {
     bar.setAttribute('aria-valuenow', String(p.resolved)); bar.setAttribute('aria-valuemax', String(p.total));
     crickets.textContent = `🦗 ${profile.crickets}`;
   }
-  function mood(m) { companion.innerHTML = blobSvg(color, m); companion.classList.remove('bounce'); void companion.offsetWidth; companion.classList.add('bounce'); }
+  function mood(m) { companion.innerHTML = companionSvg(profile, { size: 110, mood: m }); companion.classList.remove('bounce'); void companion.offsetWidth; companion.classList.add('bounce'); }
   function say(msg) { toast.textContent = msg; toast.classList.remove('show'); void toast.offsetWidth; toast.classList.add('show'); }
 
   function ask() {

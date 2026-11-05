@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { startServer } from '../../tools/static-server.js';
 import { freshState, freshProfile } from '../../js/logic/storage-schema.js';
+import { addStarter } from '../../js/logic/collection.js';
 
 export const CHROMIUM = process.env.CHROMIUM_PATH ?? '/usr/bin/chromium';
 export const hasBrowser = existsSync(CHROMIUM);
@@ -18,7 +19,8 @@ export async function launch() {
 export function seededState(words = ['Monday', 'garden', 'island']) {
   const s = freshState();
   s.wordLists.sample.words = s.wordLists.sample.words.filter((w) => words.includes(w.word));
-  s.profiles.p1 = freshProfile({ name: 'Sam', avatarSpecies: 'starter-1', now: '2026-11-05T00:00:00Z' });
+  s.profiles.p1 = freshProfile({ name: 'Sam', avatarSpecies: 'burrowby', now: '2026-11-05T00:00:00Z' });
+  addStarter(s.profiles.p1, 'burrowby', '2026-11-05T00:00:00Z');
   return s;
 }
 
@@ -35,3 +37,14 @@ export async function prepare(context, { state = null, errors = [] } = {}) {
 }
 
 export const lastSpoken = (page) => page.evaluate(() => window.__spoken.at(-1)?.text);
+
+// Answer every word correctly until the summary appears.
+export async function playSession(page) {
+  await page.click('#practice'); await page.waitForSelector('#answer');
+  for (let i = 0; i < 30 && !page.url().endsWith('#/summary'); i++) {
+    const w = await lastSpoken(page), n = await page.evaluate(() => window.__spoken.length);
+    await page.fill('#answer', w); await page.press('#answer', 'Enter');
+    await page.waitForFunction((k) => window.__spoken.length > k || location.hash === '#/summary', n);
+  }
+  await page.waitForSelector('.summary');
+}

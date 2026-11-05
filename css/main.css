@@ -51,3 +51,27 @@ fieldset { border:2px solid var(--line); border-radius:12px; display:flex; gap:1
 .levelup-card { background:var(--panel); border-radius:20px; padding:2rem 3rem; text-align:center; max-width:90vw; }
 .levelup-card h2 { font-size:3rem; margin:.25rem 0; }
 .burst { font-size:4rem; margin:0; animation: bounce .8s 2; }
+.creature { overflow: visible; }
+.idle { animation: idle 3s ease-in-out infinite; transform-origin: 50px 96px; }
+@keyframes idle { 50% { transform: translateY(-2px) scale(1.02, .98); } }
+.silhouette { filter: brightness(0) opacity(.28); }
+.species-row { display:flex; flex-wrap:wrap; gap:1rem; margin-bottom:1rem; }
+.mini { margin:0; display:flex; flex-direction:column; align-items:center; text-align:center; max-width:200px; }
+.mini figcaption { font-size:.95rem; }
+.flavor { font-size:.85rem; color:#44506b; }
+.egg-list, .creature-grid { list-style:none; padding:0; display:grid; gap:1rem; }
+.creature-grid { grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); }
+.egg-card, .creature-card { background:var(--panel); border:2px solid var(--line); border-radius:14px; padding:.75rem; display:flex; gap:.75rem; }
+.creature-card { flex-direction:column; align-items:center; text-align:center; }
+.egg-card.ready { border-color:var(--good); }
+.egg.ready { animation: bounce .8s infinite; }
+.hint { color:#44506b; }
+.hungry-pet .creature { filter:saturate(.6); }
+.ready-egg { background:#e3f6e8; border:2px solid var(--good); border-radius:10px; padding:.4rem .8rem; font-weight:bold; }
+.reveal { text-align:center; border-color:var(--good); }
+.nests { margin-top:1rem; }
+.nests button { margin:.25rem .25rem .25rem 0; }
+.trophy-line { font-weight:bold; }
+button:disabled { opacity:.5; cursor:not-allowed; }
+@media (prefers-reduced-motion: reduce) { .idle, .egg.ready, .bounce { animation:none !important; } }
+.cricket { display:inline-block; width:1.15em; height:1.15em; vertical-align:-.22em; background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M8 26 L2 36 M16 28 L12 38 M26 28 L30 38' stroke='%231d2433' stroke-width='3' stroke-linecap='round' fill='none'/%3E%3Cellipse cx='20' cy='24' rx='15' ry='8' fill='%234a8f2e' stroke='%231d2433' stroke-width='3'/%3E%3Ccircle cx='32' cy='17' r='6' fill='%236bb53f' stroke='%231d2433' stroke-width='3'/%3E%3Cpath d='M34 12 Q38 4 36 2 M30 11 Q28 4 24 3' stroke='%231d2433' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='34' cy='16' r='1.5' fill='%231d2433'/%3E%3C/svg%3E"); }

@@ -1,5 +1,7 @@
 import { h } from './dom.js';
-import { blobSvg, starterById } from './art.js';
+import { companionSvg } from './art.js';
+import { REGIONS } from '../logic/species.js';
+import { readyEggs } from '../logic/collection.js';
 import { isDue } from '../logic/leitner.js';
 import { levelProgress } from '../logic/rewards.js';
 import { startSession } from '../logic/session.js';
@@ -31,17 +33,22 @@ export function homeView(app) {
   const bonusBtn = h('button', { class: 'secondary', hidden: true, onclick: () => start(true) }, 'Bonus review');
 
   return h('section', { class: 'screen home' },
-    h('div', { class: 'hero' }, h('span', { html: blobSvg(starterById(profile.avatarSpecies).color) }),
+    h('div', { class: 'hero' }, h('span', { class: hungry ? 'hungry-pet' : '', html: companionSvg(profile, { size: 110, mood: hungry ? 'sad' : 'happy' }) }),
       h('div', {}, h('h1', {}, `Hi, ${profile.name}!`),
         h('p', { class: 'stats' }, `Level ${lp.level} · 🦗 ${profile.crickets} crickets · `, h('span', { class: 'streak' }, `🔥 ${streak} day${streak === 1 ? '' : 's'} in a row`)),
         h('progress', { class: 'xpbar', max: lp.needed, value: lp.into, 'aria-label': `Experience: ${lp.into} of ${lp.needed}` }),
         h('small', {}, `${lp.into}/${lp.needed} XP to level ${lp.level + 1}`))),
+    readyEggs(profile).length ? h('p', { class: 'ready-egg', role: 'status' }, '🥚 An egg is ready to hatch!') : null,
     hungry ? h('p', { class: 'hungry', role: 'status' }, 'Your creatures are hungry! Practice to feed them.') : null,
     h('p', { class: 'due' }, `${due} word${due === 1 ? '' : 's'} due today · ${fresh} new word${fresh === 1 ? '' : 's'} to learn`),
     h('div', { class: 'actions' },
       h('button', { class: 'primary big', id: 'practice', onclick: () => start(false) }, 'Practice'),
       bonusBtn,
+      h('button', { class: 'secondary', id: 'sanctuary', onclick: () => app.go('/sanctuary') }, 'Sanctuary'),
+      h('button', { class: 'secondary', id: 'book', onclick: () => app.go('/book') }, 'Creature book'),
       h('button', { class: 'secondary', id: 'trophies', onclick: () => app.go('/trophies') }, `Trophies (${Object.keys(profile.trophies).length})`),
       h('button', { class: 'secondary', onclick: () => app.go('/') }, 'Switch trainer')),
+    h('div', { class: 'nests' }, h('h2', {}, 'Nests'), REGIONS.filter((r) => profile.map.unlockedRegions.includes(r.id)).map((r) =>
+      h('button', { class: 'secondary nest-link', 'data-region': r.id, onclick: () => app.go(`/nest/${r.id}`) }, `🥚 ${r.name}`))),
     note);
 }
