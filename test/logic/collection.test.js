@@ -7,9 +7,10 @@ import { PART_NAMES, ART_KEYS } from '../../js/assets/creatures.js';
 
 const mk = (over = {}) => Object.assign(freshProfile({ name: 'T', avatarSpecies: 'x' }), over);
 
-test('species data: 18 species, 3 per region with one of each rarity, unique ids', () => {
-  assert.equal(SPECIES.length, 18);
-  assert.equal(new Set(SPECIES.map((s) => s.id)).size, 18);
+test('species data: 27 species, 3 per region with one of each rarity, unique ids', () => {
+  assert.equal(SPECIES.length, 27);
+  assert.equal(REGIONS.length, 9);
+  assert.equal(new Set(SPECIES.map((s) => s.id)).size, 27);
   for (const r of REGIONS) {
     const here = SPECIES.filter((s) => s.region === r.id);
     assert.deepEqual(here.map((s) => s.rarity).sort(), ['common', 'rare', 'uncommon']);

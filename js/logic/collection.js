@@ -1,6 +1,6 @@
 // Eggs, hatching, feeding, evolving, trophies for the collection (PRD 11, 9.3). Mutates the profile.
 import { eggPrice, eggNeeded, rollEgg, addEggProgress, duplicateCrickets, feedCreature, canEvolve, evolve, FEED_NEEDED } from './hatch.js';
-import { speciesInRegion, regionIndex, speciesById } from './species.js';
+import { speciesInRegion, regionIndex, speciesById, SPECIES } from './species.js';
 import { evaluateTrophies } from './trophies.js';
 import { isMastered } from './leitner.js';
 
@@ -89,10 +89,20 @@ export function evolveHint(profile, c) {
 }
 
 export function trophyContext(profile, extra = {}) {
+  const stats = Object.values(profile.wordStats[profile.activeListId] ?? {});
+  const owned = ownedSpecies(profile);
   return {
     eggsHatched: profile.eggsHatched ?? 0, sessionsCompleted: profile.sessions.length, bestRun: 0,
     masteredCount: masteredCount(profile), dayStreak: profile.streak.current, creaturesCount: profile.creatures.length,
-    maxStage: Math.max(1, ...profile.creatures.map((c) => c.stage)), battlesWon: profile.battlesWon ?? 0, ...extra,
+    maxStage: Math.max(1, ...profile.creatures.map((c) => c.stage)), battlesWon: profile.battlesWon ?? 0,
+    level: profile.level, regionsOpen: profile.map.unlockedRegions.length, trailStep: profile.map.trailStep, starsOpened: profile.map.claimedLandmarks.length,
+    perfectSessions: profile.sessions.filter((s) => s.misses === 0).length,
+    firstTryTotal: stats.reduce((n, s) => n + (s.firstTryCorrect ?? 0), 0),
+    speciesOwned: owned.size, speciesTotal: SPECIES.length,
+    rareOwned: [...owned].filter((id) => speciesById(id)?.rarity === 'rare').length,
+    heartsTotal: profile.creatures.reduce((n, c) => n + (c.hearts ?? 0), 0),
+    evolvedCount: profile.creatures.filter((c) => c.stage >= 2).length,
+    wordsInList: Infinity, ...extra,
   };
 }
 

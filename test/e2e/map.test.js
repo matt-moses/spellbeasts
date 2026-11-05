@@ -20,10 +20,10 @@ async function open(patch = () => {}, { reducedMotion = 'reduce' } = {}) {
 }
 const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('spellbeasts.v1')).profiles.p1);
 
-test('the map is the home screen: 6 regions, later ones fogged with what they need', { skip }, async () => {
+test('the map is the home screen: 9 lands, later ones fogged with what they need', { skip }, async () => {
   const { page, context, errors } = await open();
-  assert.equal(await page.locator('svg.map .layer-regions > g').count(), 6);
-  assert.equal(await page.locator('.fog[data-locked=true]').count(), 5);
+  assert.equal(await page.locator('svg.map .layer-regions > g').count(), 9);
+  assert.equal(await page.locator('.fog[data-locked=true]').count(), 8);
   assert.equal(await page.locator('.nest-link').count(), 1);
   assert.match(await page.getAttribute('.fog[data-region=r2]', 'aria-label'), /Reach level 2\b/);
   assert.match(await page.getAttribute('.fog[data-region=r3]', 'aria-label'), /Reach level 4 and 5 words mastered/);
@@ -37,7 +37,7 @@ test('the map is the home screen: 6 regions, later ones fogged with what they ne
 
 test('regions open when level (and mastery) are met; the pin is keyboard-operable', { skip }, async () => {
   const { page, context } = await open((p) => { p.level = 2; p.map.unlockedRegions = ['r1', 'r2']; });
-  assert.equal(await page.locator('.fog[data-locked=true]').count(), 4);
+  assert.equal(await page.locator('.fog[data-locked=true]').count(), 7);
   assert.equal(await page.locator('.nest-link').count(), 2);
   await page.focus('.nest-link[data-region=r2]');
   await page.keyboard.press('Enter');
@@ -72,7 +72,7 @@ test('first-try correct answers move the token; it waits at the gate of a locked
 test('a landmark chest pays 5-15 crickets once, even after a reload', { skip }, async () => {
   const { page, context, errors } = await open((p) => { p.map.trailStep = 10; });
   assert.equal(await page.locator('.landmark.ready').count(), 1);
-  assert.equal(await page.locator('.landmark.far').count(), 17);              // the rest are still ahead
+  assert.equal(await page.locator('.landmark.far').count(), 33);              // the other 33 of the 34 stars are still ahead
   const before = (await saved(page)).crickets;
   await page.click('.landmark.ready');
   await page.waitForSelector('.landmark.claimed');
@@ -110,6 +110,6 @@ test('reaching the level for a new region says so on the summary', { skip }, asy
   await page.click('#done');
   await page.waitForSelector('.world-map');
   assert.equal(await page.locator('.nest-link').count(), 2);
-  assert.equal(await page.locator('.fog[data-locked=true]').count(), 4);
+  assert.equal(await page.locator('.fog[data-locked=true]').count(), 7);
   await context.close();
 });

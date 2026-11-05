@@ -1,17 +1,35 @@
 // World map (PRD 11A) drawn as a board-game path through a park: sky and hills, region patches with themed
 // scenery, cream path tiles with yellow star stops, fog over locked regions, a region wheel, and the player's
 // token on an orange podium. Layered SVG so regions can be added without redrawing.
-import { h } from './dom.js';
+import { h, icon } from './dom.js';
 import { companionSvg } from './art.js';
 import { REGIONS } from '../logic/species.js';
-import { UNLOCKS, TOTAL_STEPS, LANDMARKS, STEPS_PER_REGION, isReached, isClaimed, unlockRequirement, claimLandmark, regionOfStep } from '../logic/world.js';
+import { awardTrophies } from '../logic/collection.js';
+import { TROPHIES } from '../logic/trophies.js';
+import { UNLOCKS, TOTAL_STEPS, REGION_END, regionStart, LANDMARKS, isReached, isClaimed, unlockRequirement, claimLandmark, regionOfStep } from '../logic/world.js';
 
-const W = 800, H = 620;
-const TRAIL = 'M 70 510 C 150 465, 200 545, 300 505 S 430 445, 520 488 S 705 505, 718 435 S 640 375, 560 395 S 470 335, 540 265 S 705 235, 665 170 S 485 140, 405 180 S 255 210, 225 270 S 120 310, 110 225 S 95 160, 150 130';
-const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6'];
+const W = 2800, H = 620;
+// One long winding trail through all the lands (Catmull-Rom through these points).
+const POINTS = [[60, 520], [170, 450], [290, 520], [400, 540], [520, 470], [640, 400], [760, 330], [880, 380], [990, 470], [1110, 530], [1240, 480], [1350, 400], [1450, 320], [1570, 280], [1690, 350], [1800, 450], [1910, 520], [2030, 500], [2140, 430], [2250, 350], [2350, 290], [2460, 330], [2560, 420], [2660, 480], [2740, 430]];
+function smooth(pts) {
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] ?? p2;
+    d += ` C ${p1[0] + (p2[0] - p0[0]) / 6} ${p1[1] + (p2[1] - p0[1]) / 6}, ${p2[0] - (p3[0] - p1[0]) / 6} ${p2[1] - (p3[1] - p1[1]) / 6}, ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+const TRAIL = smooth(POINTS);
+const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8'];
 const INK = '#1d2433';
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
+function hills(y, amp, seed) {
+  const r = prng(seed + 40);
+  let d = `M0 ${y}`;
+  for (let x = 0; x < W; x += 260) d += ` Q${x + 90} ${y - amp * (0.4 + r())} ${x + 180} ${y - amp * 0.2 * r()} T${x + 260} ${y}`;
+  return `${d} V${H} H0Z`;
+}
 const mix = (hex, amt, to = 255) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - amt) + to * amt).toString(16).padStart(2, '0')).join('');
 function prng(seed) { let a = (seed + 1) * 2654435761 >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function wrap(text, max = 18) {
@@ -45,6 +63,15 @@ const SCENERY = [
     : `<g transform="translate(${x} ${y})"><path d="M-8 4Q0 -12 8 4Z" fill="#ffd9c2" stroke="${INK}" stroke-width="1.8"/><path d="M0 4V-5M-4 4L-3 -3M4 4L3 -3" stroke="${INK}" stroke-width="1.2"/></g>`,
   ([x, y, k]) => k < 0.7 ? `<g transform="translate(${x} ${y})" fill="#fff" stroke="${INK}" stroke-width="1.8"><circle cx="-7" cy="1" r="6"/><circle cx="1" cy="-3" r="8"/><circle cx="9" cy="1" r="6"/><rect x="-12" y="2" width="27" height="6" stroke="none"/></g>`
     : `<g transform="translate(${x} ${y})"><rect x="-4" y="-6" width="8" height="14" fill="#cfd8ea" stroke="${INK}" stroke-width="1.8"/><path d="M-6 -6L0 -18L6 -6Z" fill="#6d86d6" stroke="${INK}" stroke-width="1.8"/></g>`,
+  // r7 Crystal Caves: crystal clusters, stalagmites, glowing mushrooms
+  ([x, y, k]) => k < 0.5 ? `<g transform="translate(${x} ${y})"><path d="M-8 8L-5 -10L0 8ZM0 8L4 -16L9 8ZM-2 8L2 -4L6 8Z" fill="${k < 0.25 ? '#c9a0ff' : '#8ee6ff'}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M-10 8L-3 -10L4 8Z" fill="#8c8aa0" stroke="${INK}" stroke-width="1.8"/>${k > 0.75 ? '<path d="M8 8V2" stroke="#e8e0ff" stroke-width="2"/><ellipse cx="8" cy="1" rx="5" ry="3.4" fill="#ff9bd2" stroke="#1d2433" stroke-width="1.4"/>' : ''}</g>`,
+  // r8 Sunset Dunes: cacti, dune ripples, warm rocks
+  ([x, y, k]) => k < 0.5 ? `<g transform="translate(${x} ${y})" stroke="${INK}" stroke-width="1.8" stroke-linecap="round"><path d="M0 9V-10" stroke-width="6" stroke="#3f9a45"/><path d="M0 0H-7V-6M0 -3H7V-8" fill="none" stroke="#3f9a45" stroke-width="4"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M-16 8Q-6 -6 4 4T20 8" fill="none" stroke="#c99a4a" stroke-width="3" stroke-linecap="round"/><ellipse cx="10" cy="5" rx="6" ry="4" fill="#d9a066" stroke="${INK}" stroke-width="1.4"/></g>`,
+  // r9 Starfall Isles: fallen stars, moon rocks, comets
+  ([x, y, k]) => k < 0.55 ? `<g transform="translate(${x} ${y})"><path d="M0-10L3 -3L10 -2L4 3L6 10L0 6L-6 10L-4 3L-10 -2L-3 -3Z" fill="#ffe27a" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/></g>`
+    : `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="3" rx="11" ry="7" fill="#c9d4f5" stroke="${INK}" stroke-width="1.6"/><circle cx="-3" cy="1" r="2" fill="#a4b2e0"/><path d="M12 -6L26 -14" stroke="#fff3a8" stroke-width="2.4" stroke-linecap="round" opacity=".8"/></g>`,
 ];
 
 // ---------- park props (flat shapes, scattered on the grass away from the path) ----------
@@ -59,18 +86,22 @@ const PROPS = [
   (x, y) => `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="3" rx="11" ry="4" fill="#000" opacity=".12"/><ellipse cx="0" cy="-2" rx="10" ry="7" fill="#a9b3c2"/><ellipse cx="-3" cy="-5" rx="4" ry="2.4" fill="#d3dbe6"/></g>`,
 ];
 
+// trees, pines, bushes and flowers are common; lamps, benches, swings and rocks are the occasional treat
+const PROP_PICK = [0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 5, 6, 7, 7];
+
 function waveWheel(cx, cy, r, open, idx, face) {
+  const n = REGIONS.length, span = 360 / n;
   const pt = (deg, rad) => { const a = (deg * Math.PI) / 180; return [cx + Math.cos(a) * rad, cy + Math.sin(a) * rad]; };
   const wedges = REGIONS.map((reg, i) => {
-    const a0 = -90 + 60 * i, [x0, y0] = pt(a0, r), [x1, y1] = pt(a0 + 60, r), [tx, ty] = pt(a0 + 30, r * 0.66);
+    const a0 = -90 + span * i, [x0, y0] = pt(a0, r), [x1, y1] = pt(a0 + span, r), [tx, ty] = pt(a0 + span / 2, r * 0.7);
     const on = open.has(reg.id);
-    return `<path d="M${cx} ${cy}L${x0} ${y0}A${r} ${r} 0 0 1 ${x1} ${y1}Z" fill="${on ? COLORS[i] : '#cfd6e2'}" stroke="#fff" stroke-width="2"/><text x="${tx}" y="${ty + 6}" text-anchor="middle" font-size="17" font-weight="bold" fill="${on ? '#fff' : '#8993a6'}" stroke="${on ? 'rgba(0,0,0,.25)' : 'none'}" stroke-width="2.5" paint-order="stroke">${i + 1}</text>`;
+    return `<path d="M${cx} ${cy}L${x0} ${y0}A${r} ${r} 0 0 1 ${x1} ${y1}Z" fill="${on ? COLORS[i] : '#cfd6e2'}" stroke="#fff" stroke-width="2"/><text x="${tx}" y="${ty + 5}" text-anchor="middle" font-size="14" font-weight="bold" fill="${on ? '#fff' : '#8993a6'}" stroke="${on ? 'rgba(0,0,0,.25)' : 'none'}" stroke-width="2.5" paint-order="stroke">${i + 1}</text>`;
   }).join('');
-  const dots = Array.from({ length: 16 }, (_, i) => { const [x, y] = pt(i * 22.5, r + 5); return `<circle cx="${x}" cy="${y}" r="1.9" fill="#fff" opacity=".9"/>`; }).join('');
-  return `<g class="region-wheel" role="img" aria-label="Region wheel: you are in ${REGIONS[idx].name}. ${open.size} of 6 regions open." filter="url(#shadow)">
+  const dots = Array.from({ length: 18 }, (_, i) => { const [x, y] = pt(i * 20, r + 5); return `<circle cx="${x}" cy="${y}" r="1.8" fill="#fff" opacity=".9"/>`; }).join('');
+  return `<g class="region-wheel" filter="url(#shadow)">
   <circle cx="${cx}" cy="${cy}" r="${r + 5}" fill="#ffb21c"/>${wedges}<circle cx="${cx}" cy="${cy}" r="${r + 5}" fill="none" stroke="#ffb21c" stroke-width="9"/>${dots}
-  <circle cx="${cx}" cy="${cy}" r="21" fill="#fff" stroke="#ffb21c" stroke-width="5"/><g transform="translate(${cx - 16} ${cy - 18})">${face}</g>
-  <g class="wheel-ptr" transform="rotate(${60 * idx + 30} ${cx} ${cy})"><circle cx="${cx}" cy="${cy - r - 15}" r="9" fill="#cdbcff" stroke="#fff" stroke-width="3"/><path d="M${cx - 6} ${cy - r - 9}L${cx + 6} ${cy - r - 9}L${cx} ${cy - r + 1}Z" fill="#cdbcff" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/></g></g>`;
+  <circle cx="${cx}" cy="${cy}" r="19" fill="#fff" stroke="#ffb21c" stroke-width="5"/><g transform="translate(${cx - 16} ${cy - 18})">${face}</g>
+  <g class="wheel-ptr" transform="rotate(${span * idx + span / 2} ${cx} ${cy})"><circle cx="${cx}" cy="${cy - r - 15}" r="9" fill="#cdbcff" stroke="#fff" stroke-width="3"/><path d="M${cx - 6} ${cy - r - 9}L${cx + 6} ${cy - r - 9}L${cx} ${cy - r + 1}Z" fill="#cdbcff" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/></g></g>`;
 }
 
 function starTile(state) {
@@ -83,7 +114,7 @@ function starTile(state) {
   ${ready ? '<path class="twinkle" d="M16 -18L17.5 -14L21.5 -12.5L17.5 -11L16 -7L14.5 -11L10.5 -12.5L14.5 -14Z" fill="#ffc928" stroke="#1d2433" stroke-width="1"/>' : ''}</g>`;
 }
 
-const CLOUDS = [[40, 50, 1.0, 90], [520, 30, 0.8, 120], [300, 90, 0.7, 150]].map(([x, y, sc, dur], i) =>
+const CLOUDS = [[40, 50, 1.0, 190], [620, 30, 0.8, 230], [1100, 90, 0.7, 260], [1600, 40, 1.0, 210], [2150, 80, 0.8, 240], [2600, 30, 0.9, 200]].map(([x, y, sc, dur], i) =>
   `<g class="drift" style="animation-duration:${dur}s;animation-delay:${-i * 30}s" opacity=".95" pointer-events="none"><g transform="translate(${x} ${y}) scale(${sc})" fill="#fff"><ellipse cx="0" cy="0" rx="46" ry="14"/><circle cx="-14" cy="-10" r="14"/><circle cx="10" cy="-14" r="18"/><circle cx="28" cy="-6" r="11"/></g></g>`).join('');
 
 const DEFS = (colors) => `<defs>
@@ -103,29 +134,33 @@ export function mapSection(app) {
   const step = profile.map.trailStep;
   const wrapEl = h('div', { class: 'world-map' });
   const msg = h('p', { class: 'note', role: 'status', 'aria-live': 'polite' });
-  wrapEl.innerHTML = `<svg class="map" viewBox="0 0 ${W} ${H}" role="group" aria-label="World map">
+  wrapEl.innerHTML = `<div class="map-frame"><div class="map-scroll" tabindex="0" role="region" aria-label="World map. Scroll sideways to explore new lands.">
+  <svg class="map" viewBox="0 0 ${W} ${H}" role="group" aria-label="World map">
   ${DEFS(COLORS)}
   <g clip-path="url(#mapclip)">
   <rect width="${W}" height="${H}" fill="url(#sky)"/>
-  <path d="M0 150 Q90 112 190 138 T400 124 T610 138 T800 112 V${H} H0Z" fill="#45b84d"/>
-  <path d="M0 178 Q120 142 260 170 T520 160 T800 150 V${H} H0Z" fill="url(#grass)"/>
+  <path d="${hills(150, 36, 1)}" fill="#45b84d"/>
+  <path d="${hills(178, 30, 2)}" fill="url(#grass)"/>
   <g class="scene"><g class="layer-decor"></g><g class="layer-regions"></g></g>
   <path class="trail-edge" d="${TRAIL}" fill="none" stroke="#cbbd93" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>
   <path class="trail" d="${TRAIL}" fill="none" stroke="#f7f0d8" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
   <g class="layer-ticks"></g><g class="layer-stops"></g>
   <path class="trail-done" d="${TRAIL}" fill="none" stroke="#ff6a3d" stroke-opacity=".38" stroke-width="34" stroke-linecap="round"/>
-  <g class="layer-landmarks"></g><g class="layer-fog"></g><g class="layer-pins"></g>
+  <g class="layer-landmarks"></g><g class="layer-fog"></g><g class="layer-pins"></g><g class="layer-sign"></g>
   <g class="token" data-settled="false" style="pointer-events:none"></g>
-  <g class="layer-wheel"></g>
   <g class="clouds">${CLOUDS}</g>
-  </g></svg>`;
-  const svg = wrapEl.firstElementChild;
+  </g></svg></div>
+  <div class="wheel-wrap"><svg viewBox="0 0 150 150" width="132" height="132" role="img" class="wheel-svg"></svg></div>
+  <button class="map-arrow left" type="button" aria-label="Scroll the map left"></button><button class="map-arrow right" type="button" aria-label="Scroll the map right"></button></div>
+  <p class="map-hint">Drag, swipe or use the arrows to explore new lands.</p>`;
+  const svg = wrapEl.querySelector('svg.map');
+  const scroller = wrapEl.querySelector('.map-scroll');
   const path = svg.querySelector('.trail');
   const len = path.getTotalLength();
   const at = (n) => path.getPointAtLength((len * n) / TOTAL_STEPS);
   const token = svg.querySelector('.token');
-  const samples = Array.from({ length: 140 }, (_, i) => path.getPointAtLength((len * i) / 139));
-  const centers = REGIONS.map((_, i) => at(i * STEPS_PER_REGION + STEPS_PER_REGION / 2));
+  const samples = Array.from({ length: 420 }, (_, i) => path.getPointAtLength((len * i) / 419));
+  const centers = REGIONS.map((_, i) => at((regionStart(i) + REGION_END[i]) / 2));
 
   // path tile joints and the yellow "stop" tiles that carry the star landmarks
   let ticks = '';
@@ -145,10 +180,10 @@ export function mapSection(app) {
   // park props on the grass, away from the path and the region patches
   const rnd = prng(5), placed = [];
   const clear = (x, y, pad) => samples.every((s) => Math.hypot(s.x - x, s.y - y) > pad + 16) && centers.every((c) => ((x - c.x) / (96 + pad)) ** 2 + ((y - c.y) / (72 + pad)) ** 2 > 1) && placed.every((q) => Math.hypot(q[0] - x, q[1] - y) > 34);
-  for (let i = 0, tries = 0; i < 30 && tries < 900; tries++) {
-    const x = 26 + rnd() * (W - 52), y = 175 + rnd() * (H - 200);
+  for (let i = 0, tries = 0; i < 80 && tries < 2400; tries++) {
+    const x = 26 + rnd() * (W - 52), y = 185 + rnd() * (H - 210);
     if (!clear(x, y, 6)) continue;
-    placed.push([x, y, rnd(), Math.floor(rnd() * PROPS.length)]); i++;
+    placed.push([x, y, rnd(), PROP_PICK[Math.floor(rnd() * PROP_PICK.length)]]); i++;
   }
   placed.sort((a, b) => a[1] - b[1]);
   svg.querySelector('.layer-decor').innerHTML = placed.map(([x, y, k, t]) => PROPS[t](x, y, k)).join('');
@@ -188,7 +223,28 @@ export function mapSection(app) {
 
   // region wheel in the sky: coloured wedges for open regions, a pointer on the current one
   const cur = REGIONS.findIndex((r) => r.id === regionOfStep(Math.max(1, step)));
-  svg.querySelector('.layer-wheel').innerHTML = waveWheel(400, 66, 46, unlocked, cur, companionSvg(profile, { size: 32 }));
+  const wheel = wrapEl.querySelector('.wheel-svg');
+  wheel.innerHTML = waveWheel(75, 78, 46, unlocked, cur, companionSvg(profile, { size: 32 }));
+  wheel.setAttribute('aria-label', `Region wheel: you are in ${REGIONS[cur].name}. ${unlocked.size} of ${REGIONS.length} lands open.`);
+  const endPt = at(TOTAL_STEPS);
+  svg.querySelector('.layer-sign').innerHTML = `<g transform="translate(${endPt.x + 8} ${endPt.y - 34})"><rect x="-2" y="0" width="5" height="40" fill="#8a5a2e"/><rect x="-46" y="-26" width="96" height="30" rx="8" fill="#fff8e1" stroke="#ffb21c" stroke-width="3"/><text x="2" y="-15" text-anchor="middle" font-size="11" font-weight="bold" fill="${INK}">More lands</text><text x="2" y="-2" text-anchor="middle" font-size="11" font-weight="bold" fill="${INK}">coming soon!</text></g>`;
+
+  // Scrolling: native scroll + mouse drag + arrow buttons; the view follows the token.
+  const scale = () => svg.getBoundingClientRect().width / W;
+  const scrollToX = (x, smoothly = false) => scroller.scrollTo({ left: Math.max(0, x * scale() - scroller.clientWidth / 2), behavior: smoothly && !reduceMotion() ? 'smooth' : 'auto' });
+  const arrows = wrapEl.querySelectorAll('.map-arrow');
+  arrows[0].append(icon('chevL')); arrows[1].append(icon('chevR'));
+  const syncArrows = () => { arrows[0].disabled = scroller.scrollLeft < 4; arrows[1].disabled = scroller.scrollLeft > scroller.scrollWidth - scroller.clientWidth - 4; };
+  arrows[0].addEventListener('click', () => scroller.scrollBy({ left: -scroller.clientWidth * 0.7, behavior: reduceMotion() ? 'auto' : 'smooth' }));
+  arrows[1].addEventListener('click', () => scroller.scrollBy({ left: scroller.clientWidth * 0.7, behavior: reduceMotion() ? 'auto' : 'smooth' }));
+  scroller.addEventListener('scroll', syncArrows, { passive: true });
+  let drag = null, justDragged = false;
+  scroller.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button === 0) drag = { x: e.clientX, left: scroller.scrollLeft, moved: false }; });
+  const move = (e) => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 6) { drag.moved = true; scroller.classList.add('dragging'); } if (drag.moved) scroller.scrollLeft = drag.left - dx; };
+  const up = () => { if (drag?.moved) { justDragged = true; setTimeout(() => { justDragged = false; }, 0); } drag = null; scroller.classList.remove('dragging'); };
+  document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+  app.cleanup?.push(() => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); });
+  scroller.addEventListener('click', (e) => { if (justDragged) { e.stopPropagation(); e.preventDefault(); } }, true);
 
   // star stops: one every 10 steps, claimable once
   function drawLandmarks() {
@@ -202,7 +258,9 @@ export function mapSection(app) {
         const r = claimLandmark(profile, el.dataset.landmark);
         if (!r.ok) return;
         store.save(); audio.play('chime');
-        msg.textContent = `Treasure! You found ${r.crickets} crickets${r.boost ? ' and your egg got warmer!' : '!'}`;
+        const won = awardTrophies(profile, app.today());
+        store.save();
+        msg.textContent = `Treasure! You found ${r.crickets} crickets${r.boost ? ' and your egg got warmer!' : '!'}${won.length ? ` New trophy: ${won.map((id) => TROPHIES.find((t) => t.id === id).name).join(', ')}!` : ''}`;
         app.refreshStats?.();
         drawLandmarks();
       };
@@ -223,14 +281,17 @@ export function mapSection(app) {
   const from = Math.min(app.shownStep?.[app.profileId] ?? step, step);
   const settle = () => { token.dataset.settled = 'true'; token.dataset.step = String(step); app.shownStep = { ...(app.shownStep ?? {}), [app.profileId]: step }; };
   token.dataset.step = String(from);
-  if (reduceMotion() || from === step) { place(step); settle(); }
+  const here = (n) => at(n).x;
+  const centre = (n, smoothly) => requestAnimationFrame(() => { scrollToX(here(n), smoothly); syncArrows(); });
+  if (reduceMotion() || from === step) { place(step); settle(); centre(step, false); }
   else {
-    place(from);
+    place(from); centre(from, false);
     const dur = Math.min(1500, 250 * (step - from)), t0 = performance.now();
     const tick = (now) => {
       const k = Math.min(1, (now - t0) / dur);
-      place(from + (step - from) * k);
-      if (k < 1 && token.isConnected) requestAnimationFrame(tick); else { place(step); settle(); }
+      const cursor = from + (step - from) * k;
+      place(cursor); scrollToX(here(cursor), false);
+      if (k < 1 && token.isConnected) requestAnimationFrame(tick); else { place(step); settle(); syncArrows(); }
     };
     requestAnimationFrame(tick);
   }

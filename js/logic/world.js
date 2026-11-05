@@ -5,10 +5,14 @@ import { warmEggs, masteredCount } from './collection.js';
 export const UNLOCKS = [
   { level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 5 },
   { level: 6, mastered: 15 }, { level: 8, mastered: 25 }, { level: 10, mastered: 40 },
+  { level: 12, mastered: 44 }, { level: 14, mastered: 47 }, { level: 16, mastered: 50 },   // the new lands
 ];
-export const STEPS_PER_REGION = 30;
+// Each land's stretch of trail is a little longer than the one before, so progress gets steadily harder.
+export const REGION_STEPS = [30, 32, 34, 36, 38, 40, 42, 44, 46];
+export const REGION_END = REGION_STEPS.reduce((acc, n) => [...acc, (acc.at(-1) ?? 0) + n], []);
+export const regionStart = (i) => (i === 0 ? 0 : REGION_END[i - 1]);
 export const LANDMARK_EVERY = 10;
-export const TOTAL_STEPS = STEPS_PER_REGION * REGIONS.length;
+export const TOTAL_STEPS = REGION_END.at(-1);
 
 export const isUnlocked = (index, { level, mastered }) => level >= UNLOCKS[index].level && mastered >= UNLOCKS[index].mastered;
 
@@ -32,11 +36,12 @@ export function updateUnlocks(profile) {
 // The token may walk to the end of the last unlocked region and waits at the gate there.
 export function maxStep(profile) {
   const highest = Math.max(...profile.map.unlockedRegions.map(regionIndex));
-  return (highest + 1) * STEPS_PER_REGION;
+  return REGION_END[highest];
 }
 
 export function regionOfStep(step) {
-  return REGIONS[Math.min(REGIONS.length - 1, Math.max(0, Math.ceil(step / STEPS_PER_REGION) - 1))].id;
+  const i = REGION_END.findIndex((end) => step <= end);
+  return REGIONS[i < 0 ? REGIONS.length - 1 : i].id;
 }
 
 // One first-try-correct answer = one step. Returns {moved, atGate}.
@@ -47,7 +52,7 @@ export function advanceTrail(profile) {
   return { moved: true, atGate: profile.map.trailStep >= limit && limit < TOTAL_STEPS };
 }
 
-export const LANDMARKS = Array.from({ length: TOTAL_STEPS / LANDMARK_EVERY }, (_, i) => ({ id: `L${(i + 1) * LANDMARK_EVERY}`, step: (i + 1) * LANDMARK_EVERY }));
+export const LANDMARKS = Array.from({ length: Math.floor(TOTAL_STEPS / LANDMARK_EVERY) }, (_, i) => ({ id: `L${(i + 1) * LANDMARK_EVERY}`, step: (i + 1) * LANDMARK_EVERY }));
 export const isReached = (profile, lm) => profile.map.trailStep >= lm.step;
 export const isClaimed = (profile, lm) => profile.map.claimedLandmarks.includes(lm.id);
 

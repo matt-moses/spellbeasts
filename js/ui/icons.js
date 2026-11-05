@@ -22,6 +22,8 @@ export const ICONS = {
   paw: I('<g fill="currentColor"><ellipse cx="12" cy="16" rx="5" ry="4"/><ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.5" rx="2" ry="2.7"/><ellipse cx="14.5" cy="6.5" rx="2" ry="2.7"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/></g>'),
   lock: I('<rect fill="currentColor" x="4.5" y="10.5" width="15" height="10.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2.4"/>'),
   play: I('<path fill="currentColor" d="M6 3.5l15 8.5-15 8.5z"/>'),
+  chevL: I('<path d="M15 4.5L7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>'),
+  chevR: I('<path d="M9 4.5L16.5 12 9 19.5" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>'),
   eggbook: I('<path fill="currentColor" d="M12 2C16 2 19 9 19 14a7 7 0 0 1-14 0C5 9 8 2 12 2z"/>'),
 };
 

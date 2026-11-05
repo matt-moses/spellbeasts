@@ -31,8 +31,8 @@ test('choosing a starter puts it in the Sanctuary and the Creature book', { skip
   assert.match(await page.textContent('.hungry'), /hungry/);
   await page.click('button:text-is("Creature book")');
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), /1 of 18 discovered/);
-  assert.equal(await page.locator('.book-entry.unknown').count(), 17);
+  assert.match(await page.textContent('.book p'), /1 of 27 discovered/);
+  assert.equal(await page.locator('.book-entry.unknown').count(), 26);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -62,7 +62,7 @@ test('an egg warmed by correct answers hatches, shows up everywhere, and pays Fi
   assert.equal(await page.locator('.creature-card').count(), 2);
   await page.click('button:text-is("Creature book")');
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), /2 of 18 discovered/);
+  assert.match(await page.textContent('.book p'), /2 of 27 discovered/);
   assert.equal(await page.locator('.book-entry.owned[data-species=glowmoth]').count(), 1);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('spellbeasts.v1')).profiles.p1);
   assert.equal(saved.eggsHatched, 1);

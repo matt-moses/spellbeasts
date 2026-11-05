@@ -29,7 +29,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
     profile.level = lvl;
   };
 
-  const award = (extra) => { tally.trophies.push(...awardTrophies(profile, today, { bestRun: tally.bestRun, ...extra })); };
+  const award = (extra) => { tally.trophies.push(...awardTrophies(profile, today, { bestRun: tally.bestRun, wordsInList: list.words.length, ...extra })); };
 
   const api = {
     get mode() { return mode; },

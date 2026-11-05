@@ -9,9 +9,9 @@ let env;
 before(async () => { if (hasBrowser) env = await launch(); });
 after(async () => { await env?.close(); });
 
-test('all 54 creature SVGs are well-formed XML, self-contained and actually draw something', { skip }, async () => {
+test('all 81 creature SVGs are well-formed XML, self-contained and actually draw something', { skip }, async () => {
   const svgs = SPECIES.flatMap((s) => [1, 2, 3].map((st) => ({ id: `${s.id}-${st}`, svg: creatureSvg(s.id, st) })));
-  assert.equal(svgs.length, 54);
+  assert.equal(svgs.length, 81);
   for (const { id, svg } of svgs) {                       // cheap static rules
     assert.match(svg, /viewBox="0 0 100 100"/, id);
     assert.doesNotMatch(svg, /<image|<script|href=|url\(|http/i, id);
@@ -24,7 +24,7 @@ test('all 54 creature SVGs are well-formed XML, self-contained and actually draw
   assert.deepEqual(bad, []);
   await page.setContent(`<div id="g">${svgs.map((x) => x.svg).join('')}</div>`);
   const sizes = await page.evaluate(() => [...document.querySelectorAll('#g svg')].map((s) => { const b = s.querySelector('.idle').getBBox(); return [b.width, b.height]; }));
-  assert.equal(sizes.length, 54);
+  assert.equal(sizes.length, 81);
   for (const [w, h] of sizes) assert.ok(w > 30 && h > 30, `tiny drawing ${w}x${h}`);
   await page.close();
 });

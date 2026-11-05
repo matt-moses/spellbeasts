@@ -6,7 +6,7 @@ import { rng } from '../helpers.js';
 const region = { common: 'c', uncommon: 'u', rare: 'r' };
 
 test('prices rise by region and duplicates pay half', () => {
-  assert.deepEqual([0, 1, 2, 3, 4, 5].map(eggPrice), [20, 30, 40, 50, 60, 75]);
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8].map(eggPrice), [20, 30, 40, 50, 60, 75, 90, 105, 125]);
   assert.equal(duplicateCrickets(0), 10);
   assert.equal(duplicateCrickets(5), 37);
 });

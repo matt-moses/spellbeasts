@@ -6,6 +6,9 @@ export const REGIONS = [
   { id: 'r4', name: 'Moonlit Highlands' },
   { id: 'r5', name: 'Coral Reef' },
   { id: 'r6', name: 'Cloudspire' },
+  { id: 'r7', name: 'Crystal Caves' },
+  { id: 'r8', name: 'Sunset Dunes' },
+  { id: 'r9', name: 'Starfall Isles' },
 ];
 
 // Each region: 1 common, 1 uncommon, 1 rare. `art` drives the SVG builder (js/assets/creatures.js).
@@ -51,6 +54,27 @@ export const SPECIES = [
     art: { pal: ['#3fb8c9', '#1b6f7c', '#d1f6fb'], body: 'round', ears: 'none', tail: 'none', face: 'wide', s1: ['shell', 'antennae'], s2: ['crystals', 'horns'], s3: ['crystals', 'stars', 'crown'] } },
   { id: 'skycalf', name: 'Skycalf', region: 'r6', rarity: 'rare', flavor: 'A baby sky whale who sings in low, sleepy hums.',
     art: { pal: ['#5a86c8', '#2c4f8c', '#d8e6fb'], body: 'wide', ears: 'fin', tail: 'curl', face: 'sleepy', s1: ['bubbles'], s2: ['spikes', 'stars'], s3: ['crown', 'stars', 'bigwings'] } },
+
+  { id: 'pebblepup', name: 'Pebblepup', region: 'r7', rarity: 'common', flavor: 'Collects shiny pebbles and keeps the best ones under its pillow.',
+    art: { pal: ['#9a8fb0', '#5c5270', '#e4dcf2'], body: 'round', ears: 'round', tail: 'tuft', face: 'sleepy', s2: ['crystals', 'cheeks'], s3: ['crown', 'stars'] } },
+  { id: 'geodeling', name: 'Geodeling', region: 'r7', rarity: 'uncommon', flavor: 'Plain on the outside, sparkling on the inside, just like a geode.',
+    art: { pal: ['#7d6fc9', '#43388a', '#c9f0ff'], body: 'block', ears: 'none', tail: 'none', face: 'wide', s1: ['crystals'], s2: ['crystals', 'cheeks'], s3: ['crown', 'stars'] } },
+  { id: 'gemdrake', name: 'Gemdrake', region: 'r7', rarity: 'rare', flavor: 'Its scales glow in the dark and sing when the cave hums.',
+    art: { pal: ['#c04fa0', '#7a2a68', '#ffd1f0'], body: 'long', ears: 'fin', tail: 'curl', face: 'fierce', s1: ['horns'], s2: ['wings', 'crystals'], s3: ['bigwings', 'crown', 'stars'] } },
+
+  { id: 'dunefox', name: 'Dunefox', region: 'r8', rarity: 'common', flavor: 'Giant ears hear a snack rustling three dunes away.',
+    art: { pal: ['#e8c27a', '#a87a2e', '#fff1cf'], body: 'tall', ears: 'long', tail: 'fluff', face: 'smirk', s2: ['whiskers', 'cheeks'], s3: ['crown', 'stars'] } },
+  { id: 'scarabit', name: 'Scarabit', region: 'r8', rarity: 'uncommon', flavor: 'Rolls a tiny golden sun across the sand every evening.',
+    art: { pal: ['#d9692b', '#8a3a12', '#ffd9b0'], body: 'round', ears: 'none', tail: 'none', face: 'wide', s1: ['shell', 'antennae'], s2: ['horns', 'spikes'], s3: ['crown', 'stars'] } },
+  { id: 'sandwyrm', name: 'Sandwyrm', region: 'r8', rarity: 'rare', flavor: 'Swims under the dunes and pops up to say hello.',
+    art: { pal: ['#e0a23a', '#8a5a12', '#fff0c2'], body: 'long', ears: 'fin', tail: 'curl', face: 'fierce', s1: ['spikes'], s2: ['horns', 'wings'], s3: ['bigwings', 'crown', 'flame'] } },
+
+  { id: 'lumifin', name: 'Lumifin', region: 'r9', rarity: 'common', flavor: 'Glows softly so the other fish never get lost at night.',
+    art: { pal: ['#4fa8e8', '#1f5fa8', '#d8f0ff'], body: 'wide', ears: 'fin', tail: 'curl', face: 'wide', s1: ['bubbles'], s2: ['cheeks', 'stars'], s3: ['crown', 'stars', 'bigwings'] } },
+  { id: 'nebulynx', name: 'Nebulynx', region: 'r9', rarity: 'uncommon', flavor: 'Leaves a trail of stardust and pounces on shooting stars.',
+    art: { pal: ['#7a5fd6', '#3a2a8a', '#eadfff'], body: 'tall', ears: 'point', tail: 'fluff', face: 'smirk', s1: ['whiskers'], s2: ['stars', 'wings'], s3: ['bigwings', 'crown', 'stars'] } },
+  { id: 'solphoenix', name: 'Solphoenix', region: 'r9', rarity: 'rare', flavor: 'Rises from its own sparks each sunrise, never in a bad mood.',
+    art: { pal: ['#ff7a3a', '#b8341a', '#ffe0a0'], body: 'round', ears: 'none', tail: 'flame', face: 'fierce', s1: ['beak'], s2: ['wings', 'flame'], s3: ['bigwings', 'crown', 'stars'] } },
 ];
 
 export const STARTER_IDS = ['burrowby', 'puddlenite', 'embernewt'];       // 3 commons (PRD 11)

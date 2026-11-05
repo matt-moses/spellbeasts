@@ -215,3 +215,18 @@ progress::-webkit-progress-value { background:var(--green); border-radius:999px;
 progress::-moz-progress-bar { background:var(--green); border-radius:999px; }
 .xpbar::-webkit-progress-value { background:var(--purple); }
 .xpbar::-moz-progress-bar { background:var(--purple); }
+
+/* ---------- scrollable world map ---------- */
+.map-frame { position:relative; border-radius:28px; border:6px solid #fff; overflow:hidden; background:#8fdcff; box-shadow:0 8px 0 rgba(20,60,120,.18), 0 14px 26px rgba(20,60,120,.2); }
+.map-scroll { overflow-x:auto; overflow-y:hidden; cursor:grab; scrollbar-width:thin; scrollbar-color:#ffb21c #e9f6ff; }
+.map-scroll.dragging { cursor:grabbing; user-select:none; }
+.map-scroll:focus-visible { outline:4px solid #ff9f1a; outline-offset:-4px; }
+.map { height:clamp(380px, 62vw, 560px); width:auto; max-width:none; display:block; border:0; border-radius:0; box-shadow:none; }
+.wheel-wrap { position:absolute; top:4px; left:50%; transform:translateX(-50%); pointer-events:none; }
+.map-arrow { position:absolute; top:50%; transform:translateY(-50%); width:52px; height:52px; padding:0; border-radius:50%; background:#fff; color:var(--blue-d); box-shadow:0 4px 0 var(--lip), 0 6px 12px rgba(20,40,80,.25); z-index:2; }
+.map-arrow.left { left:8px; } .map-arrow.right { right:8px; }
+.map-arrow:active:not(:disabled) { transform:translateY(-50%) translateY(3px); }
+.map-arrow:hover:not(:disabled) { transform:translateY(-50%); }
+.map-arrow:disabled { opacity:0; pointer-events:none; }
+.map-arrow .ico svg { width:26px; height:26px; }
+.map-hint { text-align:center; margin:.4rem 0 0; font-size:.95rem; color:#1c4a2c; font-weight:bold; text-shadow:0 1px 0 rgba(255,255,255,.6); }

@@ -12,10 +12,12 @@ after(async () => { await env?.close(); });
 
 // ---------------------------------------------------------------- the oracle (PRD rules, re-derived)
 const SAMPLE = ['garden', 'rainbow', 'whisper', 'island', 'library', 'Monday', 'February', 'thunder', 'bicycle', 'mountain', 'kitchen', 'Canada', 'pencil', 'window', 'journey'];
-const PRICE = [20, 30, 40, 50, 60, 75];
-const UNLOCK = [[1, 0], [2, 0], [4, 5], [6, 15], [8, 25], [10, 40]];
+const PRICE = [20, 30, 40, 50, 60, 75, 90, 105, 125];
+const UNLOCK = [[1, 0], [2, 0], [4, 5], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50]];
+const TRAIL_END = [30, 32, 34, 36, 38, 40, 42, 44, 46].reduce((a, n) => [...a, (a.at(-1) ?? 0) + n], []);   // each land's stretch of trail is longer
+const RARE = new Set(['Glowmoth', 'Mossgolem', 'Stormwyrm', 'Starcub', 'Inkwell', 'Skycalf', 'Gemdrake', 'Sandwyrm', 'Solphoenix']);
 const BOX_DAYS = [0, 2, 4, 7, 14];                                   // box 1..5 -> days until due
-const TROPHY_NAMES = { 'first-hatch': 'First Hatch', 'busy-bee': 'Busy Bee', 'perfect-flight': 'Perfect Flight', 'streak-10': 'Streak of 10', comeback: 'Comeback', 'capital-idea': 'Capital Idea', 'mastered-10': '10 Mastered', 'mastered-25': '25 Mastered', 'mastered-50': '50 Mastered', 'day-streak-3': '3-Day Streak', 'day-streak-7': '7-Day Streak', collector: 'Collector', 'fully-evolved': 'Fully Evolved' };
+const TROPHY_NAMES = { 'first-hatch': 'First Hatch', 'capital-idea': 'Capital Idea', comeback: 'Comeback', 'perfect-flight': 'Perfect Flight', 'busy-bee': 'Busy Bee', 'sessions-25': 'Practice Pro', 'sessions-50': 'Super Bee', 'perfect-5': 'Flawless Five', 'streak-10': 'Streak of 10', 'streak-20': 'Unstoppable', 'first-try-100': 'Sharp Speller', 'first-try-500': 'Word Wizard', 'mastered-10': '10 Mastered', 'mastered-25': '25 Mastered', 'mastered-50': '50 Mastered', 'word-master': 'Word Master', 'day-streak-3': '3-Day Streak', 'day-streak-7': '7-Day Streak', 'day-streak-14': 'Fortnight Fan', 'day-streak-30': 'Month of Magic', 'level-5': 'Rising Star', 'level-10': 'Trainer Pro', 'level-15': 'Legend', 'explorer-3': 'Trailblazer', 'explorer-6': 'Adventurer', 'explorer-9': 'World Traveler', 'walk-50': 'Long Walk', 'walk-150': 'Marathon Walker', 'stars-5': 'Treasure Hunter', 'stars-20': 'Star Collector', collector: 'Collector', 'collector-20': 'Big Collector', 'collector-all': 'Complete Collection', 'rare-find': 'Rare Find', 'hearts-5': 'Best Friends', 'fully-evolved': 'Fully Evolved', 'growing-family': 'Growing Family' };
 const addDays = (d, n) => { const t = new Date(`${d}T00:00:00Z`); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 const dayDiff = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 864e5);
 const mondayOf = (d) => addDays(d, -((new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7));
@@ -23,11 +25,11 @@ const levelOf = (xp) => { let n = 1, need = 0; for (;;) { need += 50 * (n + 1); 
 
 function newOracle() {
   return { crickets: 0, xp: 0, trail: 0, unlocked: new Set([0]), stats: {}, eggs: [], claimed: new Set(), starter: { stage: 1, fed: 0 }, creatures: 1, species: new Set(['Burrowby']),
-    hatched: 0, sessionsDone: 0, sessionDays: new Set(), streak: { cur: 0, last: null, rest: null }, trophies: new Set(), cases: 0, chestOpens: 0, evolves: 0, levelUps: 0 };
+    hatched: 0, hearts: 0, perfect: 0, sessionsDone: 0, sessionDays: new Set(), streak: { cur: 0, last: null, rest: null }, trophies: new Set(), cases: 0, chestOpens: 0, evolves: 0, levelUps: 0 };
 }
 const level = (o) => levelOf(o.xp);
 const mastered = (o) => Object.values(o.stats).filter((s) => s.days.size >= 3).length;
-const gate = (o) => (Math.max(...o.unlocked) + 1) * 30;
+const gate = (o) => TRAIL_END[Math.max(...o.unlocked)];
 function refreshUnlocks(o) {
   const newly = [];
   UNLOCK.forEach(([lv, m], i) => { if (!o.unlocked.has(i) && level(o) >= lv && mastered(o) >= m) { o.unlocked.add(i); newly.push(i); } });
@@ -67,19 +69,26 @@ function applyAnswer(o, s, { word, correct, first, day }) {
   }
   return { crickets, newlyMastered, newlyMasteredWord: newlyMastered ? word : null };
 }
-function sessionTrophies(o, s, day) {                                  // which trophies this session should have shown
-  const got = new Set(), has = (id) => o.trophies.has(id) || got.has(id);
-  const add = (id) => { if (!has(id)) got.add(id); };
-  if (s.capital) add('capital-idea');
-  if (s.comeback) add('comeback');
-  if (s.bestRun >= 10) add('streak-10');
-  if (mastered(o) >= 10) add('mastered-10'); if (mastered(o) >= 25) add('mastered-25'); if (mastered(o) >= 50) add('mastered-50');
-  if (o.sessionsDone + 1 >= 5) add('busy-bee');
-  if (s.misses === 0) add('perfect-flight');
-  const st = streakAfter(o.streak, day);
-  if (st.cur >= 3) add('day-streak-3'); if (st.cur >= 7) add('day-streak-7');
-  return got;
+// Every trophy the PRD-level rules say should be held right now. `f` carries this-session facts.
+function satisfied(o, f = {}) {
+  const ids = new Set(), add = (ok, id) => { if (ok) ids.add(id); };
+  const lv = level(o), m = mastered(o), ftTotal = Object.values(o.stats).reduce((n, st) => n + st.ftc, 0);
+  add(o.hatched >= 1, 'first-hatch'); add(f.capital, 'capital-idea'); add(f.comeback, 'comeback'); add(f.perfect, 'perfect-flight');
+  [[5, 'busy-bee'], [25, 'sessions-25'], [50, 'sessions-50']].forEach(([n, id]) => add(o.sessionsDone >= n, id));
+  add(o.perfect >= 5, 'perfect-5'); add((f.bestRun ?? 0) >= 10, 'streak-10'); add((f.bestRun ?? 0) >= 20, 'streak-20');
+  add(ftTotal >= 100, 'first-try-100'); add(ftTotal >= 500, 'first-try-500');
+  [[10, 'mastered-10'], [25, 'mastered-25'], [50, 'mastered-50']].forEach(([n, id]) => add(m >= n, id));
+  add(f.inSession && SAMPLE.length >= 10 && m >= SAMPLE.length, 'word-master');   // only checked while practising
+  [[3, 'day-streak-3'], [7, 'day-streak-7'], [14, 'day-streak-14'], [30, 'day-streak-30']].forEach(([n, id]) => add(o.streak.cur >= n, id));
+  [[5, 'level-5'], [10, 'level-10'], [15, 'level-15']].forEach(([n, id]) => add(lv >= n, id));
+  [[3, 'explorer-3'], [6, 'explorer-6'], [9, 'explorer-9']].forEach(([n, id]) => add(o.unlocked.size >= n, id));
+  add(o.trail >= 50, 'walk-50'); add(o.trail >= 150, 'walk-150'); add(o.claimed.size >= 5, 'stars-5'); add(o.claimed.size >= 20, 'stars-20');
+  add(o.creatures >= 10, 'collector'); add(o.creatures >= 20, 'collector-20'); add(o.species.size >= 27, 'collector-all');
+  add([...o.species].some((n) => RARE.has(n)), 'rare-find'); add(o.hearts >= 5, 'hearts-5');
+  add(o.starter.stage >= 3, 'fully-evolved'); add((o.starter.stage >= 2 ? 1 : 0) >= 3, 'growing-family');
+  return ids;
 }
+const earnNow = (o, f) => { const fresh = [...satisfied(o, f)].filter((id) => !o.trophies.has(id)); fresh.forEach((id) => o.trophies.add(id)); return fresh; };
 function streakAfter(st, day) {
   if (st.last === day) return st;
   const missed = st.last ? dayDiff(st.last, day) - 1 : null;
@@ -176,7 +185,7 @@ test('whole game: two weeks of play checked against an independent model, with z
     assert.equal((await page.textContent('.due')).trim(), `${due} word${due === 1 ? '' : 's'} due today · ${fresh} new word${fresh === 1 ? '' : 's'} to learn`, `home ${day}: due line`);
     assert.equal(Number(await page.getAttribute('.token', 'data-step')), o.trail, `home ${day}: token position`);
     assert.equal(await page.locator('.nest-link').count(), o.unlocked.size, `home ${day}: open nests`);
-    assert.equal(await page.locator('.fog[data-locked=true]').count(), 6 - o.unlocked.size, `home ${day}: fogged regions`);
+    assert.equal(await page.locator('.fog[data-locked=true]').count(), 9 - o.unlocked.size, `home ${day}: fogged regions`);
     assert.equal(await page.locator('.hungry').count(), o.sessionDays.has(day) ? 0 : 1, `home ${day}: hungry reminder`);
 
     // ---- treasure stars (every 10 steps, once each)
@@ -189,6 +198,10 @@ test('whole game: two weeks of play checked against an independent model, with z
       const gained = (await me()).crickets - before;
       assert.ok(gained >= 5 && gained <= 15, `chest paid ${gained}`);
       o.crickets += gained; o.claimed.add(step); o.chestOpens++;
+      const chestTrophies = earnNow(o, {});
+      const note = await page.textContent('.world-map .note');
+      for (const id of chestTrophies) assert.match(note, new RegExp(TROPHY_NAMES[id]), `${day}: chest note should announce ${id}`);
+      if (!chestTrophies.length) assert.doesNotMatch(note, /New trophy/, `${day}: unexpected trophy announcement`);
       if (/warmer/.test(await page.textContent('.world-map .note'))) {
         const egg = o.eggs.find((e) => e.progress < e.needed);
         assert.ok(egg, 'egg boost reported but no egg was warming');
@@ -282,10 +295,9 @@ test('whole game: two weeks of play checked against an independent model, with z
       const lvlAfter = level(o);
       if (lvlAfter > levelBefore) { s.leveled = true; o.levelUps++; }
       for (const i of refreshUnlocks(o)) s.unlocked.push(i);
-      const newTrophies = sessionTrophies(o, s, day);
       { const prev = o.streak.cur; o.streak = streakAfter(o.streak, day); if (o.streak.cur < prev) streakResets++; }
-      o.sessionDays.add(day); o.sessionsDone++;
-      for (const t of newTrophies) o.trophies.add(t);
+      o.sessionDays.add(day); o.sessionsDone++; if (s.misses === 0) o.perfect++;
+      const newTrophies = earnNow(o, { inSession: true, capital: s.capital, comeback: s.comeback, perfect: s.misses === 0, bestRun: s.bestRun });
 
       const res = await page.textContent('.results');
       assert.equal(digits(res, /first try: (\d+) of/), s.ftCorrect, `${day}: first-try count`);
@@ -301,7 +313,7 @@ test('whole game: two weeks of play checked against an independent model, with z
       const names = await page.$$eval('.new-trophies .trophy-card strong', (e) => e.map((x) => x.textContent));
       assert.deepEqual(names.sort(), [...newTrophies].map((t) => TROPHY_NAMES[t]).sort(), `${day}: trophies on summary`);
       const regionMsg = (await page.locator('.region-unlocked').count()) ? await page.textContent('.region-unlocked') : '';
-      assert.equal((regionMsg.match(/Misty Marsh|Ember Peaks|Moonlit Highlands|Coral Reef|Cloudspire/g) ?? []).length, s.unlocked.length, `${day}: unlock message`);
+      assert.equal((regionMsg.match(/Misty Marsh|Ember Peaks|Moonlit Highlands|Coral Reef|Cloudspire|Crystal Caves|Sunset Dunes|Starfall Isles/g) ?? []).length, s.unlocked.length, `${day}: unlock message`);
       assert.equal((await page.locator('#levelup-ok').count()) === 1, s.leveled, `${day}: level-up celebration`);
       if (s.leveled) assert.match(await page.textContent('.levelup-overlay h2'), new RegExp(`Level ${lvlAfter}!`));
       await noJunk(`summary ${day}`);
@@ -343,10 +355,8 @@ test('whole game: two weeks of play checked against an independent model, with z
       assert.equal(dup, o.species.has(name), `${day}: duplicate flag for ${name}`);
       o.eggs.splice(ready, 1); o.hatched++;
       if (dup) o.crickets += Math.floor(PRICE[egg.idx] / 2); else { o.species.add(name); o.creatures++; }
-      const bonusTrophies = [];
-      if (o.hatched === 1) bonusTrophies.push('first-hatch');
-      if (o.creatures >= 10) bonusTrophies.push('collector');
-      for (const t of bonusTrophies) if (!o.trophies.has(t)) { o.trophies.add(t); assert.match(await page.textContent('.reveal'), new RegExp(TROPHY_NAMES[t])); }
+      if (dup) o.hearts++;
+      for (const t of earnNow(o, {})) assert.match(await page.textContent('.reveal'), new RegExp(TROPHY_NAMES[t]), `${day}: hatch should announce ${t}`);
       await noJunk(`hatch ${day}`);
       await compare(`hatched ${name} (${day})`);
     }
@@ -368,7 +378,7 @@ test('whole game: two weeks of play checked against an independent model, with z
       await page.click('.creature-card:first-child .evolve');
       await page.waitForSelector('.reveal');
       o.starter.stage++; o.starter.fed = 0; o.evolves++;
-      if (o.starter.stage === 3 && !o.trophies.has('fully-evolved')) o.trophies.add('fully-evolved');
+      for (const t of earnNow(o, {})) assert.match(await page.textContent('.reveal'), new RegExp(TROPHY_NAMES[t]), `${day}: evolve should announce ${t}`);
       await compare(`evolved ${day}`);
     }
     await noJunk(`sanctuary ${day}`);
@@ -381,7 +391,7 @@ test('whole game: two weeks of play checked against an independent model, with z
   assert.deepEqual(earnedNames.sort(), [...o.trophies].map((t) => TROPHY_NAMES[t]).sort(), 'trophy case matches');
   await page.goto(`${env.server.url}#/book`);
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), new RegExp(`${o.species.size} of 18 discovered`));
+  assert.match(await page.textContent('.book p'), new RegExp(`${o.species.size} of 27 discovered`));
 
   await page.goto(`${env.server.url}#/parent`);
   await page.waitForSelector('#gate-answer');
