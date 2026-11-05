@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isAdultBirthYear, birthYearChoices, statsRows, sortRows, mostMissed, previewImport, importIntoList, createListFromImport, renameList, editWord, deleteWord, resetSampleList, setActiveList, renameProfile, deleteProfile, resetProgress, exportJson, parseBackup } from '../../js/logic/parent.js';
+import { listUsers, unassignList, deleteList, isAdultBirthYear, birthYearChoices, statsRows, sortRows, mostMissed, previewImport, importIntoList, createListFromImport, renameList, editWord, deleteWord, resetSampleList, setActiveList, renameProfile, deleteProfile, resetProgress, exportJson, parseBackup } from '../../js/logic/parent.js';
 import { freshState, freshProfile } from '../../js/logic/storage-schema.js';
 import { addStarter } from '../../js/logic/collection.js';
 import { applyAttempt } from '../../js/logic/leitner.js';
@@ -150,4 +150,23 @@ test('backup round-trips ALL data exactly, and bad files are rejected with a fri
     assert.equal(r.ok, false, bad);
     assert.ok(r.error.length > 10);
   }
+});
+
+test('lists and trainers: who uses a list, unassigning, and deleting a list moves its trainers and drops its progress', () => {
+  const state = freshState();
+  const mk = (n) => { const p = freshProfile({ name: n, avatarSpecies: 'burrowby' }); state.profiles[n] = p; return p; };
+  const a = mk('A'), b = mk('B');
+  const { id } = createListFromImport(state, 'Easy', 'cat|noun|pet\ndog|noun|pet');
+  setActiveList(state, 'B', id);
+  a.wordStats.sample = { garden: { box: 2 } }; b.wordStats[id] = { cat: { box: 3 } };
+  assert.deepEqual(listUsers(state, id).map(([k]) => k), ['B']);
+  assert.deepEqual(listUsers(state, 'sample').map(([k]) => k), ['A']);
+  assert.equal(unassignList(state, 'A', id), false, 'A is not on that list');
+  assert.equal(unassignList(state, 'B', id), true); assert.equal(b.activeListId, 'sample');
+  setActiveList(state, 'B', id);
+  assert.equal(deleteList(state, 'sample'), false, 'the sample list cannot be deleted');
+  assert.equal(deleteList(state, id), true);
+  assert.equal(state.wordLists[id], undefined); assert.equal(b.activeListId, 'sample'); assert.equal(b.wordStats[id], undefined);
+  assert.ok(a.wordStats.sample.garden, 'others keep their progress');
+  assert.equal(deleteList(state, 'nope'), false);
 });

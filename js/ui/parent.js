@@ -64,7 +64,19 @@ export function parentView(app) {
     const nameIn = h('input', { id: 'list-name', type: 'text', value: list.name, 'aria-label': 'List name' });
     out.append(h('div', { class: 'panel row' }, sel, nameIn,
       h('button', { class: 'secondary', id: 'rename-list', onclick: () => { if (P.renameList(st(), ui.listId, nameIn.value)) { save(); say('List renamed.'); redraw(); } } }, 'Rename list'),
+      ui.listId !== 'sample' ? confirmButton('Delete this list', () => { P.deleteList(st(), ui.listId); ui.listId = 'sample'; save(); say('List deleted. Its trainers moved to the sample list.'); redraw(); }, { sure: 'Yes, delete the list' }) : null,
       ui.listId === 'sample' ? confirmButton('Reset sample list', () => { P.resetSampleList(st()); save(); say('Sample list restored.'); redraw(); }) : null));
+
+    // who practises this list
+    const users = P.listUsers(st(), ui.listId).map(([id]) => id);
+    out.append(h('div', { class: 'panel who' }, h('h2', {}, 'Who practices this list?'),
+      Object.keys(st().profiles).length
+        ? h('div', {}, Object.entries(st().profiles).map(([id, p]) => h('label', { class: 'toggle' },
+          h('input', { type: 'checkbox', 'data-profile': id, checked: users.includes(id), disabled: users.includes(id) && Object.keys(st().wordLists).length < 2,
+            onchange: (e) => { if (e.target.checked) P.setActiveList(st(), id, ui.listId); else P.unassignList(st(), id, ui.listId); save(); say(e.target.checked ? `${p.name} now practices “${list.name}”.` : `${p.name} moved to another list.`); redraw(); } }), ` ${p.name}`,
+          h('small', { class: 'small' }, users.includes(id) ? '' : ` (now: ${st().wordLists[p.activeListId]?.name ?? '?'})`))))
+        : h('p', { class: 'small' }, 'No trainers yet.'),
+      h('p', { class: 'small' }, 'Each trainer practices one list at a time, and keeps separate progress for each list. A younger player can have an easier list than an older one.')));
 
     // import panel
     const ta = h('textarea', { id: 'import-text', rows: 7, spellcheck: 'false', placeholder: 'word | part of speech | definition | sentence (optional)\none word per line. Tab, | or comma separators. Lines starting with # are ignored.' });

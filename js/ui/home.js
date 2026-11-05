@@ -54,6 +54,7 @@ export function homeView(app) {
         h('small', {}, ` ${lp.into}/${lp.needed} XP to level ${lp.level + 1}`))),
     readyEggs(profile).length ? h('p', { class: 'bubble ready-egg', role: 'status' }, '🥚', ' An egg is ready to hatch!') : null,
     hungry ? h('p', { class: 'bubble hungry', role: 'status' }, 'Your creatures are hungry! Practice to feed them.') : null,
+    Object.keys(store.state.wordLists).length > 1 ? h('p', { class: 'small', id: 'list-name' }, `Word list: ${list.name}`) : null,
     h('p', { class: 'due' }, `${due} word${due === 1 ? '' : 's'} due today · ${fresh} new word${fresh === 1 ? '' : 's'} to learn`),
     h('div', { class: 'actions' },
       h('button', { class: 'primary big', id: 'practice', onclick: () => start(false) }, icon('play'), 'Practice'),

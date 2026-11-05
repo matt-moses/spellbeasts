@@ -248,3 +248,54 @@ test('say-it-like: set in the editor, spoken in practice (word, slow, sentence),
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test('two trainers, two lists: assign in the Parent area, each practises only their own words with separate progress', { skip }, async () => {
+  const { page, context, errors } = await open((p, st) => {
+    st.wordLists.sample.words = st.wordLists.sample.words.filter((w) => ['garden', 'island', 'Monday'].includes(w.word));
+    st.profiles.p2 = { ...JSON.parse(JSON.stringify(p)), name: 'Little Lou', activeListId: 'sample' };
+  }, { words: ['garden', 'island', 'Monday'] });
+  // build an easy list for the younger player
+  await page.fill('#import-text', 'cat | noun | a pet\ndog | noun | another pet');
+  await page.check('input[value=new]'); await page.fill('#new-list-name', 'Easy words');
+  await page.click('#do-import'); await page.waitForSelector('#parent-note');
+  assert.match(await page.textContent('#list-select option:checked'), /Easy words/);
+  assert.equal(await page.locator('.who input:checked').count(), 0);
+  await page.check('.who input[data-profile=p2]');
+  await page.waitForSelector('#parent-note');
+  assert.match(await page.textContent('#parent-note'), /Little Lou now practices “Easy words”/);
+  let st = await saved(page);
+  assert.deepEqual([st.profiles.p1.activeListId, st.profiles.p2.activeListId === 'sample'], ['sample', false]);
+
+  await page.click('#parent-back'); await page.waitForSelector('#practice');
+  await page.click('button:text-is("Switch trainer")'); await page.waitForSelector('.card');
+  const practise = async (name) => {
+    await page.click(`.card:has-text("${name}")`); await page.waitForSelector('#practice');
+    const heard = new Set();
+    await page.click('#practice'); await page.waitForSelector('#answer');
+    for (let i = 0; i < 12 && !page.url().endsWith('#/summary'); i++) {
+      const w = await page.evaluate(() => window.__spoken.at(-1).text); heard.add(w);
+      const n = await page.evaluate(() => window.__spoken.length);
+      await page.fill('#answer', w); await page.press('#answer', 'Enter');
+      await page.waitForFunction((k) => window.__spoken.length > k || location.hash === '#/summary', n);
+    }
+    await page.waitForSelector('.summary'); await page.click('#done'); await page.waitForSelector('#practice');
+    return [...heard].sort();
+  };
+  assert.deepEqual(await practise('Little Lou'), ['cat', 'dog']);
+  assert.match(await page.textContent('#list-name'), /Easy words/);
+  await page.click('button:text-is("Switch trainer")'); await page.waitForSelector('.card');
+  assert.deepEqual(await practise('Sam'), ['Monday', 'garden', 'island']);
+  assert.match(await page.textContent('#list-name'), /Sample words/);
+  st = await saved(page);
+  assert.deepEqual(Object.keys(st.profiles.p2.wordStats).filter((k) => k !== 'sample'), [Object.keys(st.wordLists).find((k) => k !== 'sample')]);
+
+  // delete the easy list: Little Lou goes back to the sample list and the list is gone
+  await page.click('#parent-link'); await unlock(page);
+  await page.selectOption('#list-select', { label: 'Easy words (2)' });
+  await page.click('.row .confirm-wrap button >> text=Delete this list'); await page.click('.confirm .yes');
+  await page.waitForSelector('#parent-note');
+  st = await saved(page);
+  assert.deepEqual([Object.keys(st.wordLists), st.profiles.p2.activeListId], [['sample'], 'sample']);
+  assert.deepEqual(errors, []);
+  await context.close();
+});

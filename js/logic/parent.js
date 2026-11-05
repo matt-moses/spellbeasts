@@ -119,6 +119,28 @@ export function setActiveList(state, profileId, listId) {
   state.profiles[profileId].activeListId = listId;
   return true;
 }
+// Trainers (id, profile) currently practising a list.
+export const listUsers = (state, listId) => Object.entries(state.profiles).filter(([, p]) => p.activeListId === listId);
+
+// Stop a trainer using `listId`: they move to the sample list, or the first other list. Returns false if there is none.
+export function unassignList(state, profileId, listId) {
+  const p = state.profiles[profileId];
+  if (!p || p.activeListId !== listId) return false;
+  const other = state.wordLists.sample && listId !== 'sample' ? 'sample' : Object.keys(state.wordLists).find((id) => id !== listId);
+  if (!other) return false;
+  p.activeListId = other;
+  return true;
+}
+
+// Delete a list. The sample list can only be reset, not deleted. Trainers on it move to another list; its progress goes with it.
+export function deleteList(state, listId) {
+  if (listId === 'sample' || !state.wordLists[listId]) return false;
+  for (const [id] of listUsers(state, listId)) unassignList(state, id, listId);
+  delete state.wordLists[listId];
+  for (const p of Object.values(state.profiles)) delete p.wordStats[listId];
+  return true;
+}
+
 export function renameProfile(state, id, name) {
   const clean = String(name ?? '').trim();
   if (!clean || !state.profiles[id]) return false;
