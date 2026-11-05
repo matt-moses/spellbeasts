@@ -2,7 +2,8 @@ import { createStore } from './platform/store.js';
 import { createSpeaker } from './platform/speech.js';
 import { createAudio } from './platform/audio.js';
 import { localDateString } from './logic/leitner.js';
-import { h } from './ui/dom.js';
+import { h, fill } from './ui/dom.js';
+import { chrome } from './ui/chrome.js';
 import { profilesView } from './ui/profiles.js';
 import { homeView } from './ui/home.js';
 import { practiceView } from './ui/practice.js';
@@ -44,7 +45,7 @@ function render() {
   if (name !== 'parent') app.parentUnlocked = false;
   if (name === 'practice' && !app.session) name = 'home';
   const route = name === '' ? '/' : `/${name}`;
-  root.replaceChildren(...banners(), routes[name](app, arg));
+  fill(root, ...banners(), name === '' || name === 'home' ? null : chrome(app), routes[name](app, arg));
   const first = root.querySelector('h1, input');
   document.title = 'Spellbeasts';
   if (route !== '/practice') first?.setAttribute('tabindex', '-1');

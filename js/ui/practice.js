@@ -1,4 +1,4 @@
-import { h } from './dom.js';
+import { h, icon, fill as setKids } from './dom.js';
 import { companionSvg } from './art.js';
 
 export function practiceView(app) {
@@ -23,11 +23,11 @@ export function practiceView(app) {
 
   const sayAgain = () => speaker.speak(cur?.word);
   const buttons = h('div', { class: 'clues' },
-    h('button', { type: 'button', id: 'say-again', onclick: sayAgain }, 'Say again'),
-    h('button', { type: 'button', id: 'say-slow', onclick: () => speaker.speak(cur?.word, { slow: true }) }, 'Say slowly'),
-    h('button', { type: 'button', id: 'say-def', onclick: () => { clue.textContent = `Definition: ${cur.definition}`; speaker.speak(cur.definition); } }, 'Definition'),
-    h('button', { type: 'button', id: 'say-pos', onclick: () => { clue.textContent = `Part of speech: ${cur.partOfSpeech}`; speaker.speak(cur.partOfSpeech); } }, 'Part of speech'),
-    h('button', { type: 'button', id: 'say-sentence', onclick: () => speaker.speak(cur.sentence) }, 'Sentence'));
+    h('button', { type: 'button', id: 'say-again', class: 'c-blue', onclick: sayAgain }, icon('speaker'), 'Say again'),
+    h('button', { type: 'button', id: 'say-slow', class: 'c-yellow', onclick: () => speaker.speak(cur?.word, { slow: true }) }, icon('turtle'), 'Say slowly'),
+    h('button', { type: 'button', id: 'say-def', class: 'c-pink', onclick: () => { clue.textContent = `Definition: ${cur.definition}`; speaker.speak(cur.definition); } }, icon('book'), 'Definition'),
+    h('button', { type: 'button', id: 'say-pos', class: 'c-purple', onclick: () => { clue.textContent = `Part of speech: ${cur.partOfSpeech}`; speaker.speak(cur.partOfSpeech); } }, icon('tag'), 'Part of speech'),
+    h('button', { type: 'button', id: 'say-sentence', class: 'c-blue', onclick: () => speaker.speak(cur.sentence) }, icon('chat'), 'Sentence'));
   const sentenceBtn = buttons.querySelector('#say-sentence');
 
   function refresh() {
@@ -56,7 +56,7 @@ export function practiceView(app) {
 
   function showMiss(r) {
     const typed = r.typed || '(nothing)';
-    feedback.replaceChildren(
+    setKids(feedback,
       h('p', { class: 'almost' }, "Almost! Let's look at it together."),
       h('p', { class: 'correct-word', 'aria-label': `The word is ${r.expected}` }, r.diff.map((d) => h('span', { class: d.ok ? 'ok' : 'bad' }, d.ch))),
       h('p', { class: 'typed' }, `You typed: ${typed}`),
@@ -89,9 +89,11 @@ export function practiceView(app) {
   app.cleanup.push(() => document.removeEventListener('keydown', onKey));
 
   const root = h('section', { class: 'screen practice' },
-    h('div', { class: 'topbar' }, bar, crickets), companion, noVoice, buttons, clue,
-    h('form', { onsubmit: onSubmit, autocomplete: 'off' }, label, input, h('button', { type: 'submit', class: 'primary' }, 'Check')),
-    feedback, toast);
+    h('div', { class: 'p-top' }, bar, crickets), companion,
+    h('div', { class: 'panel prompt-card' }, noVoice, buttons, clue,
+      h('form', { onsubmit: onSubmit, autocomplete: 'off' }, label, input, h('button', { type: 'submit', class: 'primary' }, 'Check')),
+      feedback),
+    toast);
   queueMicrotask(ask);
   return root;
 }

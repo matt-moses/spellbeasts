@@ -1,5 +1,5 @@
 // Parent area (PRD 10.2): behind an adult gate; word lists, stats, trainers, backup.
-import { h } from './dom.js';
+import { h, fill } from './dom.js';
 import * as P from '../logic/parent.js';
 import { localDateString } from '../logic/leitner.js';
 
@@ -72,7 +72,7 @@ export function parentView(app) {
     const doImport = h('button', { class: 'primary', id: 'do-import', type: 'button' }, 'Import words');
     function update() {
       const parsed = P.previewImport(st(), ui.listId, ta.value, mode === 'add' ? 'add' : 'replace');
-      preview.replaceChildren(
+      fill(preview,
         ta.value.trim() ? h('p', {}, h('strong', { id: 'valid-count' }, `${parsed.words.length} valid word${parsed.words.length === 1 ? '' : 's'}`), parsed.errors.length ? `, ${parsed.errors.length} line${parsed.errors.length === 1 ? '' : 's'} with problems:` : '') : null,
         parsed.errors.length ? h('ul', { class: 'errors' }, parsed.errors.map((e) => h('li', {}, `Line ${e.line}: ${e.message}`))) : null,
         parsed.words.length ? h('details', {}, h('summary', {}, 'Preview'), h('ol', {}, parsed.words.slice(0, 50).map((w) => h('li', {}, `${w.word} — ${w.partOfSpeech}${w.definition ? `: ${w.definition}` : ''}`)))) : null);
@@ -199,7 +199,7 @@ export function parentView(app) {
 
   function draw() {
     const body = { words: wordsTab, stats: statsTab, trainers: trainersTab, backup: backupTab }[ui.tab]();
-    root.replaceChildren(
+    fill(root,
       h('div', { class: 'row between' }, h('h1', {}, 'Parent area'), h('button', { class: 'secondary', id: 'parent-back', onclick: () => leave(app) }, 'Done')),
       tabs(), ui.note ? h('p', { class: 'note ok', role: 'status', id: 'parent-note' }, ui.note) : null, body);
   }

@@ -1,4 +1,4 @@
-import { h } from './dom.js';
+import { h, fill } from './dom.js';
 import { creatureSvg, eggSvg } from './art.js';
 import { SPECIES, REGIONS, regionById, regionIndex, speciesById, stageName } from '../logic/species.js';
 import { eggPrice } from '../logic/hatch.js';
@@ -24,9 +24,9 @@ export function nestView(app, regionId) {
     const owned = ownedSpecies(profile);
     const here = SPECIES.filter((s) => s.region === regionId);
     const eggs = profile.eggs;
-    root.replaceChildren(
+    fill(root,
       h('h1', {}, `${region.name} Nest`),
-      h('p', { class: 'stats' }, `🦗 ${profile.crickets} crickets`),
+      h('div', { class: 'stats' }, h('span', { class: 'pill gold' }, `🦗 ${profile.crickets} crickets`)),
       h('div', { class: 'panel' },
         h('p', {}, 'Eggs here hatch into one of these:'),
         h('div', { class: 'species-row' }, here.map((s) => h('figure', { class: 'mini' },
@@ -78,10 +78,10 @@ export function sanctuaryView(app) {
 
   function draw() {
     const ctx = evolveContext(profile);
-    root.replaceChildren(
+    fill(root,
       h('h1', {}, 'Sanctuary'),
-      h('p', { class: 'stats' }, `🦗 ${profile.crickets} crickets`),
-      hungry ? h('p', { class: 'hungry' }, 'Your creatures are hungry! Practice to earn crickets to feed them.') : null,
+      h('div', { class: 'stats' }, h('span', { class: 'pill gold' }, `🦗 ${profile.crickets} crickets`)),
+      hungry ? h('p', { class: 'bubble hungry' }, 'Your creatures are hungry! Practice to earn crickets to feed them.') : null,
       msg,
       h('ul', { class: 'creature-grid' }, profile.creatures.map((c) => {
         const need = FEED_NEEDED[c.stage];
