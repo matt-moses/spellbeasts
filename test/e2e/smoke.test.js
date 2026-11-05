@@ -159,3 +159,51 @@ test('storage unavailable: game still runs and shows the not-saved banner', { sk
   await page.waitForSelector('#practice');
   await context.close();
 });
+
+test('get ready: the first word waits a moment, shows a cue, and Say again or an answer cancels the wait', { skip }, async () => {
+  const run = async (act) => {
+    const context = await env.browser.newContext({ reducedMotion: 'reduce' });
+    await prepare(context, { state: seededState() });
+    await context.addInitScript(() => { window.SPELLBEASTS_READY_DELAY = 1200; });
+    const page = await context.newPage();
+    await page.goto(env.server.url); await page.click('.card'); await page.click('#practice'); await page.waitForSelector('#answer');
+    return { page, context };
+  };
+  const spoken = (page) => page.evaluate(() => window.__spoken.length);
+
+  const a = await run();                                                    // left alone: silent, then speaks once
+  assert.equal(await spoken(a.page), 0);
+  assert.match(await a.page.textContent('.get-ready'), /Get ready/);
+  await a.page.waitForFunction(() => window.__spoken.length === 1, null, { timeout: 4000 });
+  assert.equal(await a.page.locator('.get-ready').count(), 0);
+  await a.page.waitForTimeout(1500);
+  assert.equal(await spoken(a.page), 1, 'spoken exactly once, not twice');
+  await a.context.close();
+
+  const b = await run();                                                    // Say again: speaks now, and the wait is cancelled
+  await b.page.click('#say-again');
+  assert.equal(await spoken(b.page), 1);
+  assert.equal(await b.page.locator('.get-ready').count(), 0);
+  await b.page.waitForTimeout(1600);
+  assert.equal(await spoken(b.page), 1, 'the pending wait did not speak a second time');
+  await b.context.close();
+
+  const c = await run();                                                    // leaving practice early: nothing is spoken later
+  await c.page.goto(`${env.server.url}#/home`); await c.page.waitForSelector('#practice');
+  await c.page.waitForTimeout(1600);
+  assert.equal(await spoken(c.page), 0);
+  await c.context.close();
+});
+
+test('later words in a session are spoken straight away (no extra wait)', { skip }, async () => {
+  const context = await env.browser.newContext({ reducedMotion: 'reduce' });
+  await prepare(context, { state: seededState() });
+  await context.addInitScript(() => { window.SPELLBEASTS_READY_DELAY = 800; });
+  const page = await context.newPage();
+  await page.goto(env.server.url); await page.click('.card'); await page.click('#practice'); await page.waitForSelector('#answer');
+  await page.waitForFunction(() => window.__spoken.length === 1);
+  const w = await page.evaluate(() => window.__spoken.at(-1).text);
+  await page.fill('#answer', w); await page.press('#answer', 'Enter');
+  await page.waitForFunction(() => window.__spoken.length === 2, null, { timeout: 400 });   // far quicker than the 800ms wait
+  await context.close();
+});

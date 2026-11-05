@@ -345,3 +345,7 @@ details.faq p { margin:.5rem 0 .2rem; font-size:1.05rem; }
 .mem-card.up, .mem-card.matched { background:#fff; box-shadow:0 5px 0 var(--lip); }
 .mem-card.matched { background:#e4f8e9; box-shadow:0 5px 0 #a9dfb8; }
 .mem-card svg { width:100%; height:auto; }
+
+.get-ready { position:absolute; left:50%; top:-.2rem; transform:translateX(-50%); background:#fff; border-radius:999px; padding:.2rem .9rem; font-weight:bold; box-shadow:0 4px 0 var(--lip); z-index:5; animation:pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { transform:translateX(-50%) scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .get-ready { animation:none; } }

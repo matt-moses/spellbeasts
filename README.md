@@ -18,14 +18,14 @@ It is a static site (vanilla JS modules, no build step, no runtime dependencies)
 
 ## What's in it
 
-- **Spelling practice:** the word is spoken and never shown first. Replay it, slow it down, or ask for the definition, part of speech or a sentence. Answers are checked strictly, **including capital letters**. There is no timer.
+- **Spelling practice:** the first word waits a moment ("Get ready…") so you can settle in, and the word is spoken and never shown first. Replay it, slow it down, or ask for the definition, part of speech or a sentence. Answers are checked strictly, **including capital letters**. There is no timer.
 - **Spaced repetition:** a miss returns about 3 turns later, then about 7 turns after a correct retry (at most 4 times a session). Across days, words climb five review boxes (every session, 2, 4, 7 and 14 days). A word is *mastered* after being right on the first try on 3 different days.
 - **Progress that gets steadily harder:** each level costs more XP than the last, every land needs a higher level *and* more mastered words, each land's stretch of trail is longer than the one before, and egg prices and hatching effort rise with the lands.
 - **A world to walk:** nine lands on one winding trail. Each first-try answer is a step; star tiles hold treasure. Lands unlock by level and mastery, and the map scrolls sideways to new ones.
 - **27 original creatures, 3 stages each:** drawn in inline SVG. Buy eggs in each land's nest, warm them with correct answers, feed and evolve creatures (evolving ties to level and mastery).
 - **Care and play:** feed berries, give a bath, pet, and play Berry Catch. Creatures stay happy day to day, and a sparkling creature leaves a small gift. Tap any character for a random animation, sound, effect or speech bubble.
 - **Trophies:** 44 to earn, from first hatch to word master.
-- **Parent area** (behind a grown-up check: choose the year you were born, which is never saved): load your own word list, see per-word stats and the most-missed words, manage trainers, and back up or restore everything as JSON.
+- **Parent area** (behind a grown-up check: choose the year you were born, which is never saved): load your own word list, set how any word should be pronounced (for example "laffter"), see per-word stats and the most-missed words, manage trainers, and back up or restore everything as JSON.
 - **Works offline, and installs like an app:** after one visit the whole game is cached by a service worker, so it runs with no connection. In Chrome or Edge choose *Install* (or on a phone, *Add to Home screen*). A small "new version" bar appears when an update is available.
 - **Help for kids:** a round **?** button on every screen opens a pop-up of plain-language FAQs (how to play, crickets, creatures, the map, what to do if there is no sound). Opening it never interrupts a practice session.
 - **Accessible by design:** large text, full keyboard use, visible focus, reduced-motion support, encouraging wording, and spellcheck/autocorrect off on the answer box.

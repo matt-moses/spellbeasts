@@ -28,6 +28,7 @@ export function seededState(words = ['Monday', 'garden', 'island']) {
 export async function prepare(context, { state = null, errors = [] } = {}) {
   await context.addInitScript(({ state }) => {
     window.__spoken = [];
+    if (window.SPELLBEASTS_READY_DELAY === undefined) window.SPELLBEASTS_READY_DELAY = 0;      // tests skip the get-ready pause unless they test it
     const voice = { voiceURI: 'fake', lang: 'en-US', name: 'Fake' };
     window.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: { getVoices: () => [voice], cancel() {}, speak(u) { window.__spoken.push({ text: u.text, rate: u.rate }); } } });

@@ -1,6 +1,7 @@
 // Parent area (PRD 10.2): behind an adult gate; word lists, stats, trainers, backup.
 import { h, fill } from './dom.js';
 import * as P from '../logic/parent.js';
+import { spokenWord } from '../logic/pronounce.js';
 import { localDateString } from '../logic/leitner.js';
 
 const TABS = [['words', 'Word lists'], ['stats', 'Stats'], ['trainers', 'Trainers'], ['backup', 'Backup']];
@@ -96,12 +97,12 @@ export function parentView(app) {
     const confirmReplace = h('span', { class: 'confirm', role: 'alert' }, `Replace all ${list.words.length} words? `, h('button', { type: 'button', class: 'danger yes', onclick: run }, 'Yes, replace'), ' ', h('button', { type: 'button', class: 'secondary no', onclick: () => confirmReplace.replaceWith(doImport) }, 'Cancel'));
     doImport.disabled = true;
     out.append(h('div', { class: 'panel' }, h('h2', {}, 'Import words'),
-      h('p', { class: 'small' }, 'The word list stays in this browser only. It is never uploaded or saved to the website.'),
+      h('p', { class: 'small' }, 'The word list stays in this browser only. It is never uploaded or saved to the website. A fifth field, separated by | or a tab, says how to pronounce a word (for example laughter | noun | … | … | laffter).'),
       ta, h('p', {}, 'Or choose a file: ', file), modeBtns, newName, preview, h('p', {}, doImport)));
 
     // word table
     out.append(h('h2', {}, `Words in “${list.name}”`));
-    const table = h('table', { class: 'words' }, h('thead', {}, h('tr', {}, ['Word', 'Part of speech', 'Definition', 'Sentence', ''].map((t) => h('th', {}, t)))),
+    const table = h('table', { class: 'words' }, h('thead', {}, h('tr', {}, ['Word', 'Part of speech', 'Definition', 'Sentence', 'Say it like', ''].map((t) => h('th', {}, t)))),
       h('tbody', {}, list.words.map((w) => wordRow(w))));
     out.append(list.words.length ? h('div', { class: 'scroll' }, table) : h('p', {}, 'This list has no words yet.'));
     return out;
@@ -110,14 +111,16 @@ export function parentView(app) {
   function wordRow(w) {
     const tr = h('tr', { 'data-word': w.word });
     const show = () => {
-      tr.replaceChildren(h('td', { class: 'w' }, w.word), h('td', {}, w.partOfSpeech), h('td', {}, w.definition), h('td', {}, w.sentence ?? ''),
+      tr.replaceChildren(h('td', { class: 'w' }, w.word), h('td', {}, w.partOfSpeech), h('td', {}, w.definition), h('td', {}, w.sentence ?? ''), h('td', { class: 'sayas' }, w.sayAs ?? ''),
         h('td', { class: 'acts' }, h('button', { class: 'secondary edit', onclick: edit }, 'Edit'), ' ',
           confirmButton('Delete', () => { P.deleteWord(st(), ui.listId, w.word); save(); say(`Deleted “${w.word}”.`); redraw(); }, { sure: 'Yes, delete' })));
     };
     const edit = () => {
-      const f = Object.fromEntries(['word', 'partOfSpeech', 'definition', 'sentence'].map((k) => [k, h('input', { type: 'text', value: w[k] ?? '', 'aria-label': k, name: k })]));
+      const FIELDS = ['word', 'partOfSpeech', 'definition', 'sentence', 'sayAs'];
+      const f = Object.fromEntries(FIELDS.map((k) => [k, h('input', { type: 'text', value: w[k] ?? '', 'aria-label': k === 'sayAs' ? 'say it like (how it should sound)' : k, name: k, placeholder: k === 'sayAs' ? 'e.g. laffter' : null })]));
       const err = h('small', { class: 'err', role: 'alert' });
-      tr.replaceChildren(...['word', 'partOfSpeech', 'definition', 'sentence'].map((k) => h('td', {}, f[k])), h('td', { class: 'acts' },
+      tr.replaceChildren(...FIELDS.map((k) => h('td', {}, f[k])), h('td', { class: 'acts' },
+        h('button', { class: 'secondary hear', type: 'button', onclick: () => app.speaker.speak(spokenWord({ word: f.word.value, sayAs: f.sayAs.value })) }, 'Hear it'), ' ',
         h('button', { class: 'primary save', onclick: () => {
           const r = P.editWord(st(), ui.listId, w.word, Object.fromEntries(Object.entries(f).map(([k, el]) => [k, el.value])));
           if (!r.ok) { err.textContent = r.error; return; }

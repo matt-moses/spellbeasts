@@ -1,4 +1,5 @@
-// Word-list parser (PRD 6.3). Line: word | part of speech | definition | sentence (optional).
+// Word-list parser (PRD 6.3). Line: word | part of speech | definition | sentence (optional) | say it like (optional).
+// The 5th field works with | and tab separators (a comma list can add it later in the editor).
 export function detectSeparator(lines) {
   if (lines.some((l) => l.includes('\t'))) return '\t';
   if (lines.some((l) => l.includes('|'))) return '|';
@@ -19,12 +20,13 @@ export function parseWordList(text, { existing = [] } = {}) {
   const words = [], errors = [];
   const seen = new Set(existing);
   for (const { l, n } of content) {
-    const [word = '', partOfSpeech = '', definition = '', sentence = ''] = splitLine(l, separator);
+    const [word = '', partOfSpeech = '', definition = '', sentence = '', sayAs = ''] = splitLine(l, separator);
     if (!word) { errors.push({ line: n, message: 'Missing word' }); continue; }
     if (seen.has(word)) { errors.push({ line: n, message: `Duplicate word "${word}"` }); continue; }
     seen.add(word);
     const rec = { id: word, word, partOfSpeech, definition };
     if (sentence) rec.sentence = sentence;
+    if (sayAs) rec.sayAs = sayAs;
     words.push(rec);
   }
   return { words, errors, separator };

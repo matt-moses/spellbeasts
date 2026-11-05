@@ -222,3 +222,29 @@ test('backup: download is warned about, restores everything exactly, and bad fil
   assert.deepEqual(await saved(page), exported);
   await context.close();
 });
+
+test('say-it-like: set in the editor, spoken in practice (word, slow, sentence), answer still the real spelling', { skip }, async () => {
+  const { page, context, errors } = await open((p, st) => {
+    st.wordLists.sample.words = [{ id: 'laughter', word: 'laughter', partOfSpeech: 'noun', definition: 'The sound of joy.', sentence: 'Laughter filled the room.' }];
+  }, { words: ['laughter'] });
+  await page.click('tr[data-word=laughter] .edit');
+  await page.fill('tr[data-word=laughter] input[name=sayAs]', 'laffter');
+  await page.click('tr[data-word=laughter] .hear');
+  assert.equal(await page.evaluate(() => window.__spoken.at(-1).text), 'laffter');           // the editor can preview it
+  await page.click('tr[data-word=laughter] .save');
+  assert.equal(await page.textContent('tr[data-word=laughter] td.sayas'), 'laffter');
+  assert.equal((await saved(page)).wordLists.sample.words[0].sayAs, 'laffter');
+
+  await page.click('#parent-back'); await page.click('#practice'); await page.waitForSelector('#answer');
+  const said = () => page.evaluate(() => window.__spoken.at(-1));
+  assert.equal((await said()).text, 'laffter');                                                // spoken when asked
+  await page.click('#say-slow'); assert.deepEqual([(await said()).text, (await said()).rate], ['laffter', 0.6]);
+  await page.click('#say-sentence'); assert.equal((await said()).text, 'laffter filled the room.');
+  assert.equal((await page.innerText('body')).toLowerCase().includes('laffter'), false, 'the respelling is not shown on screen');
+  await page.fill('#answer', 'laffter'); await page.press('#answer', 'Enter');                  // typing what it SOUNDS like is wrong
+  await page.waitForSelector('.correct-word');
+  assert.equal(await page.textContent('.correct-word'), 'laughter');
+  await page.fill('#answer', 'laughter'); await page.press('#answer', 'Enter');                 // the real spelling is what counts
+  assert.deepEqual(errors, []);
+  await context.close();
+});

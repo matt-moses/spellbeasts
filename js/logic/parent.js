@@ -92,6 +92,8 @@ export function editWord(state, listId, oldWord, rec) {
   const next = { id: word, word, partOfSpeech: String(rec.partOfSpeech ?? '').trim(), definition: String(rec.definition ?? '').trim() };
   const sentence = String(rec.sentence ?? '').trim();
   if (sentence) next.sentence = sentence;
+  const sayAs = String(rec.sayAs ?? '').trim();
+  if (sayAs) next.sayAs = sayAs;
   list.words[i] = next;
   if (word !== oldWord) dropStats(state, listId, list.words);          // a re-spelled word is a new word
   return { ok: true };

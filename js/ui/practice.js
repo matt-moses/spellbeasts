@@ -1,6 +1,7 @@
 import { h, icon, fill as setKids } from './dom.js';
 import { companionSvg } from './art.js';
 import { makeInteractive } from './pet.js';
+import { spokenWord, spokenSentence } from '../logic/pronounce.js';
 
 export function practiceView(app) {
   const { speaker, audio, store } = app;
@@ -22,13 +23,18 @@ export function practiceView(app) {
   const noVoice = h('p', { class: 'warn', hidden: speaker.available }, speaker.helpMessage ?? '');
   speaker.onVoicesChanged(() => { noVoice.hidden = speaker.available; noVoice.textContent = speaker.helpMessage ?? ''; });
 
-  const sayAgain = () => speaker.speak(cur?.word);
+  // The very first word waits a moment so there is time to settle in. Anything the player does (Say again, Say slowly,
+  // an answer) cancels the wait. The wait length can be overridden with globalThis.SPELLBEASTS_READY_DELAY (tests use 0).
+  const readyDelay = () => globalThis.SPELLBEASTS_READY_DELAY ?? 1200;
+  let readyTimer = 0, started = false;
+  const cancelReady = () => { clearTimeout(readyTimer); readyTimer = 0; root.querySelector('.get-ready')?.remove(); };
+  const sayAgain = () => { cancelReady(); speaker.speak(spokenWord(cur)); };
   const buttons = h('div', { class: 'clues' },
     h('button', { type: 'button', id: 'say-again', class: 'c-blue', onclick: sayAgain }, icon('speaker'), 'Say again'),
-    h('button', { type: 'button', id: 'say-slow', class: 'c-yellow', onclick: () => speaker.speak(cur?.word, { slow: true }) }, icon('turtle'), 'Say slowly'),
+    h('button', { type: 'button', id: 'say-slow', class: 'c-yellow', onclick: () => { cancelReady(); speaker.speak(spokenWord(cur), { slow: true }); } }, icon('turtle'), 'Say slowly'),
     h('button', { type: 'button', id: 'say-def', class: 'c-pink', onclick: () => { clue.textContent = `Definition: ${cur.definition}`; speaker.speak(cur.definition); } }, icon('book'), 'Definition'),
     h('button', { type: 'button', id: 'say-pos', class: 'c-purple', onclick: () => { clue.textContent = `Part of speech: ${cur.partOfSpeech}`; speaker.speak(cur.partOfSpeech); } }, icon('tag'), 'Part of speech'),
-    h('button', { type: 'button', id: 'say-sentence', class: 'c-blue', onclick: () => speaker.speak(cur.sentence) }, icon('chat'), 'Sentence'));
+    h('button', { type: 'button', id: 'say-sentence', class: 'c-blue', onclick: () => speaker.speak(spokenSentence(cur)) }, icon('chat'), 'Sentence'));
   const sentenceBtn = buttons.querySelector('#say-sentence');
 
   function refresh() {
@@ -47,12 +53,19 @@ export function practiceView(app) {
       app.lastSummary = summary; app.session = null;
       return app.go('/summary');
     }
+    cancelReady();
     feedback.replaceChildren(); clue.textContent = '';
     sentenceBtn.hidden = !cur.sentence;
     label.textContent = 'Spell the word you hear';
     input.value = ''; input.focus();
     refresh();
-    speaker.speak(cur.word);
+    const wait = started ? 0 : readyDelay();
+    started = true;
+    if (wait > 0) {
+      const word = cur;
+      companion.append(h('span', { class: 'get-ready', role: 'status' }, 'Get ready…'));
+      readyTimer = setTimeout(() => { readyTimer = 0; root.querySelector('.get-ready')?.remove(); if (cur === word) speaker.speak(spokenWord(word)); }, wait);
+    } else speaker.speak(spokenWord(cur));
   }
 
   function showMiss(r) {
@@ -87,7 +100,7 @@ export function practiceView(app) {
     else if (e.key === ' ' && e.target === input && input.value === '' && s.mode === 'asking') { e.preventDefault(); sayAgain(); }
   }
   document.addEventListener('keydown', onKey);
-  app.cleanup.push(() => document.removeEventListener('keydown', onKey));
+  app.cleanup.push(() => { document.removeEventListener('keydown', onKey); clearTimeout(readyTimer); });
 
   makeInteractive(companion, app, { name: profile.name, speak: false, focusable: false, label: 'Tap your practice buddy' });
   const root = h('section', { class: 'screen practice' },
