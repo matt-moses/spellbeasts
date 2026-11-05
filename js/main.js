@@ -64,6 +64,15 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 const foot = h('p', { class: 'version', id: 'version-stamp' }, `Version ${BUILD_VERSION}`);
 document.body.append(foot);
 // The offline cache serves the old version on a plain reload, so first let the new service worker install and take over.
+// Without a service worker (Chrome and Safari on iPad/iPhone), a plain reload re-uses the old scripts from the browser's
+// HTTP cache and the update bar comes straight back. Re-download every app file first, bypassing that cache.
+async function refreshHttpCache() {
+  try {
+    const text = await (await fetch('sw-assets.js', { cache: 'reload' })).text();
+    const files = JSON.parse(text.slice(text.indexOf('['), text.lastIndexOf(']') + 1));
+    await Promise.all(files.map((f) => fetch(f, { cache: 'reload' }).catch(() => {})));
+  } catch { /* best effort */ }
+}
 async function applyUpdate() {
   try {
     const reg = await navigator.serviceWorker?.getRegistration();
@@ -73,6 +82,7 @@ async function applyUpdate() {
       await Promise.race([swap, new Promise((res) => setTimeout(res, 4000))]);
     }
   } catch { /* fall through to a plain reload */ }
+  await refreshHttpCache();
   location.reload();
 }
 startUpdateWatch((v) => {

@@ -33,3 +33,17 @@ test('the page shows its version, and offers a reload only when the site has a n
   assert.match(await b.textContent('#update-bar'), /new version/i);
   await newer.close();
 });
+
+test('Reload re-downloads the app files first, so browsers without a service worker (iPad) really update', { skip }, async () => {
+  const ctx = await env.browser.newContext({ serviceWorkers: 'block' }); await prepare(ctx, { state: null });
+  await ctx.route('**/version.json*', (r) => r.fulfill({ contentType: 'application/json', body: '{"version":"9999.0101.0000"}' }));
+  const page = await ctx.newPage();
+  const forced = [];
+  page.on('request', (r) => { if (r.url().endsWith('/js/logic/build.js')) forced.push(r.url()); });
+  await page.goto(env.server.url);
+  await page.click('#update-reload');
+  await page.waitForLoadState('load');
+  await page.waitForTimeout(500);
+  assert.ok(forced.length >= 3, `build.js fetched ${forced.length}x; expected load + forced refresh + reload`);
+  await ctx.close();
+});
