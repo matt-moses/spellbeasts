@@ -10,7 +10,7 @@ const mk = (over = {}) => Object.assign(freshProfile({ name: 'T', avatarSpecies:
 const mastered = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`w${i}`, { correctDays: ['a', 'b', 'c'] }]));
 
 test('unlock table matches the PRD', () => {
-  assert.deepEqual(UNLOCKS, [{ level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 5 }, { level: 6, mastered: 15 }, { level: 8, mastered: 25 }, { level: 10, mastered: 40 }, { level: 12, mastered: 44 }, { level: 14, mastered: 47 }, { level: 16, mastered: 50 }]);
+  assert.deepEqual(UNLOCKS, [{ level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 0 }, { level: 6, mastered: 15 }, { level: 8, mastered: 25 }, { level: 10, mastered: 40 }, { level: 12, mastered: 44 }, { level: 14, mastered: 47 }, { level: 16, mastered: 50 }]);
 });
 test('a region needs BOTH level and mastery', () => {
   for (let i = 2; i < 9; i++) {
@@ -21,11 +21,11 @@ test('a region needs BOTH level and mastery', () => {
   }
   assert.equal(isUnlocked(1, { level: 2, mastered: 0 }), true);
   assert.equal(isUnlocked(1, { level: 1, mastered: 99 }), false);
-  assert.equal(unlockRequirement(2), 'Reach level 4 and 5 words mastered');
+  assert.equal(unlockRequirement(2), 'Reach level 4');
   assert.equal(unlockRequirement(1), 'Reach level 2');
 });
 test('updateUnlocks adds regions in order and reports only new ones', () => {
-  const p = mk({ level: 4 }); p.wordStats[p.activeListId] = mastered(5);
+  const p = mk({ level: 4 });   // Ember Peaks needs no mastery
   assert.deepEqual(updateUnlocks(p), ['r2', 'r3']);
   assert.deepEqual(updateUnlocks(p), []);
   assert.deepEqual(p.map.unlockedRegions, ['r1', 'r2', 'r3']);

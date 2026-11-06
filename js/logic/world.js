@@ -4,7 +4,7 @@ import { warmEggs, masteredCount } from './collection.js';
 import { STAR_BERRIES } from './care.js';
 
 export const UNLOCKS = [
-  { level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 5 },
+  { level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 0 },
   { level: 6, mastered: 15 }, { level: 8, mastered: 25 }, { level: 10, mastered: 40 },
   { level: 12, mastered: 44 }, { level: 14, mastered: 47 }, { level: 16, mastered: 50 },   // the new lands
 ];

@@ -206,7 +206,7 @@ Behind a simple adult gate (e.g. a multi-digit multiplication question), not a p
   |---|---|
   | 1 | start |
   | 2 | level 2 |
-  | 3 | level 4 **and** 5 words mastered |
+  | 3 | level 4 |
   | 4 | level 6 **and** 15 mastered |
   | 5 | level 8 **and** 25 mastered |
   | 6 | level 10 **and** 40 mastered |

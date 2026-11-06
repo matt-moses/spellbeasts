@@ -13,7 +13,7 @@ after(async () => { await env?.close(); });
 // ---------------------------------------------------------------- the oracle (PRD rules, re-derived)
 const SAMPLE = ['garden', 'rainbow', 'whisper', 'island', 'library', 'Monday', 'February', 'thunder', 'bicycle', 'mountain', 'kitchen', 'Canada', 'pencil', 'window', 'journey'];
 const PRICE = [20, 30, 40, 50, 60, 75, 90, 105, 125];
-const UNLOCK = [[1, 0], [2, 0], [4, 5], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50]];
+const UNLOCK = [[1, 0], [2, 0], [4, 0], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50]];
 const TRAIL_END = [30, 32, 34, 36, 38, 40, 42, 44, 46].reduce((a, n) => [...a, (a.at(-1) ?? 0) + n], []);   // each land's stretch of trail is longer
 const RARE = new Set(['Glowmoth', 'Mossgolem', 'Stormwyrm', 'Starcub', 'Inkwell', 'Skycalf', 'Gemdrake', 'Sandwyrm', 'Solphoenix']);
 const BOX_DAYS = [0, 2, 4, 7, 14];                                   // box 1..5 -> days until due

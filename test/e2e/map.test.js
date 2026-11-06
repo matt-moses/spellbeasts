@@ -26,7 +26,7 @@ test('the map is the home screen: 9 lands, later ones fogged with what they need
   assert.equal(await page.locator('.fog[data-locked=true]').count(), 8);
   assert.equal(await page.locator('.nest-link').count(), 1);
   assert.match(await page.getAttribute('.fog[data-region=r2]', 'aria-label'), /Reach level 2\b/);
-  assert.match(await page.getAttribute('.fog[data-region=r3]', 'aria-label'), /Reach level 4 and 5 words mastered/);
+  assert.match(await page.getAttribute('.fog[data-region=r3]', 'aria-label'), /Reach level 4\b(?! and)/);
   assert.match(await page.getAttribute('.fog[data-region=r6]', 'aria-label'), /Reach level 10 and 40 words mastered/);
   assert.match(await page.getAttribute('.fog[data-region=r4]', 'aria-label'), /level 6 and 15 words mastered/);
   const sign = await page.$$eval('.fog[data-region=r4] tspan', (t) => t.map((x) => x.textContent).join(' '));
@@ -43,8 +43,8 @@ test('regions open when level (and mastery) are met; the pin is keyboard-operabl
   await page.keyboard.press('Enter');
   await page.waitForSelector('.nest[data-region=r2]');
   await context.close();
-  const lvl4 = await open((p) => { p.level = 4; p.map.unlockedRegions = ['r1', 'r2']; });   // level 4 but no mastery: still closed
-  assert.equal(await lvl4.page.locator('.fog[data-region=r3]').count(), 1);
+  const lvl4 = await open((p) => { p.level = 6; p.map.unlockedRegions = ['r1', 'r2', 'r3']; });   // level 6 but no mastery: still closed
+  assert.equal(await lvl4.page.locator('.fog[data-region=r4]').count(), 1);
   await lvl4.context.close();
 });
 
