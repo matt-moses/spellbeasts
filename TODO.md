@@ -32,6 +32,19 @@ How we will know it is done (the same autonomous loop as the other phases):
 - [ ] An end-to-end test: reach level 3, open the Arena, hit, special move, dodge and requeue, win and befriend, see the creature in the Creature book, and Champion progress.
 - [ ] Extend the whole-game playthrough (`test/e2e/playthrough.test.js`) so its independent model covers battles too.
 
+### [ ] Spell Master: make the lessons clearer, then switch it on
+
+**Status: built, tested and committed, but switched OFF.** The home tile and the `#/learn` screens are hidden by `SPELL_MASTER_ENABLED = false` in `js/config.js`. To turn it on, set that to `true` (this also un-skips `test/e2e/learn.test.js`).
+
+What exists: a snowy owl in a magician's hat teaches 11 spelling rules (`js/logic/spells.js`, `js/ui/learn.js`, art in `js/assets/spellmaster.js`). Every example word is verified against a rule formula in `test/logic/spells.test.js`; those unit tests still run while it is off.
+
+Before switching it on:
+
+- [ ] **Make the lessons clearer for a 4th grader.** Reread each rule and heading in plain words, try them with the child, and rewrite whatever confuses them (for example "consonant", "vowel ending" and "prefix" may need a quick "what is that?" line).
+- [ ] **Check the examples and the made-up wrong spellings by eye** (the tests check the pattern, not whether a word is real).
+- [ ] **Decide how it fits the game:** where it lives (tile only, or also a hint after a missed word), and whether finishing lessons or quizzes should earn anything.
+- [ ] **Real-device check** on the child's iPad, then flip the flag.
+
 ## Known gaps and open questions
 
 - [x] **Settings screen** (PRD §10.1): voice picker (natural voices first, with preview), speed, sound and music. Done.

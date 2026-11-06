@@ -1,10 +1,11 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { SPELL_MASTER_ENABLED } from '../../js/config.js';
 import { hasBrowser, launch, prepare, seededState } from './helpers.js';
 
-const skip = hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
+const skip = !SPELL_MASTER_ENABLED ? 'Spell Master is switched off (SPELL_MASTER_ENABLED in js/config.js)' : hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
 let env;
-before(async () => { if (hasBrowser) env = await launch(); });
+before(async () => { if (hasBrowser && SPELL_MASTER_ENABLED) env = await launch(); });
 after(async () => { await env?.close(); });
 
 async function open() {
