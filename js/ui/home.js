@@ -1,3 +1,4 @@
+import { spellMasterSvg } from '../assets/spellmaster.js';
 import { h, icon } from './dom.js';
 import { companionSvg } from './art.js';
 import { mapSection } from './map.js';
@@ -67,6 +68,7 @@ export function homeView(app) {
       h('button', { class: 'tile t-blue', id: 'book', onclick: () => app.go('/book') }, icon('book'), 'Creature book'),
       h('button', { class: 'tile t-pink', id: 'trophies', onclick: () => app.go('/trophies') }, icon('trophy'), `Trophies (${Object.keys(profile.trophies).length})`),
       h('button', { class: 'tile t-blue', id: 'words-link', onclick: () => app.go('/words') }, icon('star'), `My words (${masteredCount(profile)})`),
+      h('button', { class: 'tile t-yellow', id: 'learn-link', onclick: () => app.go('/learn') }, h('span', { class: 'ico', html: spellMasterSvg({ size: 34, label: '' }) }), 'Spell Master'),
       h('button', { class: 'tile t-grey', id: 'settings-link', onclick: () => app.go('/settings') }, icon('speaker'), 'Settings'),
       h('button', { class: 'tile t-grey', id: 'parent-link', onclick: () => app.go('/parent') }, icon('lock'), 'Parent area'),
       h('button', { class: 'tile t-grey', onclick: () => app.go('/') }, icon('home'), 'Switch trainer')));

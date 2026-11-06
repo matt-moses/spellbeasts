@@ -10,6 +10,7 @@ import { practiceView } from './ui/practice.js';
 import { summaryView } from './ui/summary.js';
 import { trophiesView } from './ui/trophies.js';
 import { wordsView } from './ui/words.js';
+import { learnView } from './ui/learn.js';
 import { nestView, sanctuaryView, bookView } from './ui/collection.js';
 import { parentView } from './ui/parent.js';
 import { careView, playView } from './ui/care.js';
@@ -33,7 +34,7 @@ const app = {
   choose(id) { this.profileId = id; this.go('/home'); },
 };
 
-const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, words: wordsView, nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView, care: careView, play: playView, settings: settingsView };
+const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, words: wordsView, learn: learnView, nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView, care: careView, play: playView, settings: settingsView };
 const root = document.getElementById('app');
 
 function banners() {

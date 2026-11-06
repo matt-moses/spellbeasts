@@ -352,3 +352,34 @@ details.faq p { margin:.5rem 0 .2rem; font-size:1.05rem; }
 
 .word-grid { list-style:none; padding:0; display:flex; flex-wrap:wrap; gap:.5rem; }
 .word-grid button { font-size:1.15rem; padding:.4rem .9rem; border-radius:999px; background:#fff; box-shadow:0 4px 0 var(--lip); font-weight:bold; }
+
+/* ---------- Spell Master (spelling-rule lessons) ---------- */
+.master { display:flex; align-items:center; gap:.8rem; margin:.4rem 0 1rem; }
+.master .owl svg, .master .owl { display:block; flex:none; }
+.master-says { flex:1; margin:0; }
+.master-says h1 { margin:.1rem 0 .3rem; font-size:1.5rem; }
+.master-says p { margin:0; font-style:italic; }
+.small-master h1 { margin:0; font-size:1.6rem; }
+.lessons { list-style:none; padding:0; margin:0 0 1rem; display:grid; gap:.7rem; }
+.lesson-card { width:100%; justify-content:flex-start; text-align:left; padding:.6rem 1rem; gap:.8rem; }
+.lesson-card .num { flex:none; width:2.2rem; height:2.2rem; border-radius:50%; background:var(--purple); color:#fff; display:inline-flex; align-items:center; justify-content:center; }
+.lesson-text { display:flex; flex-direction:column; }
+.lesson-text small { font-weight:normal; color:#44506b; }
+.group h2 { margin:.1rem 0 .3rem; font-size:1.25rem; }
+.examples { list-style:none; padding:0; margin:.6rem 0 0; display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:.6rem; }
+.example { width:100%; flex-direction:column; gap:.1rem; padding:.5rem .7rem; background:#f8fbff; font-family:Verdana,Tahoma,sans-serif; }
+.example .eq { font-size:1rem; color:#44506b; }
+.example .plus { margin:0 .35rem; }
+.example .result { font-size:1.45rem; letter-spacing:.06em; }
+.example .hl { color:var(--purple); text-decoration:underline; }
+.example .cut { color:var(--bad); }
+.example .not { font-weight:normal; color:var(--bad); }
+.quiz h2 { margin:.2rem 0 .6rem; }
+.choices { display:flex; flex-wrap:wrap; gap:.8rem; }
+.choice { font-family:Verdana,Tahoma,sans-serif; font-size:1.5rem; padding:.7rem 1.4rem; }
+.choice.right { background:#d8f5e3; box-shadow:0 5px 0 #8fd6ac; }
+.choice.miss { background:#ffe3e3; box-shadow:0 5px 0 #f0b3b3; }
+.choice:disabled { opacity:1; cursor:default; }
+.quiz-out { margin-top:.8rem; }
+.quiz-out .yes { color:var(--good); font-weight:bold; }
+.quiz-out .almost { color:var(--ink); }
