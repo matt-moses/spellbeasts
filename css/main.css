@@ -200,6 +200,8 @@ th, td { border:1px solid var(--line); padding:.35rem .5rem; text-align:left; ve
 th { background:#eef4fd; }
 td.w { font-weight:bold; }
 td.acts { white-space:nowrap; }
+.edit-word { display:flex; gap:8px; align-items:center; flex-wrap:nowrap; }
+.edit-actions { white-space:nowrap; }
 .sort { border:none; background:none; padding:0; box-shadow:none; font-weight:bold; cursor:pointer; }
 .sort:active:not(:disabled) { transform:none; box-shadow:none; }
 .confirm { background:#fde8e6; border-radius:12px; padding:.3rem .6rem; display:inline-block; }

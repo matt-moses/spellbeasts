@@ -131,13 +131,16 @@ export function parentView(app) {
       const FIELDS = ['word', 'partOfSpeech', 'definition', 'sentence', 'sayAs'];
       const f = Object.fromEntries(FIELDS.map((k) => [k, h('input', { type: 'text', value: w[k] ?? '', 'aria-label': k === 'sayAs' ? 'say it like (how it should sound)' : k, name: k, placeholder: k === 'sayAs' ? 'e.g. laffter' : null })]));
       const err = h('small', { class: 'err', role: 'alert' });
-      tr.replaceChildren(...FIELDS.map((k) => h('td', {}, f[k])), h('td', { class: 'acts' },
-        h('button', { class: 'secondary hear', type: 'button', onclick: () => app.speaker.speak(spokenWord({ word: f.word.value, sayAs: f.sayAs.value })) }, 'Hear it'), ' ',
+      // Save sits right beside the word box, so it is never scrolled out of sight at the far end of the wide table.
+      const actions = h('div', { class: 'edit-actions' },
         h('button', { class: 'primary save', onclick: () => {
           const r = P.editWord(st(), ui.listId, w.word, Object.fromEntries(Object.entries(f).map(([k, el]) => [k, el.value])));
           if (!r.ok) { err.textContent = r.error; return; }
           save(); say('Word saved.'); redraw();
-        } }, 'Save'), ' ', h('button', { class: 'secondary', onclick: show }, 'Cancel'), err));
+        } }, 'Save'), ' ', h('button', { class: 'secondary', onclick: show }, 'Cancel'), ' ',
+        h('button', { class: 'secondary hear', type: 'button', onclick: () => app.speaker.speak(spokenWord({ word: f.word.value, sayAs: f.sayAs.value })) }, 'Hear it'));
+      tr.replaceChildren(h('td', { class: 'editing' }, h('div', { class: 'edit-word' }, f.word, actions), err),
+        ...FIELDS.slice(1).map((k) => h('td', {}, f[k])), h('td', {}));
     };
     show();
     return tr;
