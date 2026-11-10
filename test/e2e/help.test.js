@@ -1,14 +1,15 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { hasBrowser, launch, prepare, seededState } from './helpers.js';
-import { FAQ } from '../../js/ui/help-content.js';
+import { FAQ, ARENA_FAQ } from '../../js/ui/help-content.js';
 
 const skip = hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
 let env;
 before(async () => { if (hasBrowser) env = await launch(); });
 after(async () => { await env?.close(); });
 
-const TOTAL = FAQ.flatMap((g) => g.items).length;
+const GROUPS = [...FAQ, ARENA_FAQ];                                    // the Arena is on, so its questions show too
+const TOTAL = GROUPS.flatMap((g) => g.items).length;
 async function open(withProfile = true) {
   const context = await env.browser.newContext({ reducedMotion: 'reduce', viewport: { width: 900, height: 1000 } });
   const errors = [];
@@ -27,7 +28,7 @@ test('the picker has a help button; the dialog lists every question, opens answe
   assert.equal(await page.getAttribute('#help-dialog', 'aria-modal'), 'true');
   assert.equal(await page.evaluate(() => document.activeElement.id), 'help-close');
   assert.equal(await page.locator('details.faq').count(), TOTAL);
-  assert.equal(await page.locator('.faq-group h3').count(), FAQ.length);
+  assert.equal(await page.locator('.faq-group h3').count(), GROUPS.length);
   assert.equal(await page.locator('details.faq[open]').count(), 0);
   await page.click('details.faq:has-text("Do capital letters matter") summary');
   assert.match(await page.textContent('details.faq[open] p'), /Monday/);

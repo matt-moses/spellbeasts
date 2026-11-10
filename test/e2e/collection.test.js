@@ -31,8 +31,8 @@ test('choosing a starter puts it in the Sanctuary and the Creature book', { skip
   assert.match(await page.textContent('.hungry'), /hungry/);
   await page.click('button:text-is("Creature book")');
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), /1 of 27 discovered/);
-  assert.equal(await page.locator('.book-entry.unknown').count(), 26);
+  assert.match(await page.textContent('.book p'), /1 of 36 discovered/);
+  assert.equal(await page.locator('.book-entry.unknown').count(), 35);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -62,7 +62,7 @@ test('an egg warmed by correct answers hatches, shows up everywhere, and pays Fi
   assert.equal(await page.locator('.creature-card').count(), 2);
   await page.click('button:text-is("Creature book")');
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), /2 of 27 discovered/);
+  assert.match(await page.textContent('.book p'), /2 of 36 discovered/);
   assert.equal(await page.locator('.book-entry.owned[data-species=glowmoth]').count(), 1);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('spellbeasts.v1')).profiles.p1);
   assert.equal(saved.eggsHatched, 1);
@@ -126,7 +126,7 @@ test('with the Arena on, the Creature book lists 36 creatures: each land shows i
   await context.close();
 });
 test('with the Arena off, the book still shows 27 creatures and no arena entries', { skip }, async () => {
-  const { page, context, errors } = await newPage({ state: seededState() });
+  const { page, context, errors } = await newPage({ state: seededState(), arena: false });
   await page.goto(env.server.url);
   await page.click('.card'); await page.waitForSelector('#practice');
   await page.evaluate(() => { location.hash = '#/book'; });

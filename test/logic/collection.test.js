@@ -44,7 +44,7 @@ test('arena-only species never come out of an egg: 10,000 seeded hatches across 
   assert.equal(seen.size, 27);                                   // and every egg species does turn up
   assert.ok(p.creatures.every((c) => !isArenaSpecies(c.species)));
 });
-test('the Creature book counts 27 species until the Arena is switched on, then 36', () => {
+test('the Creature book counts 36 species, or 27 with the Arena switched off', () => {
   const p = mk(); addStarter(p, 'burrowby');
   try {
     globalThis.SPELLBEASTS_ARENA = false;

@@ -9,7 +9,7 @@ export const CF_BEACON_URL = 'https://static.cloudflareinsights.com/beacon.min.j
 // Turning it on shows the home tile and the #/learn screens (and un-skips test/e2e/learn.test.js).
 export const SPELL_MASTER_ENABLED = false;
 
-// Trainer Battles (the Arena, js/logic/battle.js). Built behind this switch because every push to main goes live.
-// Tests turn it on with globalThis.SPELLBEASTS_ARENA = true.
-export const ARENA_ENABLED = false;
+// Trainer Battles (the Arena, js/logic/battle.js). Setting this to false hides every flag, screen, creature and help
+// question that belongs to it. Tests force it either way with globalThis.SPELLBEASTS_ARENA = true / false.
+export const ARENA_ENABLED = true;
 export const arenaOn = () => globalThis.SPELLBEASTS_ARENA ?? ARENA_ENABLED;

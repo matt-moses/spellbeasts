@@ -46,6 +46,17 @@ await shot('practice', { fullPage: true });
 await page.press('#answer', 'Enter'); await page.waitForSelector('.correct-word');
 await shot('practice-miss', { fullPage: true });
 
+// the Arena: pick a creature, then a battle a few answers in (two hits, so the special move is charged)
+await go('home'); await page.waitForSelector('.token[data-settled=true]');
+await page.evaluate(() => { Math.random = () => 0.1; });                 // the land's arena-only creature turns up
+await go('arena/r3'); await page.waitForSelector('.arena');
+await page.click('.arena-pick[data-species=stormwyrm]');
+await shot('arena', { fullPage: true });
+await page.click('#battle-go'); await page.waitForSelector('.battle-stage');
+for (let i = 0; i < 5; i++) { const n = await page.evaluate(() => window.__spoken.length); await page.fill('#answer', await page.evaluate(() => window.__spoken.at(-1).text)); await page.press('#answer', 'Enter'); await page.waitForFunction((k) => window.__spoken.length > k, n); }
+await page.fill('#answer', 'thund');
+await shot('battle', { fullPage: true });
+
 await go('sanctuary'); await page.waitForSelector('.creature-card');
 await shot('sanctuary', { fullPage: true });
 await page.click('.creature-card:first-child .care-link'); await page.waitForSelector('#care-feed');

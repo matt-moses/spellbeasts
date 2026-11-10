@@ -25,10 +25,10 @@ export function seededState(words = ['Monday', 'garden', 'island']) {
 }
 
 // Fake speech (records utterances) + optional pre-seeded storage; runs before app code.
-export async function prepare(context, { state = null, errors = [], arena = false } = {}) {
+export async function prepare(context, { state = null, errors = [], arena = null } = {}) {
   await context.addInitScript(({ state, arena }) => {
     window.__spoken = [];
-    if (arena) window.SPELLBEASTS_ARENA = true;                                                 // the Arena is built behind a switch (js/config.js)
+    if (arena !== null) window.SPELLBEASTS_ARENA = arena;                                       // force the Arena switch (js/config.js) on or off; null leaves the shipped setting
     if (window.SPELLBEASTS_READY_DELAY === undefined) window.SPELLBEASTS_READY_DELAY = 0;      // tests skip the get-ready pause unless they test it
     const voice = { voiceURI: 'fake', lang: 'en-US', name: 'Fake' };
     window.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };

@@ -14,6 +14,6 @@ The PRD (`spelling-bee-creature-game-prd.md`) is the approved starting point. Th
 | Characters | decorative | Tap-to-play: every click runs the next action in a shuffled rotation (animation, sound, effect, speech bubble) |
 | Look | plain | A bright park-scene look: chunky buttons, pills, a board-game map with star tiles and a region wheel |
 | Order of unlock and step | unspecified | An answer that unlocks a land can already step the token into it |
-| Not yet built | Phase 2 Trainer Battles (Arena) | Still to do |
+| Phase 2 Trainer Battles (Arena) | 6 arena-only species; 5 hearts; a win ends the battle | Built. 9 arena-only species (one per land). Hearts scale with the session (10 to 14) so the fight lasts it, and the remaining words are a victory lap. The special move is every third right answer in a row. An unowned egg species joins 25% of the time. The win is saved the moment the last heart goes. Details in `plan.md`. |
 
 Where the PRD's numbers conflict: a brand-new trainer's first session has only **3 words**, because the PRD caps new words at 3 per session and nothing is due yet. That follows the 3-new-words rule rather than the 10-12-word target.
