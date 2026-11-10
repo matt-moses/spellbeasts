@@ -1,0 +1,31 @@
+<!doctype html>
+<!-- Test page for the battle stage (js/ui/battle-stage.js). Not part of the game: it is never cached or linked.
+     ?player=burrowby&pstage=1&wild=glowmoth&wstage=2&hearts=10&left=10&land=r1 -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Battle stage test page</title><link rel="icon" href="data:,"><link rel="stylesheet" href="../../css/main.css">
+<style>#buttons { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:1rem; } #buttons button { font-size:.8rem; padding:.3rem .6rem; }</style></head>
+<body><div id="app"><div id="mount"></div><div id="buttons"></div></div>
+<script type="module">
+import { createBattleStage } from '../../js/ui/battle-stage.js';
+import { CUES } from '../../js/logic/battle-cues.js';
+const q = new URLSearchParams(location.search);
+const hearts = Number(q.get('hearts') ?? 10);
+const stage = createBattleStage({
+  player: { species: q.get('player') ?? 'burrowby', stage: Number(q.get('pstage') ?? 1) },
+  wild: { species: q.get('wild') ?? 'glowmoth', stage: Number(q.get('wstage') ?? 1) },
+  hearts, heartsLeft: Number(q.get('left') ?? hearts), land: q.get('land') ?? 'r1',
+});
+document.getElementById('mount').append(stage.el);
+stage.set({});
+window.stage = stage; window.CUES = CUES;
+// Sensible end states so each button shows the event as the game would.
+const REST = {
+  enter: () => ({}), hit: (s) => ({ heartsLeft: Math.max(1, s.heartsLeft - 1), charge: (s.charge + 1) % 3 }), special: (s) => ({ heartsLeft: Math.max(1, s.heartsLeft - 2), charge: 0 }),
+  dodge: () => ({ charge: 0 }), 'win-befriend': () => ({ heartsLeft: 0, won: true, prize: 'befriend', charge: 0 }), 'win-crickets': () => ({ heartsLeft: 0, won: true, prize: 'crickets', charge: 0 }),
+  cheer: () => ({}), oops: () => ({}), escape: () => ({ escaped: true }), taunt: () => ({}),
+};
+window.playEvent = (event) => { const s = stage.state; const rest = REST[event](s); return stage.play(event, rest, { damage: Math.max(0, s.heartsLeft - (rest.heartsLeft ?? s.heartsLeft)) }); };
+for (const e of Object.keys(CUES)) { const b = document.createElement('button'); b.textContent = e; b.onclick = () => window.playEvent(e); document.getElementById('buttons').append(b); }
+const reset = document.createElement('button'); reset.textContent = 'reset'; reset.onclick = () => stage.set({ heartsLeft: hearts, charge: 0, won: false, prize: null, escaped: false }); document.getElementById('buttons').append(reset);
+window.ready = true;
+</script></body></html>

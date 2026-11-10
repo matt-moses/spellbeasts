@@ -4,16 +4,32 @@ import { makeInteractive } from './pet.js';
 import { spokenWord, spokenSentence } from '../logic/pronounce.js';
 
 export function practiceView(app) {
-  const { speaker, audio, store } = app;
-  const s = app.session;
-  if (!s) { queueMicrotask(() => app.go('/home')); return h('div'); }
+  if (!app.session) { queueMicrotask(() => app.go('/home')); return h('div'); }
+  return wordScreen(app, app.session, companionScene(app));
+}
+
+// The scene above the word prompt in plain practice: your buddy on its podium, happy or sad with each answer.
+function companionScene(app) {
   const profile = app.profile;
-  let cur = null;
+  const el = h('div', { class: 'companion', html: companionSvg(profile, { size: 110 }) });
+  const mood = (m) => { el.innerHTML = companionSvg(profile, { size: 110, mood: m }); el.classList.remove('bounce'); void el.offsetWidth; el.classList.add('bounce'); };
+  makeInteractive(el, app, { name: profile.name, speak: false, focusable: false, label: 'Tap your practice buddy' });
+  return { el, cls: 'practice', correct: () => mood('happy'), miss: () => mood('sad'), corrected: () => mood('happy'), end: () => { app.session = null; } };
+}
+
+// The word prompt shared by practice and battles (js/ui/battle.js): hear a word, type it, get gentle feedback.
+// `s` is a session (or a battle, which has the same interface). `scene` supplies what is drawn above the prompt:
+//   el, cls, correct(result), miss(result), corrected(), end(), and optionally
+//   toast(result) -> text, quiet (the scene plays its own sounds), finish(summary) -> ms to wait before the summary.
+export function wordScreen(app, s, scene) {
+  const { speaker, audio, store } = app;
+  const profile = app.profile;
+  let cur = null, leaving = false;
 
   const fill = h('div', { class: 'fill' });
   const bar = h('div', { class: 'bar', role: 'progressbar', 'aria-label': 'Session progress' }, fill);
   const crickets = h('span', { class: 'crickets' });
-  const companion = h('div', { class: 'companion', html: companionSvg(profile, { size: 110 }) });
+  const companion = scene.el;
   const clue = h('p', { class: 'clue', 'aria-live': 'polite' });
   const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
   const toast = h('div', { class: 'toast', role: 'status' });
@@ -26,7 +42,7 @@ export function practiceView(app) {
   // The very first word waits a moment so there is time to settle in. Anything the player does (Say again, Say slowly,
   // an answer) cancels the wait. The wait length can be overridden with globalThis.SPELLBEASTS_READY_DELAY (tests use 0).
   const readyDelay = () => globalThis.SPELLBEASTS_READY_DELAY ?? 1200;
-  let readyTimer = 0, started = false;
+  let readyTimer = 0, leaveTimer = 0, started = false;
   const cancelReady = () => { clearTimeout(readyTimer); readyTimer = 0; root.querySelector('.get-ready')?.remove(); };
   const sayAgain = () => { cancelReady(); speaker.speak(spokenWord(cur)); };
   const buttons = h('div', { class: 'clues' },
@@ -46,14 +62,18 @@ const sentenceBtn = buttons.querySelector('#say-sentence');
     bar.setAttribute('aria-valuenow', String(p.resolved)); bar.setAttribute('aria-valuemax', String(p.total));
     crickets.textContent = `🦗 ${profile.crickets}`;
   }
-  function mood(m) { companion.innerHTML = companionSvg(profile, { size: 110, mood: m }); companion.classList.remove('bounce'); void companion.offsetWidth; companion.classList.add('bounce'); }
   function say(msg) { toast.textContent = msg; toast.classList.remove('show'); void toast.offsetWidth; toast.classList.add('show'); }
 
   function ask() {
     cur = s.next();
     if (!cur) {
+      if (leaving) return undefined;
+      leaving = true;
       const summary = s.finish(); store.save();
-      app.lastSummary = summary; app.session = null;
+      app.lastSummary = summary; scene.end();
+      // A scene may play a short goodbye (never more than a second) now that there is nothing left to type.
+      const wait = scene.finish?.(summary) ?? 0;
+      if (wait > 0) { input.disabled = true; leaveTimer = setTimeout(() => app.go('/summary'), wait); return undefined; }
       return app.go('/summary');
     }
     cancelReady();
@@ -88,12 +108,13 @@ const sentenceBtn = buttons.querySelector('#say-sentence');
       const r = s.submit(input.value);
       store.save();
       if (r.correct) {
-        audio.play('correct'); mood('happy');
-        say(`✓ Correct!  +${r.reward.crickets} 🦗${r.newlyMastered ? '  Mastered!' : ''}`);
+        if (!scene.quiet) audio.play('correct');
+        scene.correct(r);
+        say(`${scene.toast?.(r) ?? '✓ Correct!'}  +${r.reward.crickets} 🦗${r.newlyMastered ? '  Mastered!' : ''}`);
         ask();
-      } else { audio.play('gentle'); mood('sad'); showMiss(r); refresh(); }
+      } else { if (!scene.quiet) audio.play('gentle'); scene.miss(r); const t = scene.toast?.(r); if (t) say(t); showMiss(r); refresh(); }
     } else if (s.mode === 'correcting') {
-      if (s.submitCorrection(input.value)) { store.save(); mood('happy'); ask(); }
+      if (s.submitCorrection(input.value)) { store.save(); scene.corrected(); ask(); }
       else { say('Not quite. Look at the letters and try again.'); input.value = ''; input.focus(); }
     }
   }
@@ -103,10 +124,9 @@ const sentenceBtn = buttons.querySelector('#say-sentence');
     else if (e.key === ' ' && e.target === input && input.value === '' && s.mode === 'asking') { e.preventDefault(); sayAgain(); }
   }
   document.addEventListener('keydown', onKey);
-  app.cleanup.push(() => { document.removeEventListener('keydown', onKey); clearTimeout(readyTimer); });
+  app.cleanup.push(() => { document.removeEventListener('keydown', onKey); clearTimeout(readyTimer); clearTimeout(leaveTimer); scene.destroy?.(); });
 
-  makeInteractive(companion, app, { name: profile.name, speak: false, focusable: false, label: 'Tap your practice buddy' });
-  const root = h('section', { class: 'screen practice' },
+  const root = h('section', { class: `screen practice${scene.cls === 'practice' ? '' : ` ${scene.cls}`}` },
     h('div', { class: 'p-top' }, bar, crickets), companion,
     h('div', { class: 'panel prompt-card' }, noVoice, buttons, clue,
       h('form', { onsubmit: onSubmit, autocomplete: 'off' }, label, input, h('button', { type: 'submit', class: 'primary' }, 'Check')),

@@ -7,11 +7,13 @@ import { chrome } from './ui/chrome.js';
 import { profilesView } from './ui/profiles.js';
 import { homeView } from './ui/home.js';
 import { practiceView } from './ui/practice.js';
+import { battleView } from './ui/battle.js';
+import { arenaView } from './ui/arena.js';
 import { summaryView } from './ui/summary.js';
 import { trophiesView } from './ui/trophies.js';
 import { wordsView } from './ui/words.js';
 import { learnView } from './ui/learn.js';
-import { SPELL_MASTER_ENABLED } from './config.js';
+import { SPELL_MASTER_ENABLED, arenaOn } from './config.js';
 import { nestView, sanctuaryView, bookView } from './ui/collection.js';
 import { parentView } from './ui/parent.js';
 import { careView, playView } from './ui/care.js';
@@ -24,7 +26,7 @@ const store = createStore();
 store.load();
 
 const app = {
-  store, profileId: null, session: null, lastSummary: null, cleanup: [],
+  store, profileId: null, session: null, battle: null, lastSummary: null, cleanup: [],
   speaker: createSpeaker({ getSettings: () => store.state.settings }),
   audio: createAudio({ getSettings: () => store.state.settings }),
   get profile() { return store.state.profiles[this.profileId]; },
@@ -32,10 +34,10 @@ const app = {
   parentUnlocked: false,
   render: () => render(),
   go(route) { location.hash = `#${route}`; },
-  choose(id) { this.profileId = id; this.go('/home'); },
+  choose(id) { this.profileId = id; this.battle = null; this.go('/home'); },
 };
 
-const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, words: wordsView, ...(SPELL_MASTER_ENABLED ? { learn: learnView } : {}), nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView, care: careView, play: playView, settings: settingsView };
+const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, words: wordsView, ...(SPELL_MASTER_ENABLED ? { learn: learnView } : {}), nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView, care: careView, play: playView, settings: settingsView, ...(arenaOn() ? { arena: arenaView, battle: battleView } : {}) };
 const root = document.getElementById('app');
 
 function banners() {
@@ -52,11 +54,12 @@ function render() {
   if (name !== '' && name !== 'parent' && name !== 'settings' && !app.profile) { app.go('/'); return; }
   if (name !== 'parent') app.parentUnlocked = false;
   if (name === 'practice' && !app.session) name = 'home';
+  if (name === 'battle' && !app.battle) name = arg ? 'arena' : 'home';
   const route = name === '' ? '/' : `/${name}`;
   fill(root, ...banners(), name === '' || name === 'home' ? null : chrome(app), routes[name](app, arg));
   const first = root.querySelector('h1, input');
   document.title = 'Spellbeasts';
-  if (route !== '/practice') first?.setAttribute('tabindex', '-1');
+  if (route !== '/practice' && route !== '/battle') first?.setAttribute('tabindex', '-1');
 }
 window.addEventListener('hashchange', render);
 loadAnalytics();

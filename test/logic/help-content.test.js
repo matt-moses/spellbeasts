@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { FAQ } from '../../js/ui/help-content.js';
+import { FAQ, ARENA_FAQ, faqGroups } from '../../js/ui/help-content.js';
 
-const items = FAQ.flatMap((g) => g.items);
+const items = [...FAQ, ARENA_FAQ].flatMap((g) => g.items);
 const words = (s) => s.trim().split(/\s+/);
 
 test('there is a good spread of questions in clear groups', () => {
@@ -27,4 +27,15 @@ test('answers use kid-sized words (few very long words) and no jargon', () => {
 test('the FAQs cover the main things a kid will wonder about', () => {
   const text = items.map((i) => `${i.q} ${i.a}`).join(' ').toLowerCase();
   for (const topic of ['capital', 'crickets', 'egg', 'berries', 'mastered', 'streak', 'foggy', 'hear', 'trophies', 'level']) assert.ok(text.includes(topic), `missing: ${topic}`);
+});
+test('battle questions appear only when the Arena is switched on, and cover the things a kid will ask', () => {
+  try {
+    globalThis.SPELLBEASTS_ARENA = false;
+    assert.deepEqual(faqGroups(), FAQ);
+    globalThis.SPELLBEASTS_ARENA = true;
+    assert.equal(faqGroups().length, FAQ.length + 1);
+    assert.deepEqual(faqGroups().map((g) => g.group), ['Spelling', 'Prizes and levels', 'Creatures', 'Battles', 'The map', 'Trouble?']);
+  } finally { delete globalThis.SPELLBEASTS_ARENA; }
+  const text = ARENA_FAQ.items.map((i) => `${i.q} ${i.a}`).join(' ').toLowerCase();
+  for (const topic of ['battle', 'heart', 'special move', 'three', 'lose', 'never', 'friends', 'level 3', 'arena flag']) assert.ok(text.includes(topic), `missing: ${topic}`);
 });

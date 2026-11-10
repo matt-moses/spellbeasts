@@ -1,6 +1,6 @@
 import { h, fill } from './dom.js';
 import { creatureSvg, eggSvg } from './art.js';
-import { SPECIES, REGIONS, regionById, regionIndex, speciesById, stageName } from '../logic/species.js';
+import { NEST_SPECIES, bookSpecies, REGIONS, regionById, regionIndex, speciesById, stageName } from '../logic/species.js';
 import { eggPrice } from '../logic/hatch.js';
 import { buyEgg, hatchEgg, feed, tryEvolve, evolveHint, readyEggs, ownedSpecies, evolveContext } from '../logic/collection.js';
 import { canEvolve, FEED_NEEDED } from '../logic/hatch.js';
@@ -24,7 +24,7 @@ export function nestView(app, regionId) {
 
   function draw() {
     const owned = ownedSpecies(profile);
-    const here = SPECIES.filter((s) => s.region === regionId);
+    const here = NEST_SPECIES.filter((s) => s.region === regionId);
     const eggs = profile.eggs;
     fill(root,
       h('h1', {}, `${region.name} Nest`),
@@ -116,19 +116,20 @@ export function bookView(app) {
   const profile = app.profile;
   const best = {};
   for (const c of profile.creatures) best[c.species] = Math.max(best[c.species] ?? 0, c.stage);
-  const count = Object.keys(best).length;
+  const all = bookSpecies();
+  const count = all.filter((s) => best[s.id]).length;
   return h('section', { class: 'screen book' },
     h('h1', {}, 'Creature book'),
-    h('p', {}, `${count} of ${SPECIES.length} discovered`),
+    h('p', {}, `${count} of ${all.length} discovered`),
     REGIONS.map((r) => h('div', { class: 'panel' }, h('h2', {}, r.name),
-      h('div', { class: 'species-row' }, SPECIES.filter((s) => s.region === r.id).map((s) => {
-        const stage = best[s.id];
+      h('div', { class: 'species-row' }, all.filter((s) => s.region === r.id).map((s) => {
+        const stage = best[s.id], arena = s.rarity === 'arena';
         const art = h('span', { html: creatureSvg(s.id, stage ?? 1, { size: 96, silhouette: !stage }) });
         if (stage) makeInteractive(art, app, { name: profile.name, speak: false, label: `Tap ${s.name}` });
-        return h('figure', { class: `mini book-entry ${stage ? 'owned' : 'unknown'}`, 'data-species': s.id },
+        return h('figure', { class: `mini book-entry ${stage ? 'owned' : 'unknown'}${arena ? ' arena-only' : ''}`, 'data-species': s.id },
           art,
           h('figcaption', {}, h('strong', {}, stage ? s.name : '???'), h('small', {}, ` ${s.rarity}`),
-            stage ? h('div', { class: 'flavor' }, s.flavor) : h('div', { class: 'flavor' }, `Lives in ${r.name}.`)));
+            stage ? h('div', { class: 'flavor' }, s.flavor) : h('div', { class: 'flavor' }, arena ? `Meet it in the ${r.name} Arena.` : `Lives in ${r.name}.`)));
       })))),
     h('div', { class: 'actions' }, back(app), h('button', { class: 'secondary', onclick: () => app.go('/sanctuary') }, 'Sanctuary')));
 }

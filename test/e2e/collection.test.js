@@ -104,3 +104,35 @@ test('buying eggs spends crickets; locked regions are closed; feeding and evolvi
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test('with the Arena on, the Creature book lists 36 creatures: each land shows its arena-only one as a silhouette with a hint', { skip }, async () => {
+  const state = seededState();
+  const { page, context, errors } = await newPage({ state, arena: true });
+  await page.goto(env.server.url);
+  await page.click('.card'); await page.waitForSelector('#practice');
+  await page.evaluate(() => { location.hash = '#/book'; });
+  await page.waitForSelector('.book');
+  assert.match(await page.textContent('.book p'), /1 of 36 discovered/);
+  assert.equal(await page.locator('.book-entry').count(), 36);
+  assert.equal(await page.locator('.book-entry.arena-only').count(), 9);
+  assert.equal(await page.locator('.book-entry.arena-only .silhouette').count(), 9);
+  assert.match(await page.textContent('.book-entry[data-species=cloverknight]'), /\?\?\?.*Meet it in the Sunny Meadow Arena\./s);
+  assert.doesNotMatch(await page.textContent('.book-entry[data-species=cloverknight]'), /Cloverknight/);
+  // the Nest still offers only the three egg species
+  await page.evaluate(() => { location.hash = '#/nest/r1'; });
+  await page.waitForSelector('.nest');
+  assert.equal(await page.locator('.nest .species-row .mini').count(), 3);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+test('with the Arena off, the book still shows 27 creatures and no arena entries', { skip }, async () => {
+  const { page, context, errors } = await newPage({ state: seededState() });
+  await page.goto(env.server.url);
+  await page.click('.card'); await page.waitForSelector('#practice');
+  await page.evaluate(() => { location.hash = '#/book'; });
+  await page.waitForSelector('.book');
+  assert.equal(await page.locator('.book-entry').count(), 27);
+  assert.equal(await page.locator('.book-entry.arena-only').count(), 0);
+  assert.deepEqual(errors, []);
+  await context.close();
+});

@@ -5,7 +5,7 @@ import { creatureSvg } from './art.js';
 import { createRunner, stepRunner, jump, score, prizeFor as runPrize, HEARTS, PLAYER_X0, SPRITE_SIZE, GROUND_Y, HOP_SCALE, spriteTop, hopLift } from '../logic/runner.js';
 import { createMemory, flip, settle, prizeFor as memPrize } from '../logic/memory.js';
 import { finishGame } from '../logic/care.js';
-import { SPECIES, STARTER_IDS } from '../logic/species.js';
+import { SPECIES, STARTER_IDS, bookSpecies } from '../logic/species.js';
 
 const SVGNS = 'http://www.w3.org/2000/svg';
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -71,7 +71,7 @@ export function memoryGame({ app, creature, root, exit, result, restart }) {
   const { audio } = app, profile = app.profile;
   const PAIRS = 6;
   const owned = [...new Set(profile.creatures.map((c) => c.species))];
-  const fillers = [...new Set([...STARTER_IDS, ...SPECIES.map((s) => s.id)])].filter((id) => !owned.includes(id));   // each creature at most once
+  const fillers = [...new Set([...STARTER_IDS, ...bookSpecies().map((s) => s.id)])].filter((id) => !owned.includes(id));   // each creature at most once
   const chosen = [...owned.sort(() => Math.random() - 0.5), ...fillers].slice(0, PAIRS);
   console.assert(new Set(chosen).size === chosen.length, 'memory pairs must be distinct');
   const g = createMemory({ pairs: chosen, rng: Math.random });

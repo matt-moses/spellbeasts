@@ -25,6 +25,7 @@ export function freshProfile({ name, avatarSpecies, now = new Date().toISOString
     creatures: [], eggs: [],
     map: { trailStep: 0, claimedLandmarks: [], unlockedRegions: ['r1'] },
     trophies: {}, sessions: [],
+    battlesWon: 0, arena: { befriended: [], wins: {}, lastCreature: null },
   };
 }
 

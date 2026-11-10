@@ -1,3 +1,5 @@
+import { arenaOn } from '../config.js';
+
 // Kid-friendly FAQs. Keep answers short and simple (a test checks length and reading ease).
 export const FAQ = [
   { group: 'Spelling', items: [
@@ -34,3 +36,15 @@ export const FAQ = [
     { q: 'How do I change my word list?', a: 'That is for grown-ups. They can open the Parent area from the home screen. It asks the year they were born, to check they are grown up.' },
   ] },
 ];
+
+// Shown once the Arena is switched on (js/config.js).
+export const ARENA_FAQ = { group: 'Battles', items: [
+  { q: 'What is a battle?', a: 'A battle is spelling practice with a wild creature watching. Tap an Arena flag on the map, pick your creature and press Battle!' },
+  { q: 'How do I win a battle?', a: 'Every right answer is a hit that takes one heart from the wild creature. Take all its hearts and you win!' },
+  { q: 'What is a special move?', a: 'Spell three words right in a row and your creature does a special move. It takes two hearts at once!' },
+  { q: 'Can I lose a battle?', a: 'No, never! If you run out of words the wild creature just hops away. You keep all your crickets and XP.' },
+  { q: 'How do I make friends with a wild creature?', a: 'Win a battle! Each land has one special creature that lives only in its Arena. It joins you the first time you beat it.' },
+  { q: 'When does the Arena open?', a: 'The Arena opens when you reach level 3. Until then the flags on the map are grey.' },
+] };
+// The groups to show: the battle questions slot in after Creatures.
+export const faqGroups = () => (arenaOn() ? [...FAQ.slice(0, 3), ARENA_FAQ, ...FAQ.slice(3)] : FAQ);

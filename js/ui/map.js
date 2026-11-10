@@ -4,6 +4,8 @@
 import { h, icon } from './dom.js';
 import { companionSvg } from './art.js';
 import { REGIONS } from '../logic/species.js';
+import { arenaOn } from '../config.js';
+import { arenaOpen, ARENA_LEVEL } from '../logic/battle.js';
 import { awardTrophies } from '../logic/collection.js';
 import { TROPHIES } from '../logic/trophies.js';
 import { UNLOCKS, TOTAL_STEPS, REGION_END, regionStart, LANDMARKS, isReached, isClaimed, unlockRequirement, claimLandmark, regionOfStep } from '../logic/world.js';
@@ -127,6 +129,35 @@ ${colors.map((c, i) => `<radialGradient id="rg${i}" cx=".45" cy=".4" r=".8"><sto
 <clipPath id="mapclip"><rect width="${W}" height="${H}" rx="22"/></clipPath>
 </defs>`;
 
+// Where a land's Arena flag stands: on the rim of the land's patch, as far as possible from the trail (so it never
+// covers a path tile or a treasure star) and clear of the Nest pin and its name label above the centre.
+function arenaSpot(mid, samples) {
+  let best = null;
+  for (let deg = 0; deg < 360; deg += 10) {
+    const a = (deg * Math.PI) / 180, x = mid.x + Math.cos(a) * 98, y = mid.y + Math.sin(a) * 78;
+    if (y > H - 60 || y < 200 || x < 50 || x > W - 50) continue;
+    const trail = Math.min(...samples.map((p) => Math.hypot(p.x - x, p.y - y)));
+    const nest = Math.min(Math.hypot(mid.x - x, mid.y - 50 - y), Math.hypot(mid.x - x, mid.y - 92 - y) + 10);
+    const score = Math.min(trail, nest);
+    if (!best || score > best.score) best = { x, y, score };
+  }
+  return best ?? { x: mid.x + 70, y: mid.y + 40 };
+}
+
+// The Arena flag beside a land's Nest (PRD 12). Locked (grey, not a link) until the trainer reaches the Arena level.
+function arenaPin(r, x, y, open) {
+  const flag = open ? '#e5484d' : '#b8c2d4', pole = open ? '#8a5a2e' : '#8d97aa';
+  const art = `<g filter="url(#shadow)"><ellipse cx="${x}" cy="${y + 15}" rx="19" ry="6.5" fill="${open ? '#d97e00' : '#9aa5b8'}"/><ellipse cx="${x}" cy="${y + 12}" rx="19" ry="6.5" fill="${open ? '#ffc766' : '#d5dbe6'}"/>
+      <rect x="${x - 1.8}" y="${y - 24}" width="3.6" height="37" rx="1.8" fill="${pole}"/><path d="M${x + 1.5} ${y - 24} L${x + 25} ${y - 16} L${x + 1.5} ${y - 7}z" fill="${flag}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/></g>
+      ${open ? `<path d="M${x + 9} ${y - 20.500} l1.300 2.700 3 .400 -2.200 2.100 .500 3 -2.600 -1.400 -2.600 1.400 .500 -3 -2.200 -2.100 3 -.400z" fill="#ffe14d"/>` : `<g transform="translate(${x + 8} ${y - 15})"><rect x="-4" y="-1" width="8" height="6" rx="1.500" fill="#f5c518" stroke="${INK}" stroke-width="1.300"/><path d="M-2.300 -1V-3.200a2.300 2.300 0 0 1 4.600 0V-1" fill="none" stroke="${INK}" stroke-width="1.300"/></g>`}
+      <rect x="${x - 24}" y="${y + 20}" width="48" height="17" rx="8.500" fill="#fff" stroke="${open ? '#e5484d' : '#b8c2d4'}" stroke-width="2"/>
+      <text x="${x}" y="${y + 32.500}" text-anchor="middle" font-size="11" font-weight="bold" fill="${INK}">Arena</text>`;
+  const big = `<g transform="translate(${x} ${y}) scale(1.3) translate(${-x} ${-y})">${art}</g>`;
+  return open
+    ? `<g class="pin arena-link" data-region="${r.id}" role="link" tabindex="0" aria-label="Open ${r.name} Arena" style="cursor:pointer">${big}</g>`
+    : `<g class="arena-pin-locked" data-region="${r.id}" role="img" aria-label="${r.name} Arena. Opens at level ${ARENA_LEVEL}">${big}</g>`;
+}
+
 export function mapSection(app) {
   const { store, audio } = app;
   const profile = app.profile;
@@ -210,11 +241,17 @@ export function mapSection(app) {
       <circle cx="${mid.x - 5}" cy="${py - 2}" r="2.6" fill="#e8c27a"/><circle cx="${mid.x + 5}" cy="${py - 10}" r="2.2" fill="#e8c27a"/><circle cx="${mid.x + 6}" cy="${py + 1}" r="2" fill="#e8c27a"/>
       <rect x="${mid.x - lw / 2}" y="${py - 52}" width="${lw}" height="23" rx="11.5" fill="#fff" stroke="#ffb21c" stroke-width="2.5"/>
       <text x="${mid.x}" y="${py - 36}" text-anchor="middle" font-size="13.5" font-weight="bold" fill="${INK}">${label}</text></g>`;
+      if (arenaOn()) { const spot = arenaSpot(mid, samples); pins += arenaPin(r, spot.x, spot.y - 8, arenaOpen(profile)); }
     }
   });
   svg.querySelector('.layer-regions').innerHTML = regions;
   svg.querySelector('.layer-fog').innerHTML = fog;
   svg.querySelector('.layer-pins').innerHTML = pins;
+  svg.querySelectorAll('.arena-link').forEach((el) => {
+    const go = () => app.go(`/arena/${el.dataset.region}`);
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
   svg.querySelectorAll('.nest-link').forEach((el) => {
     const go = () => app.go(`/nest/${el.dataset.region}`);
     el.addEventListener('click', go);

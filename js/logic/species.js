@@ -1,3 +1,5 @@
+import { arenaOn } from '../config.js';
+
 // Species and regions (names are placeholders to be finalized with the player; all original).
 export const REGIONS = [
   { id: 'r1', name: 'Sunny Meadow' },
@@ -75,12 +77,38 @@ export const SPECIES = [
     art: { pal: ['#7a5fd6', '#3a2a8a', '#eadfff'], body: 'tall', ears: 'point', tail: 'fluff', face: 'smirk', s1: ['whiskers'], s2: ['stars', 'wings'], s3: ['bigwings', 'crown', 'stars'] } },
   { id: 'solphoenix', name: 'Solphoenix', region: 'r9', rarity: 'rare', flavor: 'Rises from its own sparks each sunrise, never in a bad mood.',
     art: { pal: ['#ff7a3a', '#b8341a', '#ffe0a0'], body: 'round', ears: 'none', tail: 'flame', face: 'fierce', s1: ['beak'], s2: ['wings', 'flame'], s3: ['bigwings', 'crown', 'stars'] } },
+  // Arena-only species: one per land, befriended only by winning a battle there (js/logic/battle.js). Never in eggs.
+  { id: 'cloverknight', name: 'Cloverknight', region: 'r1', rarity: 'arena', flavor: 'Guards the meadow with a four-leaf shield and a very loud hello.',
+    art: { pal: ['#6fbf5a', '#3d7a34', '#eaf7c8'], body: 'tall', ears: 'round', tail: 'tuft', face: 'fierce', s1: ['leafy'], s2: ['cape', 'helmet'], s3: ['stars', 'crown'] } },
+  { id: 'reedwisp', name: 'Reedwisp', region: 'r2', rarity: 'arena', flavor: 'A marsh light that leads lost travelers home, then asks for a story.',
+    art: { pal: ['#7fc7c2', '#3b7f86', '#e6fbf7'], body: 'round', ears: 'none', tail: 'curl', face: 'sleepy', s1: ['antennae'], s2: ['wings', 'lantern'], s3: ['bigwings', 'stars'] } },
+  { id: 'lavalynx', name: 'Lavalynx', region: 'r3', rarity: 'arena', flavor: 'Purrs like a kettle and naps on the warmest rock it can find.',
+    art: { pal: ['#f0703a', '#7a2a1a', '#ffe0b0'], body: 'tall', ears: 'point', tail: 'flame', face: 'fierce', s1: ['whiskers'], s2: ['mane', 'claws'], s3: ['flame', 'stars'] } },
+  { id: 'aurorastag', name: 'Aurorastag', region: 'r4', rarity: 'arena', flavor: 'Its antlers catch the northern lights and keep a little for later.',
+    art: { pal: ['#7fd6c0', '#3a7f8c', '#f0e6ff'], body: 'tall', ears: 'round', tail: 'tuft', face: 'wide', s1: ['antlers'], s2: ['cheeks', 'stars'], s3: ['bigwings', 'cape'] } },
+  { id: 'pearlcrab', name: 'Pearlcrab', region: 'r5', rarity: 'arena', flavor: 'Polishes one pearl all day and gives it away by evening.',
+    art: { pal: ['#ff8fa3', '#c0506a', '#fff0f3'], body: 'wide', ears: 'none', tail: 'none', face: 'wide', s1: ['pincers', 'eyebumps'], s2: ['shell', 'bubbles'], s3: ['crown', 'stars'] } },
+  { id: 'galeram', name: 'Galeram', region: 'r6', rarity: 'arena', flavor: 'Headbutts storm clouds until they agree to rain somewhere else.',
+    art: { pal: ['#f4f4fb', '#8f9bd0', '#ffffff'], body: 'round', ears: 'round', tail: 'fluff', face: 'smirk', s1: ['horns'], s2: ['mane', 'bolts'], s3: ['wings', 'stars'] } },
+  { id: 'echobat', name: 'Echobat', region: 'r7', rarity: 'arena', flavor: 'Sings into the caves and giggles when the caves sing back.',
+    art: { pal: ['#8a6fd0', '#4a3590', '#e9dcff'], body: 'round', ears: 'point', tail: 'none', face: 'wide', s1: ['batwings'], s2: ['crystals', 'cheeks'], s3: ['crown', 'stars'] } },
+  { id: 'miragecat', name: 'Miragecat', region: 'r8', rarity: 'arena', flavor: 'Now you see it, now you see two of it. Only one wants a snack.',
+    art: { pal: ['#f2b84a', '#b5622a', '#fff3d0'], body: 'long', ears: 'point', tail: 'curl', face: 'smirk', s1: ['whiskers'], s2: ['hat', 'cheeks'], s3: ['stars', 'bubbles'] } },
+  { id: 'cosmoth', name: 'Cosmoth', region: 'r9', rarity: 'arena', flavor: 'Carries a map of the night sky on its wings and never gets lost.',
+    art: { pal: ['#5a4fc0', '#2a2470', '#d9ccff'], body: 'tall', ears: 'none', tail: 'none', face: 'owl', s1: ['antennae', 'wings'], s2: ['bigwings', 'stars'], s3: ['crown', 'bolts'] } },
 ];
 
 export const STARTER_IDS = ['burrowby', 'puddlenite', 'embernewt'];       // 3 commons (PRD 11)
 export const speciesById = (id) => SPECIES.find((s) => s.id === id);
 export const regionById = (id) => REGIONS.find((r) => r.id === id);
 export const regionIndex = (id) => REGIONS.findIndex((r) => r.id === id);
+export const isArenaSpecies = (id) => speciesById(id)?.rarity === 'arena';
+export const NEST_SPECIES = SPECIES.filter((s) => s.rarity !== 'arena');
+export const ARENA_SPECIES = SPECIES.filter((s) => s.rarity === 'arena');
+export const arenaSpeciesOf = (regionId) => ARENA_SPECIES.find((s) => s.region === regionId)?.id ?? null;
+// The species the Creature book counts: arena-only ones join once the Arena is switched on.
+export const bookSpecies = () => (arenaOn() ? SPECIES : NEST_SPECIES);
+// The three Nest (egg) species of a land, by rarity.
 export const speciesInRegion = (regionId) => {
   const list = SPECIES.filter((s) => s.region === regionId);
   return { common: list.find((s) => s.rarity === 'common').id, uncommon: list.find((s) => s.rarity === 'uncommon').id, rare: list.find((s) => s.rarity === 'rare').id };

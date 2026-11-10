@@ -1,6 +1,6 @@
 // Eggs, hatching, feeding, evolving, trophies for the collection (PRD 11, 9.3). Mutates the profile.
 import { eggPrice, eggNeeded, rollEgg, addEggProgress, duplicateCrickets, feedCreature, canEvolve, evolve, FEED_NEEDED } from './hatch.js';
-import { speciesInRegion, regionIndex, speciesById, SPECIES } from './species.js';
+import { speciesInRegion, regionIndex, speciesById, bookSpecies } from './species.js';
 import { evaluateTrophies } from './trophies.js';
 import { isMastered } from './leitner.js';
 
@@ -18,6 +18,13 @@ export function addStarter(profile, speciesId, now = new Date().toISOString()) {
   const creature = { id: newId('c', profile), species: speciesId, stage: 1, fed: 0, hearts: 0, hatchedAt: now };
   profile.creatures.push(creature);
   profile.companion = creature.id;
+  return creature;
+}
+
+// A creature that joins without an egg (befriended in the Arena).
+export function adoptCreature(profile, speciesId, { now = new Date().toISOString(), origin = 'arena' } = {}) {
+  const creature = { id: newId('c', profile), species: speciesId, stage: 1, fed: 0, hearts: 0, hatchedAt: now, origin };
+  profile.creatures.push(creature);
   return creature;
 }
 
@@ -103,7 +110,7 @@ export function trophyContext(profile, extra = {}) {
     level: profile.level, regionsOpen: profile.map.unlockedRegions.length, trailStep: profile.map.trailStep, starsOpened: profile.map.claimedLandmarks.length,
     perfectSessions: profile.sessions.filter((s) => s.misses === 0).length,
     firstTryTotal: stats.reduce((n, s) => n + (s.firstTryCorrect ?? 0), 0),
-    speciesOwned: owned.size, speciesTotal: SPECIES.length,
+    speciesOwned: owned.size, speciesTotal: bookSpecies().length,
     rareOwned: [...owned].filter((id) => speciesById(id)?.rarity === 'rare').length,
     heartsTotal: profile.creatures.reduce((n, c) => n + (c.hearts ?? 0), 0),
     evolvedCount: profile.creatures.filter((c) => c.stage >= 2).length,

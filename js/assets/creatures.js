@@ -41,11 +41,15 @@ const BACK = {
   mane: (b) => `<circle cx="50" cy="${b.fy}" r="${b.side + 9}" fill="var(--c1)" ${ST}/>`,
   spikes: (b) => [38, 50, 62].map((x) => `<path d="M${x - 7} ${b.top + 8} L${x} ${b.top - 9} L${x + 7} ${b.top + 8}z" fill="var(--c1)" ${ST}/>`).join(''),
   tentacles: () => [34, 50, 66].map((x, i) => `<ellipse cx="${x}" cy="${92 + (i === 1 ? 2 : 0)}" rx="6" ry="9" fill="var(--c0)" ${ST}/>`).join(''),
+  batwings: (b) => mirror((s) => `<path d="M${X(s, b.side - 8)} ${b.fy - 2} L${X(s, b.side + 22)} ${b.fy - 24} L${X(s, b.side + 19)} ${b.fy - 7} L${X(s, b.side + 27)} ${b.fy + 2} L${X(s, b.side + 16)} ${b.fy + 5} L${X(s, b.side + 19)} ${b.fy + 16} L${X(s, b.side - 8)} ${b.fy + 14}z" fill="var(--c1)" ${ST}/>`),
+  cape: (b) => `<path d="M${50 - b.side + 4} ${b.fy - 6} Q50 ${b.fy - 16} ${50 + b.side - 4} ${b.fy - 6} L${50 + b.side + 11} 93 Q50 84 ${50 - b.side - 11} 93z" fill="#d1495b" ${ST}/>`,
   shell: () => `<ellipse cx="50" cy="64" rx="39" ry="32" fill="var(--c1)" ${ST}/><path d="M50 32 V96" stroke="${INK}" stroke-width="3"/>`,
 };
 
 // Parts drawn on top of the body, before the face.
 const FRONT = {
+  antlers: (b) => mirror((s) => { const d = `M${X(s, 8)} ${b.top + 7} Q${X(s, 9)} ${b.top - 6} ${X(s, 19)} ${b.top - 17} M${X(s, 10)} ${b.top - 3} L${X(s, 22)} ${b.top - 3} M${X(s, 14)} ${b.top - 11} L${X(s, 8)} ${b.top - 20}`; return `<path d="${d}" fill="none" stroke="${INK}" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="#e6c88f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`; }),
+  pincers: (b) => mirror((s) => { const cx = X(s, b.side + 9), cy = b.fy - 6; return `<path d="M${X(s, b.side - 6)} ${b.fy + 8} L${cx} ${cy + 6}" fill="none" stroke="${INK}" stroke-width="10" stroke-linecap="round"/><path d="M${X(s, b.side - 6)} ${b.fy + 8} L${cx} ${cy + 6}" fill="none" stroke="var(--c1)" stroke-width="4.5" stroke-linecap="round"/><path d="M${cx} ${cy} L${cx - 5} ${cy - 10} A11.2 11.2 0 1 0 ${cx + 5} ${cy - 10}z" fill="var(--c0)" ${ST}/>`; }),
   claws: () => mirror((s) => `<path d="M${X(s, 14)} 91 l3 8 l3 -8z" fill="#fff" ${st(2)}/>`),
   helmet: (b) => `<path d="M${50 - b.side + 4} ${b.top + 14} Q50 ${b.top - 16} ${50 + b.side - 4} ${b.top + 14}z" fill="#9aa5b8" ${ST}/><path d="M50 ${b.top - 8} q6 -10 12 -4 q-4 4 -8 6z" fill="#e8573a" ${st(2.5)}/>`,
   hat: (b) => `<ellipse cx="50" cy="${b.top + 8}" rx="22" ry="5" fill="var(--c1)" ${ST}/><path d="M37 ${b.top + 8} L52 ${b.top - 22} L63 ${b.top + 8}z" fill="var(--c1)" ${ST}/><circle cx="52" cy="${b.top - 4}" r="3" fill="${GOLD}"/>`,
@@ -69,11 +73,17 @@ const FACEFRONT = {
   whiskers: (b) => mirror((s) => [0, 5].map((d) => `<path d="M${X(s, 12)} ${b.fy + 3 + d} L${X(s, 26)} ${b.fy + d * 1.6 - 2 + (d ? 6 : 0)}" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>`).join('')),
 };
 
-function face(kind, b, mood) {
+// Battle poses reuse the same drawn parts: only the face and a small lean change (PRD 12).
+export const POSES = ['ready', 'attack', 'hurt', 'dodge', 'dizzy', 'cheer', 'smitten'];
+const LEAN = { ready: -4, attack: -9, hurt: 7, dodge: 6 };
+
+function face(kind, b, mood, pose) {
   const ey = b.fy - 3, my = b.fy + 8;
   const dot = (x) => `<circle cx="${x}" cy="${ey}" r="4.5" fill="${INK}"/><circle cx="${x + 1.5}" cy="${ey - 1.5}" r="1.6" fill="#fff"/>`;
-  const big = (x, r = 7, p = 3.8) => `<circle cx="${x}" cy="${ey}" r="${r}" fill="#fff" ${st(2.5)}/><circle cx="${x + 1}" cy="${ey + 1}" r="${p}" fill="${INK}"/><circle cx="${x + 2}" cy="${ey}" r="1.3" fill="#fff"/>`;
+  const big = (x, r = 7, p = 3.8, dx = 1) => `<circle cx="${x}" cy="${ey}" r="${r}" fill="#fff" ${st(2.5)}/><circle cx="${x + dx}" cy="${ey + 1}" r="${p}" fill="${INK}"/><circle cx="${x + dx + 1}" cy="${ey}" r="1.3" fill="#fff"/>`;
   const closed = (x) => `<path d="M${x - 5} ${ey} Q${x} ${ey + 6} ${x + 5} ${ey}" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`;
+  const line = (d, w = 3) => `<path d="${d}" fill="none" stroke="${INK}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const brows = `<path d="M33 ${ey - 8} L45 ${ey - 4} M67 ${ey - 8} L55 ${ey - 4}" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`;
   const mouths = {
     happy: `M44 ${my} Q50 ${my + 7} 56 ${my}`, smirk: `M44 ${my} Q52 ${my + 6} 57 ${my - 2}`, sleepy: `M46 ${my} Q50 ${my + 4} 54 ${my}`,
     fierce: `M44 ${my + 2} Q50 ${my + 4} 56 ${my + 2}`, sad: `M44 ${my + 4} Q50 ${my - 2} 56 ${my + 4}`,
@@ -82,10 +92,18 @@ function face(kind, b, mood) {
   let eyes;
   if (kind === 'wide') eyes = big(40, 6.5, 3.5) + big(60, 6.5, 3.5);
   else if (kind === 'owl') eyes = big(38, 10, 5) + big(62, 10, 5);
-  else if (kind === 'sleepy' && mood !== 'sad') eyes = closed(40) + closed(60);
-  else if (kind === 'fierce') eyes = dot(40) + dot(60) + `<path d="M33 ${ey - 8} L45 ${ey - 4} M67 ${ey - 8} L55 ${ey - 4}" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`;
+  else if (kind === 'sleepy' && mood !== 'sad' && !pose) eyes = closed(40) + closed(60);
+  else if (kind === 'fierce') eyes = dot(40) + dot(60) + brows;
   else eyes = dot(40) + dot(60);
-  return `${eyes}<path d="${mouth}" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`;
+  let lips = line(mouth);
+  if (pose === 'ready') { if (kind !== 'fierce') eyes += brows; lips = line(kind === 'smirk' ? mouths.smirk : `M45 ${my + 2} Q50 ${my + 4} 55 ${my + 2}`); }
+  else if (pose === 'attack') { if (kind !== 'fierce') eyes += brows; lips = `<ellipse cx="50" cy="${my + 2}" rx="6" ry="5" fill="#7a2a3a" ${st(2.5)}/>`; }
+  else if (pose === 'hurt') { eyes = line(`M35 ${ey - 5} L43 ${ey} L35 ${ey + 5} M65 ${ey - 5} L57 ${ey} L65 ${ey + 5}`); lips = line(`M43 ${my + 3} q3.5 -5 7 0 t7 0`); }
+  else if (pose === 'dodge') { eyes = big(40, 6, 3.2, 3) + big(60, 6, 3.2, 3); lips = line(mouths.smirk) + `<path d="M52 ${my + 2} q4 6 6 0z" fill="#ff8fa3" ${st(2)}/>`; }
+  else if (pose === 'dizzy') { const sp = (x) => line(`M${x - 6} ${ey} a6 6 0 1 1 6 6 a4 4 0 1 1 -4 -4 a2 2 0 1 1 2 2`, 2.2); eyes = sp(40) + sp(60); lips = line(`M43 ${my + 3} q3.5 -5 7 0 t7 0`); }
+  else if (pose === 'cheer') { const up = (x) => line(`M${x - 5} ${ey + 2} Q${x} ${ey - 6} ${x + 5} ${ey + 2}`); eyes = up(40) + up(60); lips = `<path d="M43 ${my - 1} Q50 ${my + 12} 57 ${my - 1}z" fill="#7a2a3a" ${st(2.5)}/>`; }
+  else if (pose === 'smitten') { const heart = (x) => `<path d="M${x} ${ey + 6} C${x - 10} ${ey - 2} ${x - 4} ${ey - 9} ${x} ${ey - 3} C${x + 4} ${ey - 9} ${x + 10} ${ey - 2} ${x} ${ey + 6}z" fill="#ff4d6d" ${st(2)}/>`; eyes = heart(40) + heart(60); lips = line(mouths.happy); }
+  return `<g class="c-eyes">${eyes}</g><g class="c-mouth">${lips}</g>`;
 }
 
 export const GROW = [0.74, 0.86, 0.94];
@@ -95,21 +113,25 @@ export function creatureParts(speciesId, stage) {
   return [...(a.s1 ?? []), ...(stage >= 2 ? a.s2 ?? [] : []), ...(stage >= 3 ? a.s3 ?? [] : [])];
 }
 
-// opts: {mood:'happy'|'sad', silhouette:bool, size:px}
-export function creatureSvg(speciesId, stage = 1, { mood = 'happy', silhouette = false, size = 96 } = {}) {
+// opts: {mood:'happy'|'sad', silhouette:bool, size:px, pose: one of POSES, flip:bool (mirrored, so the tail is on the left)}
+// Every part sits in its own named group (.c-back, .c-tail, .c-ears, .c-body, .c-front, .c-face, .p-<part>) so each can
+// move on its own in CSS. The groups carry no transform of their own.
+export function creatureSvg(speciesId, stage = 1, { mood = 'happy', silhouette = false, size = 96, pose = null, flip = false } = {}) {
   const sp = speciesById(speciesId);
   const a = sp.art, b = BODIES[a.body];
   const parts = creatureParts(speciesId, stage);
-  const back = parts.filter((p) => BACK[p]).map((p) => BACK[p](b)).join('');
-  const front = parts.filter((p) => FRONT[p]).map((p) => FRONT[p](b)).join('');
-  const faceFront = parts.filter((p) => FACEFRONT[p]).map((p) => FACEFRONT[p](b)).join('');
+  const group = (set) => parts.filter((p) => set[p]).map((p) => `<g class="p p-${p}">${set[p](b)}</g>`).join('');
   const belly = b.belly ? `<ellipse cx="${b.belly[0]}" cy="${b.belly[1]}" rx="${b.belly[2]}" ry="${b.belly[3]}" fill="var(--c2)" opacity=".85"/>` : '';
   const feet = mirror((s) => `<ellipse cx="${X(s, 15)}" cy="90" rx="10" ry="5.5" fill="var(--c1)" ${ST}/>`);
   const glow = stage >= 3 ? `<circle cx="50" cy="60" r="48" fill="var(--c2)" opacity=".28"/>` : stage === 2 ? `<circle cx="50" cy="62" r="42" fill="var(--c2)" opacity=".14"/>` : '';
   const g = GROW[stage - 1];
   const label = silhouette ? 'Unknown creature' : `${stageName(speciesId, stage)}`;
-  return `<svg class="creature stage-${stage}${silhouette ? ' silhouette' : ''}" viewBox="0 0 100 100" width="${size}" height="${size}" overflow="visible" role="img" aria-label="${label}" style="--c0:${a.pal[0]};--c1:${a.pal[1]};--c2:${a.pal[2]}">
-<g class="idle">${glow}<g transform="translate(50 96) scale(${g}) translate(-50 -96)">${back}${TAILS[a.tail]()}${EARS[a.ears](b)}${feet}${b.draw(a.pal)}${belly}${front}${face(a.face, b, mood)}${faceFront}</g></g></svg>`;
+  const lean = LEAN[pose] ? ` transform="rotate(${LEAN[pose]} 50 96)"` : '';
+  const figure = `<g class="idle"><g class="c-glow">${glow}</g><g transform="translate(50 96) scale(${g}) translate(-50 -96)"><g class="c-pose"${lean}>`
+    + `<g class="c-back">${group(BACK)}</g><g class="c-tail tail-${a.tail}">${TAILS[a.tail]()}</g><g class="c-ears ears-${a.ears}">${EARS[a.ears](b)}</g><g class="c-feet">${feet}</g>`
+    + `<g class="c-body">${b.draw(a.pal)}${belly}</g><g class="c-front">${group(FRONT)}</g><g class="c-face">${face(a.face, b, mood, pose)}${group(FACEFRONT)}</g></g></g></g>`;
+  return `<svg class="creature stage-${stage}${silhouette ? ' silhouette' : ''}${pose ? ` pose-${pose}` : ''}" viewBox="0 0 100 100" width="${size}" height="${size}" overflow="visible" role="img" aria-label="${label}" style="--c0:${a.pal[0]};--c1:${a.pal[1]};--c2:${a.pal[2]}">
+${flip ? `<g class="c-flip" transform="translate(100 0) scale(-1 1)">${figure}</g>` : figure}</svg>`;
 }
 
 export const PART_NAMES = new Set([...Object.keys(BACK), ...Object.keys(FRONT), ...Object.keys(FACEFRONT)]);

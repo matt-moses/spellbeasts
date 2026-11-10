@@ -1,5 +1,6 @@
 // A whole-game playthrough through the real UI, checked against an INDEPENDENT model of the PRD rules.
 // ~2 weeks of simulated days (with skipped days), misses, capitalization slips, eggs, feeding, evolving, chests.
+// Once the trainer reaches level 3 each day also ends with a battle in the Arena (PRD 12), modelled the same way.
 // Nothing here imports game logic: the oracle below re-derives every number from the PRD.
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,8 +17,14 @@ const PRICE = [20, 30, 40, 50, 60, 75, 90, 105, 125];
 const UNLOCK = [[1, 0], [2, 0], [4, 0], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50]];
 const TRAIL_END = [30, 32, 34, 36, 38, 40, 42, 44, 46].reduce((a, n) => [...a, (a.at(-1) ?? 0) + n], []);   // each land's stretch of trail is longer
 const RARE = new Set(['Glowmoth', 'Mossgolem', 'Stormwyrm', 'Starcub', 'Inkwell', 'Skycalf', 'Gemdrake', 'Sandwyrm', 'Solphoenix']);
+// Battles (PRD 12 and plan.md decisions D1-D8), re-derived here rather than imported.
+const ARENA_ONLY = ['Cloverknight', 'Reedwisp', 'Lavalynx', 'Aurorastag', 'Pearlcrab', 'Galeram', 'Echobat', 'Miragecat', 'Cosmoth'];   // one per land, in land order
+const LAND_NAMES = ['Sunny Meadow', 'Misty Marsh', 'Ember Peaks', 'Moonlit Highlands', 'Coral Reef', 'Cloudspire', 'Crystal Caves', 'Sunset Dunes', 'Starfall Isles'];
+const ARENA_LEVEL = 3;
+const heartsFor = (words, land) => Math.max(1, Math.min(words + Math.min(2, Math.floor(land / 3)), words + Math.floor(words / 3)));
+const cricketBag = (land) => 5 + 2 * land;
 const BOX_DAYS = [0, 2, 4, 7, 14];                                   // box 1..5 -> days until due
-const TROPHY_NAMES = { 'first-hatch': 'First Hatch', 'capital-idea': 'Capital Idea', comeback: 'Comeback', 'perfect-flight': 'Perfect Flight', 'busy-bee': 'Busy Bee', 'sessions-25': 'Practice Pro', 'sessions-50': 'Super Bee', 'perfect-5': 'Flawless Five', 'streak-10': 'Streak of 10', 'streak-20': 'Unstoppable', 'first-try-100': 'Sharp Speller', 'first-try-500': 'Word Wizard', 'mastered-10': '10 Mastered', 'mastered-25': '25 Mastered', 'mastered-50': '50 Mastered', 'word-master': 'Word Master', 'day-streak-3': '3-Day Streak', 'day-streak-7': '7-Day Streak', 'day-streak-14': 'Fortnight Fan', 'day-streak-30': 'Month of Magic', 'level-5': 'Rising Star', 'level-10': 'Trainer Pro', 'level-15': 'Legend', 'explorer-3': 'Trailblazer', 'explorer-6': 'Adventurer', 'explorer-9': 'World Traveler', 'walk-50': 'Long Walk', 'walk-150': 'Marathon Walker', 'stars-5': 'Treasure Hunter', 'stars-20': 'Star Collector', collector: 'Collector', 'collector-20': 'Big Collector', 'collector-all': 'Complete Collection', 'rare-find': 'Rare Find', 'hearts-5': 'Best Friends', 'fully-evolved': 'Fully Evolved', 'growing-family': 'Growing Family' };
+const TROPHY_NAMES = { 'first-hatch': 'First Hatch', 'capital-idea': 'Capital Idea', comeback: 'Comeback', 'perfect-flight': 'Perfect Flight', 'busy-bee': 'Busy Bee', 'sessions-25': 'Practice Pro', 'sessions-50': 'Super Bee', 'perfect-5': 'Flawless Five', 'streak-10': 'Streak of 10', 'streak-20': 'Unstoppable', 'first-try-100': 'Sharp Speller', 'first-try-500': 'Word Wizard', 'mastered-10': '10 Mastered', 'mastered-25': '25 Mastered', 'mastered-50': '50 Mastered', 'word-master': 'Word Master', 'day-streak-3': '3-Day Streak', 'day-streak-7': '7-Day Streak', 'day-streak-14': 'Fortnight Fan', 'day-streak-30': 'Month of Magic', 'level-5': 'Rising Star', 'level-10': 'Trainer Pro', 'level-15': 'Legend', 'explorer-3': 'Trailblazer', 'explorer-6': 'Adventurer', 'explorer-9': 'World Traveler', 'walk-50': 'Long Walk', 'walk-150': 'Marathon Walker', 'stars-5': 'Treasure Hunter', 'stars-20': 'Star Collector', collector: 'Collector', 'collector-20': 'Big Collector', 'collector-all': 'Complete Collection', 'rare-find': 'Rare Find', 'hearts-5': 'Best Friends', 'fully-evolved': 'Fully Evolved', 'growing-family': 'Growing Family', champion: 'Champion' };
 const addDays = (d, n) => { const t = new Date(`${d}T00:00:00Z`); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 const dayDiff = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 864e5);
 const mondayOf = (d) => addDays(d, -((new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7));
@@ -25,7 +32,7 @@ const levelOf = (xp) => { let n = 1, need = 0; for (;;) { need += 50 * (n + 1); 
 
 function newOracle() {
   return { crickets: 0, xp: 0, trail: 0, unlocked: new Set([0]), stats: {}, eggs: [], claimed: new Set(), starter: { stage: 1, fed: 0 }, creatures: 1, species: new Set(['Burrowby']),
-    hatched: 0, hearts: 0, perfect: 0, berries: 3, sessionsDone: 0, sessionDays: new Set(), streak: { cur: 0, last: null, rest: null }, trophies: new Set(), cases: 0, chestOpens: 0, evolves: 0, levelUps: 0 };
+    hatched: 0, hearts: 0, battles: 0, battlesWon: 0, befriended: 0, escapes: 0, specials: 0, dodges: 0, perfect: 0, berries: 3, sessionsDone: 0, sessionDays: new Set(), streak: { cur: 0, last: null, rest: null }, trophies: new Set(), cases: 0, chestOpens: 0, evolves: 0, levelUps: 0 };
 }
 const level = (o) => levelOf(o.xp);
 const mastered = (o) => Object.values(o.stats).filter((s) => s.days.size >= 3).length;
@@ -83,7 +90,7 @@ function satisfied(o, f = {}) {
   [[5, 'level-5'], [10, 'level-10'], [15, 'level-15']].forEach(([n, id]) => add(lv >= n, id));
   [[3, 'explorer-3'], [6, 'explorer-6'], [9, 'explorer-9']].forEach(([n, id]) => add(o.unlocked.size >= n, id));
   add(o.trail >= 50, 'walk-50'); add(o.trail >= 150, 'walk-150'); add(o.claimed.size >= 5, 'stars-5'); add(o.claimed.size >= 20, 'stars-20');
-  add(o.creatures >= 10, 'collector'); add(o.creatures >= 20, 'collector-20'); add(o.species.size >= 27, 'collector-all');
+  add(o.creatures >= 10, 'collector'); add(o.creatures >= 20, 'collector-20'); add(o.species.size >= 36, 'collector-all'); add(o.battlesWon >= 10, 'champion');
   add([...o.species].some((n) => RARE.has(n)), 'rare-find'); add(o.hearts >= 5, 'hearts-5');
   add(o.starter.stage >= 3, 'fully-evolved'); add((o.starter.stage >= 2 ? 1 : 0) >= 3, 'growing-family');
   return ids;
@@ -119,11 +126,11 @@ const typedFor = (kind, word) => ({ ok: word, trim: `  ${word}  `, typo: word.le
 const START = '2026-11-05';
 const PLAY_DAYS = [0, 1, 2, 4, 5, 6, 8, 11, 12, 13];
 
-test('whole game: two weeks of play checked against an independent model, with zero errors', { skip, timeout: 280000 }, async () => {
+test('whole game: two weeks of play checked against an independent model, with zero errors', { skip, timeout: 420000 }, async () => {
   const o = newOracle();
   const context = await env.browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1000, height: 1200 } });
   const errors = [], requests = [];
-  await prepare(context, { errors });
+  await prepare(context, { errors, arena: true });
   await context.addInitScript(() => { let a = 20261105; Math.random = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; });
   context.on('request', (r) => requests.push(r.url()));
   const page = await context.newPage();
@@ -157,6 +164,8 @@ test('whole game: two weeks of play checked against an independent model, with z
     assert.equal(p.creatures.length, o.creatures, `${label}: creature count`);
     assert.equal(p.sessions.length, o.sessionsDone, `${label}: sessions`);
     assert.equal(p.eggsHatched ?? 0, o.hatched, `${label}: eggs hatched`);
+    assert.equal(p.battlesWon ?? 0, o.battlesWon, `${label}: battles won`);
+    assert.equal(Object.values(p.arena?.wins ?? {}).reduce((a, b) => a + b, 0), o.battlesWon, `${label}: wins by land`);
   }
 
   // ---- create the trainer through the real form
@@ -186,6 +195,8 @@ test('whole game: two weeks of play checked against an independent model, with z
     assert.equal((await page.textContent('.due')).trim(), `${due} word${due === 1 ? '' : 's'} due today · ${fresh} new word${fresh === 1 ? '' : 's'} to learn`, `home ${day}: due line`);
     assert.equal(Number(await page.getAttribute('.token', 'data-step')), o.trail, `home ${day}: token position`);
     assert.equal(await page.locator('.nest-link').count(), o.unlocked.size, `home ${day}: open nests`);
+    assert.equal(await page.locator('.arena-link').count(), level(o) >= ARENA_LEVEL ? o.unlocked.size : 0, `home ${day}: open Arena flags`);
+    assert.equal(await page.locator('.arena-pin-locked').count(), level(o) >= ARENA_LEVEL ? 0 : o.unlocked.size, `home ${day}: locked Arena flags`);
     assert.equal(await page.locator('.fog[data-locked=true]').count(), 9 - o.unlocked.size, `home ${day}: fogged regions`);
     assert.equal(await page.locator('.hungry').count(), o.sessionDays.has(day) ? 0 : 1, `home ${day}: hungry reminder`);
 
@@ -211,16 +222,34 @@ test('whole game: two weeks of play checked against an independent model, with z
     }
     await compare(`after chests ${day}`);
 
-    // ---- up to three practice sessions
-    for (let n = 0; n < 3; n++) {
+    // ---- up to three practice sessions, then (from level 3) one battle in an open land's Arena
+    for (let n = 0; n < 4; n++) {
+      const isBattle = n === 3;
+      if (isBattle && level(o) < ARENA_LEVEL) break;
+      const land = [...o.unlocked].sort()[(dayIdx + o.battles) % o.unlocked.size];
       const hadMaterial = dueWords(o, day).length + newWords(o).length > 0;
+      const seenBefore = new Set(Object.keys(o.stats));
       const beforeSnapshot = { due: dueWords(o, day), fresh: newWords(o), seenNotDue: SAMPLE.filter((w) => o.stats[w] && !dueWords(o, day).includes(w)) };
       await page.goto(`${env.server.url}#/home`);
       await page.waitForSelector('#practice');
-      await page.click('#practice');
+      const battle = { left: 0, full: 0, won: false, prize: null, wild: null };
+      if (isBattle) {
+        await page.click(`.arena-link[data-region=r${land + 1}]`);
+        await page.waitForSelector('#battle-go');
+        assert.equal(await page.textContent('.arena h1'), `${LAND_NAMES[land]} Arena`);
+        await page.click('#battle-go');
+      } else await page.click('#practice');
       const started = await page.locator('#answer').waitFor({ timeout: 2000 }).then(() => true, () => false);
-      assert.equal(started, hadMaterial, `${day}: a session starts exactly when something is due or new`);
-      if (!started) break;
+      // Practice needs something due or new. A battle falls back to the weakest words already seen (plan D5).
+      assert.equal(started, isBattle ? hadMaterial || seenBefore.size > 0 : hadMaterial, `${day}: a ${isBattle ? 'battle' : 'session'} starts exactly when it should`);
+      if (!started) { if (isBattle) break; n = 2; continue; }
+      if (isBattle) {
+        o.battles++;
+        battle.full = battle.left = Number(await page.getAttribute('.bs-hearts', 'data-left'));
+        battle.wild = (await page.textContent('.bs-wild .bs-name')).replace(/^Wild /, '');
+        assert.equal(await page.locator('.bs-heart.full').count(), battle.full, `${day}: hearts drawn`);
+        assert.match(await page.textContent('.bs-live'), new RegExp(`A wild ${battle.wild} appears! It has ${battle.full} hearts\\.`));
+      }
 
       sessionNo++;
       const s = { run: 0, bestRun: 0, missedBefore: new Set(), misses: 0, crickets: 0, xp: 0, steps: 0, ftCorrect: 0, retryCorrect: 0, unlocked: [], leveled: false, capital: false, comeback: false, newlyMastered: [] };
@@ -242,6 +271,27 @@ test('whole game: two weeks of play checked against an independent model, with z
         await page.fill('#answer', typedFor(kind, word));
         await page.press('#answer', 'Enter');
         const r = applyAnswer(o, s, { word, correct, first: appearance === 1, day });
+        if (isBattle) {
+          // hearts: a hit takes 1, every third right answer in a row takes 2, a miss takes none; after the win nothing changes
+          const toastNow = await page.evaluate(() => document.querySelector('.toast')?.textContent ?? '');
+          if (!battle.won && correct) {
+            const special = s.run % 3 === 0;
+            if (special) o.specials++;
+            battle.left -= Math.min(battle.left, special ? 2 : 1);
+            if (battle.left > 0) assert.match(toastNow, special ? /^Special move!/ : /^Hit!/, `${day} ${word}: battle toast`);
+            if (battle.left === 0) {
+              battle.won = true; o.battlesWon++;
+              const arenaOnly = battle.wild === ARENA_ONLY[land], owned = o.species.has(battle.wild);
+              const joined = /joined you/.test(toastNow);
+              assert.match(toastNow, /^You won!/, `${day}: win toast`);
+              if (arenaOnly && !owned) assert.equal(joined, true, `${day}: a new arena-only creature always joins`);
+              if (owned) assert.equal(joined, false, `${day}: a creature you own cannot join again`);
+              if (joined) { o.species.add(battle.wild); o.creatures++; o.befriended++; battle.prize = 'befriend'; }
+              else { assert.equal(digits(toastNow, /A bag of (\d+) crickets/), cricketBag(land), `${day}: cricket bag`); o.crickets += cricketBag(land); battle.prize = 'crickets'; }
+            }
+          } else if (!battle.won && !correct) { o.dodges++; assert.equal(toastNow, 'It dodged!', `${day} ${word}: dodge toast`); }
+          if (!page.url().endsWith('#/summary')) assert.equal(Number(await page.getAttribute('.bs-hearts', 'data-left')), battle.left, `${day} ${word}: hearts left`);
+        }
         {
           const mine = await me();                                         // saved after every turn: exact per-answer check
           const ends = page.url().endsWith('#/summary');                   // the last answer also pays the session bonus
@@ -273,8 +323,14 @@ test('whole game: two weeks of play checked against an independent model, with z
       const brandNew = distinct.filter((w) => beforeSnapshot.fresh.includes(w));
       assert.ok(brandNew.length <= 3, `${day}: ${brandNew.length} new words`);
       const material = beforeSnapshot.due.length + Math.min(3, beforeSnapshot.fresh.length) + beforeSnapshot.seenNotDue.length;
-      assert.ok(distinct.length >= Math.min(10, material), `${day}: session too short (${distinct.length} of ${material} available)`);
-      if (beforeSnapshot.due.length <= 10) for (const w of beforeSnapshot.due) assert.ok(distinct.includes(w), `${day}: due word ${w} was left out`);
+      if (hadMaterial) {
+        assert.ok(distinct.length >= Math.min(10, material), `${day}: session too short (${distinct.length} of ${material} available)`);
+        if (beforeSnapshot.due.length <= 10) for (const w of beforeSnapshot.due) assert.ok(distinct.includes(w), `${day}: due word ${w} was left out`);
+      } else {                                                           // a battle on the Bonus review words: only words met before
+        assert.ok(isBattle, `${day}: only a battle may start with nothing due`);
+        for (const w of distinct) assert.ok(seenBefore.has(w), `${day}: bonus battle used an unseen word ${w}`);
+        assert.ok(distinct.length >= Math.min(10, seenBefore.size), `${day}: bonus battle too short`);
+      }
       const D = distinct.length;
       seq.forEach((turn, t) => {
         if (turn.appearance === 1 && distinct.includes(turn.word)) assert.ok(brandNew.includes(turn.word) || o.stats[turn.word], 'word has stats');
@@ -300,6 +356,16 @@ test('whole game: two weeks of play checked against an independent model, with z
       o.sessionDays.add(day); o.sessionsDone++; if (s.misses === 0) o.perfect++;
       const newTrophies = earnNow(o, { inSession: true, capital: s.capital, comeback: s.comeback, perfect: s.misses === 0, bestRun: s.bestRun });
 
+      if (isBattle) {
+        // the wild creature's hearts scale with the session (capped so a clean run always wins), tougher in later lands
+        assert.equal(battle.full, heartsFor(D, land), `${day}: wild hearts for ${D} words in land ${land + 1}`);
+        assert.equal(await page.getAttribute('.battle-card', 'data-outcome'), battle.won ? 'won' : 'escaped', `${day}: battle outcome`);
+        assert.equal(await page.getAttribute('.battle-card', 'data-prize'), battle.prize ?? 'none', `${day}: battle prize`);
+        assert.match(await page.textContent('.battle-card'), new RegExp(`Battles won: ${o.battlesWon} of 10`), `${day}: Champion progress`);
+        assert.equal(await page.textContent('.summary h1'), battle.won ? 'You won the battle!' : s.misses === 0 ? 'Perfect flight!' : 'Great practice!');
+        if (!battle.won) o.escapes++;
+        assert.equal((await me()).sessions.at(-1).mode, 'battle');
+      } else assert.equal(await page.locator('.battle-card').count(), 0, `${day}: no battle card after practice`);
       const res = await page.textContent('.results');
       assert.equal(digits(res, /first try: (\d+) of/), s.ftCorrect, `${day}: first-try count`);
       assert.equal(digits(res, /first try: \d+ of (\d+)/), D, `${day}: words in session`);
@@ -320,7 +386,7 @@ test('whole game: two weeks of play checked against an independent model, with z
       if (s.leveled) assert.match(await page.textContent('.levelup-overlay h2'), new RegExp(`Level ${lvlAfter}!`));
       await noJunk(`summary ${day}`);
       await compare(`session ${sessionNo} (${day})`);
-      log.push(`${day}: ${D} words, ${s.misses} misses, +${s.crickets} crickets, level ${lvlAfter}`);
+      log.push(`${day}: ${isBattle ? `battle in land ${land + 1} vs ${battle.wild} (${battle.full} hearts, ${battle.won ? battle.prize : 'escaped'}), ` : ''}${D} words, ${s.misses} misses, +${s.crickets} crickets, level ${lvlAfter}`);
       if (s.leveled) await page.click('#levelup-ok');
       await page.click('#done');
     }
@@ -393,7 +459,7 @@ test('whole game: two weeks of play checked against an independent model, with z
   assert.deepEqual(earnedNames.sort(), [...o.trophies].map((t) => TROPHY_NAMES[t]).sort(), 'trophy case matches');
   await page.goto(`${env.server.url}#/book`);
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), new RegExp(`${o.species.size} of 27 discovered`));
+  assert.match(await page.textContent('.book p'), new RegExp(`${o.species.size} of 36 discovered`));
 
   await page.goto(`${env.server.url}#/parent`);
   await unlockParent(page);
@@ -423,6 +489,11 @@ test('whole game: two weeks of play checked against an independent model, with z
   assert.ok(mastered(o) >= 3, `only ${mastered(o)} words mastered`);
   assert.ok(o.unlocked.size >= 2, 'no region ever unlocked');
   assert.ok(o.hatched >= 1, 'no egg ever hatched');
+  assert.ok(o.battles >= 4, `only ${o.battles} battles`);
+  assert.ok(o.battlesWon >= 3, `only ${o.battlesWon} battles won`);
+  assert.ok(o.specials >= 4, `only ${o.specials} special moves`);
+  assert.ok(o.dodges >= 1, 'a dodge was never exercised');
+  assert.ok(o.befriended >= 1, 'no creature was ever befriended in the Arena');
   assert.ok(o.chestOpens >= 1, 'no treasure star was ever opened');
   assert.ok(o.trophies.size >= 5, `only ${o.trophies.size} trophies`);
   assert.ok(streakResets >= 1, 'a streak reset was never exercised');
@@ -430,6 +501,6 @@ test('whole game: two weeks of play checked against an independent model, with z
 
   assert.deepEqual(errors, [], 'console / page errors');
   assert.deepEqual(requests.filter((u) => !u.startsWith(env.server.url) && !u.startsWith('data:') && !u.startsWith('blob:')), [], 'no off-site requests');
-  console.log(`playthrough: ${sessionNo} sessions over ${PLAY_DAYS.length} days | level ${level(o)} | ${mastered(o)} mastered | ${o.unlocked.size} regions | ${o.hatched} hatched, ${o.evolves} evolved | ${o.chestOpens} stars | ${o.trophies.size} trophies | streak ${o.streak.cur}`);
+  console.log(`playthrough: ${sessionNo} sessions over ${PLAY_DAYS.length} days | level ${level(o)} | ${mastered(o)} mastered | ${o.unlocked.size} regions | ${o.hatched} hatched, ${o.evolves} evolved | ${o.battlesWon}/${o.battles} battles won, ${o.befriended} befriended, ${o.escapes} escaped | ${o.chestOpens} stars | ${o.trophies.size} trophies | streak ${o.streak.cur}`);
   await context.close();
 });
