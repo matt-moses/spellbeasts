@@ -1,6 +1,6 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { hasBrowser, launch, prepare, seededState, lastSpoken } from './helpers.js';
+import { hasBrowser, launch, prepare, seededState, lastSpoken, playSession } from './helpers.js';
 
 const skip = hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
 let env;
@@ -206,5 +206,30 @@ test('later words in a session are spoken straight away (no extra wait)', { skip
   const w = await page.evaluate(() => window.__spoken.at(-1).text);
   await page.fill('#answer', w); await page.press('#answer', 'Enter');
   await page.waitForFunction(() => window.__spoken.length === 2, null, { timeout: 400 });   // far quicker than the 800ms wait
+  await context.close();
+});
+
+test('Play again on the summary starts another round (a bonus review once nothing is due)', { skip }, async () => {
+  const st = seededState(['Monday', 'garden', 'island', 'window']);
+  const context = await env.browser.newContext({ reducedMotion: 'reduce', viewport: { width: 900, height: 1000 } });
+  const errors = [];
+  await prepare(context, { state: st, errors });
+  const page = await context.newPage();
+  await page.goto(env.server.url);
+  await page.click('.card'); await page.waitForSelector('#practice');
+  await playSession(page);
+  if (await page.$('#levelup-ok')) await page.click('#levelup-ok');
+  await page.click('#play-again');                                  // nothing is due now, so this is a bonus review
+  await page.waitForSelector('#answer');
+  assert.ok(page.url().endsWith('#/practice'));
+  for (let i = 0; i < 30 && !page.url().endsWith('#/summary'); i++) {
+    const w = await lastSpoken(page), n = await page.evaluate(() => window.__spoken.length);
+    await page.fill('#answer', w); await page.press('#answer', 'Enter');
+    await page.waitForFunction((k) => window.__spoken.length > k || location.hash === '#/summary', n);
+  }
+  await page.waitForSelector('#play-again');                        // the second round ends on a summary with the button again
+  if (await page.$('#levelup-ok')) await page.click('#levelup-ok');
+  await page.click('#done'); await page.waitForSelector('#practice');
+  assert.deepEqual(errors, []);
   await context.close();
 });

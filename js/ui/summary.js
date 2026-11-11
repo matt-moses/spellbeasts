@@ -7,6 +7,7 @@ import { REGIONS, speciesById } from '../logic/species.js';
 import { creatureSvg } from './art.js';
 import { arenaOn } from '../config.js';
 import { ARENA_LEVEL } from '../logic/battle.js';
+import { startSession } from '../logic/session.js';
 
 const CHAMPION_AT = 10;
 // The result of a battle, shown above the usual practice summary.
@@ -21,6 +22,17 @@ function battleCard(app, b) {
       friend ? h('button', { class: 'secondary', id: 'see-friend', onclick: () => app.go('/book') }, 'See it in the Creature book') : null));
 }
 
+// Start another practice round: what is due first, then a bonus review of the trickiest words.
+function playAgain(app, note) {
+  const profile = app.profile, store = app.store;
+  const list = store.state.wordLists[profile.activeListId] ?? store.state.wordLists.sample;
+  const today = app.today();
+  const s = startSession({ profile, list, today }) ?? startSession({ profile, list, today, bonus: true });
+  if (!s) { note.textContent = 'No more words to practice right now. Come back later!'; return; }
+  app.session = s;
+  app.go('/practice');
+}
+
 export function summaryView(app) {
   const s = app.lastSummary;
   if (!s) { queueMicrotask(() => app.go('/home')); return h('div'); }
@@ -28,6 +40,7 @@ export function summaryView(app) {
   const buddy = h('div', { class: 'summary-buddy', html: companionSvg(app.profile, { size: 120 }) });
   const buddyPet = makeInteractive(buddy, app, { name: app.profile.name, speak: true, label: 'Tap your practice buddy' });
   if (!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) setTimeout(() => buddy.isConnected && buddy.classList.add('pet-hop'), 200);
+  const again = h('p', { class: 'note', role: 'status' });
   const root = h('section', { class: 'screen summary' },
     h('h1', {}, s.battle?.outcome === 'won' ? 'You won the battle!' : s.misses === 0 ? 'Perfect flight!' : 'Great practice!'),
     buddy,
@@ -48,7 +61,9 @@ export function summaryView(app) {
     s.trophies.length ? h('div', { class: 'new-trophies' }, h('h2', {}, 'New trophies!'),
       h('ul', { class: 'trophy-grid' }, s.trophies.map((id) => { const t = TROPHIES.find((x) => x.id === id); return h('li', { class: 'trophy-card earned' }, h('span', { html: trophySvg(false) }), h('strong', {}, t.name), h('span', { class: 'cond' }, t.desc)); }))) : null,
     h('p', {}, `🔥 ${s.dayStreak} day${s.dayStreak === 1 ? '' : 's'} in a row`),
-    h('button', { class: 'primary big', id: 'done', onclick: () => app.go('/home') }, 'Back to home'));
+    s.battle ? null : h('button', { class: 'primary big', id: 'play-again', onclick: () => playAgain(app, again) }, icon('play'), 'Play again'),
+    again,
+    h('button', { class: s.battle ? 'primary big' : 'secondary', id: 'done', onclick: () => app.go('/home') }, 'Back to home'));
   if (s.leveledUp) {
     app.audio.play('levelup');
     const ok = h('button', { class: 'primary big', id: 'levelup-ok', onclick: () => { overlay.remove(); root.querySelector('h1').focus(); } }, 'Keep going!');

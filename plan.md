@@ -1,241 +1,184 @@
-# Execution plan: Trainer Battles (Arena mode)
+# Execution plan: Three new lands (r10–r12)
 
-**Source spec:** `docs/spelling-bee-creature-game-prd.md` §12 and the Phase 2 criteria in §15, plus the Arena section of `TODO.md`.
-**Written:** 2026-11-10. Supersedes "Phase 9" in `docs/spelling-bee-creature-game-plan.md`.
+**Source:** no separate PRD exists. The brief below is the spec, taken from the code survey and the request "build three new lands". It follows `docs/spelling-bee-creature-game-prd.md` §11 and §11A for how lands, species and the trail work.
+**Written:** 2026-11-11. Replaces the Trainer Battles plan that was here (shipped; see git history at `f4c23b2`).
 
-A battle is one ordinary practice session with a wild creature on screen. Words, scheduling, rewards and spaced repetition come from the existing engine (`js/logic/session.js`); the battle layer only watches the results and adds hearts, animations and a prize.
+**Goal:** the map goes from 9 to 12 lands and the book from 36 to 48 species. Each new land has 3 Nest species (common, uncommon, rare) and 1 Arena-only species, a patch on the map, scenery, a fog gate with an unlock rule, a battle backdrop, and a longer trail.
+
+**Out of scope:** new game modes, new creature body or part types unless the art review (Phase 2) shows a species is too similar to an existing one, rebalancing lands 1–9, new dependencies.
 
 ---
 
-## Decisions taken (defaults for the spec's open questions)
+## What changes, by file
 
-Each is a named constant in `js/logic/battle.js`, so it can be changed in one place.
+| Area | Files | Change |
+|---|---|---|
+| Land and species data | `js/logic/species.js` | 3 `REGIONS`, 12 `SPECIES` (9 nest + 3 arena) |
+| Progression | `js/logic/world.js` | 3 `UNLOCKS` rows, 3 `REGION_STEPS` entries (`TOTAL_STEPS` 342 → 492) |
+| Battle difficulty | `js/logic/battle.js` | `heartTier` cap 2 → 3, comment updated |
+| Trophies | `js/logic/trophies.js` | `explorer-12` added; `explorer-9` text made "Open 9 lands" |
+| Map | `js/ui/map.js` | `W` 2800 → ~3750, more `POINTS`, 3 `COLORS`, 3 `SCENERY` functions, clouds, nothing else is per-land |
+| Battle backdrops | `css/main.css` | 3 `.battle-stage[data-land=…]` rules |
+| Creature art | `js/assets/creatures.js` | Only if a new species needs a part that does not exist yet |
+| Docs and tests | `README.md`, `docs/changes-since-prd.md`, `test/**`, `test/COVERAGE.md` | Literals `9`, `36`, `342`, `r9` replaced by values derived from the data |
+
+Saves store only `unlockedRegions` and `trailStep`, so old profiles need no migration. A player at the end of the old trail simply finds it extended and a new gate ahead (proved in Phase 1).
+
+---
+
+## Decisions taken (defaults; each is one constant or one table row)
 
 | # | Question | Decision |
 |---|---|---|
-| D1 | How many hearts? | Scaled to the session so the fight lasts it: `hearts = min(words + tier, words + floor(words / 3))`, where `tier` is 0 in lands 1–3, 1 in lands 4–6, 2 in lands 7–9. The second term guarantees a clean run always wins. A 10-word battle in Sunny Meadow has 10 hearts and a perfect run wins on answer 8. |
-| D2 | What happens after the win? | **Victory lap.** The session always plays every word. The wild creature stays on screen cheering. A battle never shortens or changes the word queue. |
-| D3 | When does the special move fire? | On every third correct answer in a row (run of 3, 6, 9…), using the session's existing run counter. It removes 2 hearts. At a run of 2 the player's creature visibly charges up. |
-| D4 | Does the chosen creature matter? | Cosmetic only. Any owned creature can battle; its current stage is what is drawn. |
-| D5 | Nothing is due today? | The battle uses the Bonus review word set (weakest words). If the trainer has no seen words at all, the Arena shows a friendly "practice first" note. |
-| D6 | Which wild creature? | From that land: its arena-only species 40% of the time until befriended (10% after), otherwise one of the 3 Nest species, evenly. Wild stage is cosmetic: stage 1 60%, stage 2 30%, stage 3 10%. |
-| D7 | Prize for a win? | Arena-only species not yet owned: always befriended (joins at stage 1). Nest species not yet owned: 25% befriend chance. Everything else: bonus crickets, `5 + 2 × land index`. |
-| D7a | When is the win saved? | **Changed while building:** the moment the last heart goes, not at the end of the session, so a win the player has seen is never lost by leaving early. The victory lap still asks every word. |
-| D8 | Escape? | If the words run out with hearts left, the creature waves and leaves. Nothing is lost. With D1 this is rare (it needs given-up words), which suits the "can never lose" rule. |
-| D9 | Arena-only species count | 9, one per land (the PRD said 6 when there were 6 lands). Total species 36, total creature drawings 108. |
-| D10 | Rollout | Built behind `ARENA_ENABLED = false` in `js/config.js`, because every push to `main` goes live. Tests switch it on with `globalThis.SPELLBEASTS_ARENA = true` (same pattern as `SPELLBEASTS_READY_DELAY`). The last phase flips the flag. |
-
-**Out of scope:** player hearts, creature stats or types, trainer-vs-trainer, timers, new trophies beyond the existing Champion.
+| D1 | Land names and themes | Proposals, **to be confirmed by the user in Phase 1** (`TODO.md` still lists final names as open). **r10 Harvest Hollow** (autumn orchard, orange and amber), **r11 Lantern Harbor** (night seaside town, teal and warm yellow), **r12 Wishing Ruins** (mossy stone and soft gold). |
+| D2 | Species names (proposals, all must pass `npm run hygiene` and be unique) | r10: Acornet (common), Quillhog (uncommon), Gourdwyrm (rare), Hollowfawn (arena). r11: Lampling, Buoypup, Anglerlight, Sealantern (arena). r12: Runepup, Chimeling, Wishlion, Mythcat (arena). Starters stay the same three. |
+| D3 | Unlock rules | r10: level 18 and 53 words mastered. r11: level 20 and 56. r12: level 22 and 60. (Today's last three: 12/44, 14/47, 16/50.) Level 22 needs 12,600 XP (`xpForLevel`), about twice level 16. |
+| D4 | Trail length per land | 48, 50, 52 steps, continuing the "+2 each land" rule. `LANDMARK_EVERY` stays 10, so stars go from 34 to 49. |
+| D5 | Battle difficulty | `heartTier = min(3, floor(landIndex / 3))`: lands 10–12 get +3 hearts. `wildHearts` already caps hearts at what a clean run can deal, so a clean run still always wins. |
+| D6 | Trophies | `explorer-12` "Open all 12 lands" is added. Existing earned trophies are never revoked. `collector-all` is checked: its condition is `speciesOwned >= speciesTotal`, so players who had 36 of 36 keep the badge they earned, and the book then shows 36 of 48. |
+| D7 | Rollout | Built behind a land-count flag, because every push to `main` goes live. `LAND_COUNT = 9` in `js/config.js`, with a `landCount()` helper that honours `globalThis.SPELLBEASTS_LANDS` (same pattern as `arenaOn()`). Tests switch it to 12 through that global; **all data for the new lands is present but filtered out** until the flag is raised. Phase 5 raises the default and is the go-live commit. |
+| D8 | Word-list size | Mastery thresholds above 50 only matter with a big custom list. The bundled sample list stays as is; the Parent area is unchanged. Noted in the README. |
 
 ## Ground rules for every phase
 
-- **No dependency changes** (`AGENTS.md`). Tests use `node --test` and the existing `playwright-core`. Image checks compare PNG buffers; no image-diff package.
-- **A phase is done only when `npm run check` is green** (hygiene scan, all unit tests, all end-to-end tests including the two-week playthrough) and its own new tests pass.
-- Game rules stay in pure modules under `js/logic/`; screens under `js/ui/`; art under `js/assets/`.
-- New shipped files must appear in `sw-assets.js` (run `npm run stamp`); `test/logic/pwa.test.js` and `test/e2e/offline.test.js` guard this.
-- New creature and move names must pass `npm run hygiene` (original names only).
-- Commit to `main` at the end of each phase. `.github/workflows` is not touched.
+- **No dependency changes** (`AGENTS.md`). Tests use `node --test` and the existing `playwright-core`.
+- **A phase is done only when `npm run check` is green** (hygiene, unit tests, end-to-end tests) **and** its own new checks pass. From Phase 1 on, `npm run check:12` (added in Phase 1: the same suite with `SPELLBEASTS_LANDS=12`) is also run, and it is allowed to fail only on the literals Phase 5 will fix. Each phase lists which failures are expected.
+- Game rules stay in `js/logic/`, screens in `js/ui/`, art in `js/assets/`.
+- New shipped files need `npm run stamp` (updates `sw-assets.js`); `test/logic/pwa.test.js` and `test/e2e/offline.test.js` guard this.
+- Commit to `main` at the end of each phase. Phases 1–4 are invisible to players (flag off), so pushing them is safe. **Pushing Phase 5 is the go-live; confirm with the user first.** `.github/workflows` is not touched.
+- The e2e suite needs a Chromium for `playwright-core`; if none is found the tests skip, so the first task of Phase 1 confirms they actually run.
 
 ## Phase map
 
 ```
-Phase 1  Battle rules ─────────────┐
-                                   ├─► Phase 4  Battle screen ─► Phase 5  Arena on the map ─► Phase 6  Playthrough, polish, switch on
-Phase 2  Species, art, poses ─► Phase 3  Animation kit ─┘
+Phase 1  Flag, data and rules ─► Phase 2  Species art ─────┐
+                              └► Phase 3  The map ─────────┼─► Phase 4  Nest, Arena, book, battles ─► Phase 5  Playthrough, tests and docs, switch on
 ```
 
-Phases 1 and 2 are independent of each other and can be built in either order.
+Phases 2 and 3 both depend on Phase 1 but not on each other. Phase 4 needs both. Phase 5 needs all.
 
 ---
 
-## Phase 1: Battle rules (pure logic)
+## Phase 1: Flag, data model and progression rules (pure logic)
 
 **Depends on:** nothing.
-**Leaves:** a fully tested `startBattle()` that can be driven from Node with no browser.
+**Leaves:** with the flag at 9 the game is byte-for-byte what ships today; with it at 12 the logic layer knows all 12 lands, and a Node test proves the rules.
 
 ### Tasks
-- [ ] Record the baseline: `npm ci`, then `npm run check` is green before any change.
-- [ ] Add `ARENA_ENABLED = false` to `js/config.js` and an `arenaOn()` helper that honours `globalThis.SPELLBEASTS_ARENA`.
-- [ ] `js/logic/session.js`: accept a `mode` label so the saved session row can say `'battle'`. No other change to turn handling.
-- [ ] New `js/logic/battle.js`:
-  - [ ] Constants for D1, D3, D6, D7 and `ARENA_LEVEL = 3`.
-  - [ ] `arenaOpen(profile)`, `wildHearts(words, landIndex)`, `pickWild({ regionId, owned, rng })`, `prizeFor({ wild, owned, landIndex, rng })`.
-  - [ ] `startBattle({ profile, list, today, regionId, creatureId, rng })`: wraps `startSession()` (falling back to the bonus set, D5) and returns the same `next / submit / submitCorrection / finish` interface. `submit()` passes the session result through untouched and adds a `battle` field: `{ event: 'hit' | 'special' | 'dodge' | 'cheer', damage, heartsLeft, charged, justWon }`.
-  - [ ] `finish()`: sets the outcome (`won` or `escaped`), applies the prize, increments `profile.battlesWon`, records `profile.arena.befriended` and `profile.arena.wins[regionId]`, and runs the trophy check so Champion can fire.
-- [ ] `js/logic/storage-schema.js`: add `battlesWon: 0` and `arena: { befriended: [], wins: {} }` to `freshProfile()` (migration already fills defaults, so no schema version bump).
-- [ ] `js/logic/trophies.js`: confirm Champion is counted and shown now that `battlesWon` is real.
+- [ ] Baseline: `npm ci`, then `npm run check` is green. Confirm the e2e tests run (not skipped) and note the counts.
+- [ ] Ask the user to confirm or change the names in D1 and D2 and the thresholds in D3. Record the answers in the table above.
+- [ ] `js/config.js`: add `LAND_COUNT = 9` and `landCount()` honouring `globalThis.SPELLBEASTS_LANDS`.
+- [ ] `js/logic/species.js`: define `ALL_REGIONS` (12) and `ALL_SPECIES` (48). Export `REGIONS = ALL_REGIONS.slice(0, landCount())` and `SPECIES` filtered to active regions, so every existing import keeps working. Species use only existing art parts for now, with distinct palettes; Phase 2 reviews them.
+- [ ] `js/logic/world.js`: extend `UNLOCKS` and `REGION_STEPS` to 12 and slice both to `landCount()` so `REGION_END`, `TOTAL_STEPS` and `LANDMARKS` follow.
+- [ ] `js/logic/battle.js`: `heartTier` cap 3; fix the comment that lists tiers.
+- [ ] `js/logic/trophies.js`: `explorer-9` text "Open 9 lands"; add `explorer-12`.
+- [ ] `test/lands-env.mjs`: a tiny `--import` preload that copies `SPELLBEASTS_LANDS` from the environment onto `globalThis`. `package.json` gets scripts `test:12` and `check:12` that use it (scripts only, no dependency change). `test/e2e/helpers.js` forwards the same variable into the page with the same init script that already sets `SPELLBEASTS_ARENA`.
 
 ### How we know it is done (autonomous)
-- [ ] `test/logic/battle.test.js`:
-  - [ ] Heart maths: hit removes 1, every third in a row removes 2, a miss removes 0 and resets the run, hearts never go below 0.
-  - [ ] `wildHearts` for every word count 1–12 and every land: a clean run always wins, and never before the session is about two-thirds played (for 6 or more words).
-  - [ ] Victory lap: after `justWon`, the queue is unchanged and later answers report `cheer` with 0 damage.
-  - [ ] Escape: a script with given-up words ends `escaped`, with crickets and XP equal to plain practice.
-  - [ ] Prize: arena-only unowned always befriends; Nest unowned follows the 25% roll with a seeded generator; owned species pay the cricket bonus; a befriended creature appears in `profile.creatures` at stage 1.
-  - [ ] `pickWild` weights over 10,000 seeded rolls land within tolerance, before and after befriending.
-  - [ ] Champion fires on the 10th win and only once.
-  - [ ] Nothing-due fallback uses the bonus set; no seen words returns `null`.
-- [ ] **Parity test:** the same seeded answer script run through `startSession()` and `startBattle()` on cloned profiles gives deep-equal `wordStats`, trail, eggs, streak, XP and (before the prize) crickets.
-- [ ] **Fuzz test:** 500 seeded random answer scripts. Invariants: hearts only go down, outcome is `won` or `escaped`, parity holds, no throw.
-- [ ] `test/logic/storage-schema.test.js`: an old profile without the new fields migrates; backup and restore round-trip keeps them.
-- [ ] `npm run check` green.
+- [ ] `test/logic/lands.test.js` (sets the global, then imports dynamically, so it runs under plain `npm test`):
+  - [ ] 12 regions with ids `r1..r12`, in order; 48 species with unique ids and names; every region has exactly one each of common, uncommon, rare and arena.
+  - [ ] `NEST_SPECIES` is 36 (3 per land) and `ARENA_SPECIES` is 12; `bookSpecies()` is 48 with the Arena on and 36 with it off.
+  - [ ] `UNLOCKS` levels and mastery counts never decrease; `REGION_STEPS` strictly increases; `TOTAL_STEPS` is 492; `maxStep` for each unlocked set equals that land's `REGION_END`; `regionOfStep` is correct at every boundary (1, `REGION_END[i]`, `REGION_END[i]+1`).
+  - [ ] `updateUnlocks` opens r10 only when level 18 **and** 53 mastered (each missing half keeps it closed), likewise r11 and r12; `unlockRequirement` strings read correctly.
+  - [ ] `wildHearts` for words 1–12 in every land: a clean run always wins, never below 1; lands 10–12 are one tier above 7–9.
+  - [ ] `explorer-12` fires only at 12 open lands and only once; `explorer-9` still fires at 9.
+  - [ ] **Old-save test:** a profile with `trailStep: 342`, `unlockedRegions` r1–r9 and all 34 landmarks claimed loads at 12 lands, shows 15 unclaimed landmarks to come, keeps its token where it is, and can step into land 10 only after r10 unlocks.
+  - [ ] `pickWild`/`prizeFor` work for r10–r12 (seeded, 10,000 rolls within tolerance); `claimLandmark` pays out for the new stars.
+- [ ] **Flag-off guard:** the existing suite is unchanged and green with the flag at its default 9 (`npm run check`).
+- [ ] Hygiene is green with all 12 new species and 3 land names present.
+- [ ] `npm run check:12` runs. Expected failures: only tests that hardcode 9, 36 or 342 (listed in a scratch file for Phase 5). Anything else is a bug.
 
 ---
 
-## Phase 2: Arena-only species, part-grouped art and battle poses
+## Phase 2: Species art for the 12 new creatures
 
-**Depends on:** nothing.
-**Leaves:** 36 species that draw in every stage and pose, with existing screens unchanged.
+**Depends on:** Phase 1.
+**Leaves:** all 48 species draw in every stage and battle pose, look distinct from each other, and fit their boxes.
 
 ### Tasks
-- [ ] `js/logic/species.js`: add 9 species, one per land, with `rarity: 'arena'`, a name, flavour line, palette and parts. Use the existing part vocabulary; add a part only where a creature needs a signature look.
-- [ ] Keep arena species out of eggs and starters: audit every use of `SPECIES` and `speciesInRegion` (`hatch.js`, `collection.js`, `profiles.js`, `trophies.js`, `world.js`, `parent.js`) and add `arenaSpeciesOf(regionId)` and `nestSpecies()` helpers. Decide per trophy whether "collect them all" means 27 or 36 and say so in its description.
-- [ ] `js/assets/creatures.js`: wrap the drawing in named groups so parts can move on their own: `.c-back` (wings, glow), `.c-tail`, `.c-ears`, `.c-body`, `.c-front`, `.c-face`, `.c-eyes`. Pixel output of the default pose must not change.
-- [ ] Add a `pose` option to `creatureSvg()`, composed from existing parts only:
-  - [ ] `ready` (leaning in, determined brows), `attack` (open mouth, forward lean), `hurt` (squeezed eyes, wobble mouth), `dodge` (smirk, side glance), `dizzy` (spiral eyes), `cheer` (arms-up bounce, big smile), `smitten` (heart eyes, for befriending).
-  - [ ] A `facing: 'left'` option so the wild creature faces the player.
-- [ ] `js/ui/collection.js`: Creature book lists arena species in their land as silhouettes with a "Meet it in the Arena" hint until befriended.
-- [ ] Update the counts in `README.md` text only where already true after this phase (the rest waits for Phase 6).
+- [ ] Review each new `art` recipe against the existing 36: body, face, ears, tail, extras and palette. Adjust until each new species is visibly its own creature.
+- [ ] Add new parts to `js/assets/creatures.js` (a body, ear, tail or extra) only where the recipes cannot make the theme (for example a lantern for Lampling or a flame-free glow for Anglerlight). New parts must work in all three stages and all seven battle poses.
+- [ ] Check name originality (D2) against the hygiene scan and the species list.
+- [ ] Render a contact sheet with `tools/screenshots.mjs` (or a small script in the scratchpad) of all 48 species at stage 1, 2 and 3 and look at the new ones.
 
 ### How we know it is done (autonomous)
-- [ ] `test/e2e/art.test.js` extended:
-  - [ ] All 108 stage drawings are well-formed, self-contained and draw something.
-  - [ ] Every species × stage × pose (36 × 3 × 7) is valid XML, has every named group, and its drawing stays inside the view box when facing either way.
-  - [ ] Every pose differs from the default drawing for every species.
-- [ ] **No-regression snapshot:** before the regroup, save the default-pose screenshot of all 81 existing drawings to the scratchpad; after it, the PNG buffers are identical.
-- [ ] `test/logic/hatch.test.js` and `collection.test.js`: 10,000 seeded hatches never produce an arena species; starters exclude them.
-- [ ] `test/e2e/collection.test.js`: the book shows 36 entries with 9 arena silhouettes and the hint.
-- [ ] `npm run check` green (the existing playthrough proves eggs and trophies did not shift).
+- [ ] `test/e2e/art.test.js` (run with the flag at 12): every species × 3 stages × 7 poses × both directions is valid, fully grouped, and stays in its box. The expected count is computed from `SPECIES.length`, so it reads 48 × 3 × 7 × 2 = 2016.
+- [ ] `test/e2e/battle-stage.test.js` at 12: idle is alive for all 48; nothing is clipped at phone and tablet widths.
+- [ ] **Distinctness test:** no two species render to the same SVG at the same stage; each new species' main colour is at least a set colour distance from every other species in the **same** land, so three siblings cannot look alike.
+- [ ] **Visual review:** I read the contact-sheet PNG (Read tool handles images) and compare the 12 new creatures with the existing ones. Anything that looks like a recolour gets another pass.
+- [ ] `npm run check` green (flag 9, unchanged).
 
 ---
 
-## Phase 3: Battle animation kit
+## Phase 3: The map
 
-**Depends on:** Phase 2.
-**Leaves:** a self-contained battle stage component that can play every animation on its own, with a test page.
-
-This phase is where the wild creatures come alive. Animations use CSS transforms and opacity only, are driven by a `data-anim` attribute, and never hold up typing.
+**Depends on:** Phase 1. (Does not need Phase 2.)
+**Leaves:** with the flag at 12 the map shows 12 lands on a longer trail, nothing overlaps, and the token can walk the whole way.
 
 ### Tasks
-- [ ] New `js/logic/battle-cues.js` (pure): maps each battle event to an ordered list of cues with durations, for example `special → [charge 250, lunge 200, burst 350, hearts 300]`. One table, so timing is testable.
-- [ ] New `js/ui/battle-stage.js`: `createBattleStage({ player, wild, hearts })` returning `{ el, play(event), setHearts(n), destroy() }`.
-  - [ ] `play()` never returns a promise the caller must wait on. A new event interrupts the previous animation and jumps the stage to the correct end state, so a fast typist never sees a stale heart count.
-  - [ ] Heart row with a text equivalent and a polite live region ("Glowmoth has 4 hearts left").
-- [ ] Wild creature animations in `css/main.css`:
-  - [ ] **Entrance:** grass rustles, the creature hops in with squash and stretch, and a name banner slides in ("A wild Glowmoth appears!").
-  - [ ] **Living idle, driven by its parts:** breathing bob and blinking for all; wings flap, tails sway, flame tails flicker, ears twitch, crystals and stars twinkle. Each part group gets its own gentle loop with staggered timing so no two species move alike.
-  - [ ] **Taunts while waiting:** every 6–10 seconds one of a small set (peek, hop, spin, tongue-out smirk), picked at random.
-  - [ ] **Hit:** knock-back with squash, a white flash, a star burst in the attacker's colour, a floating "−1", and one heart cracking and popping.
-  - [ ] **Special hit:** a larger burst in the player creature's palette, a small stage shake, a tumble and recover, "−2", and two hearts popping one after the other.
-  - [ ] **Dodge:** a quick sidestep or duck with an after-image and a cheeky smirk, then back to idle. The wording stays kind: "It dodged! Let's look at the word together."
-  - [ ] **Getting tired:** at a quarter of its hearts or less, the idle slows, the creature wobbles and a sweat drop appears.
-  - [ ] **Won, befriended:** dizzy spin, sits down, heart eyes, hops across to the player's side, heart burst and confetti.
-  - [ ] **Won, not befriended:** dizzy spin, a friendly wave, drops a cricket pouch that flies to the cricket counter, then cheers through the victory lap.
-  - [ ] **Escape:** waves goodbye and bounds off with a dust puff.
-- [ ] Player creature animations: lunge on a hit, a glowing charge-up at a run of 2, a big leap on the special, a sympathetic flinch on a miss, a cheer on the win.
-- [ ] Sounds in `js/platform/audio.js`: `hit`, `special`, `dodge`, `win`, `befriend`, `escape`, respecting the sound setting.
-- [ ] **Reduced motion:** every animation has an override in the existing `prefers-reduced-motion` blocks. The stage changes pose and hearts instantly and relies on the text announcements.
-- [ ] Test page `test/fixtures/battle-stage.html` that mounts the stage for any species, stage and event from the query string. Not shipped (kept out of `sw-assets.js`).
-- [ ] New `tools/battle-filmstrip.mjs`: for a given species, captures frames at 0, 150, 300, 600 and 1000 ms of every animation into the scratchpad as contact sheets.
+- [ ] `js/ui/map.js`:
+  - [ ] Raise `W` (about 3750) so each land keeps roughly the same width as today.
+  - [ ] Extend `POINTS` with a continuing winding route; keep the Catmull-Rom path inside the 620-high frame.
+  - [ ] Add `COLORS` for r10–r12 (D1 palettes) and make the 9 existing colours the first nine.
+  - [ ] Add three `SCENERY` functions (Harvest Hollow: trees with orange leaves, pumpkins, haystacks; Lantern Harbor: lampposts, boats, barrels; Wishing Ruins: broken pillars, glowing stones, vines).
+  - [ ] Extend `CLOUDS`; check the park props loop (`80` props) still fills the longer map evenly, raising the count in proportion.
+  - [ ] Slice `COLORS`/`SCENERY` to `REGIONS.length` so the flag-off map is unchanged.
+- [ ] `css/main.css`: `.battle-stage[data-land="r10".."r12"]` sky and floor variables matching the land colours.
+- [ ] Check the scroll container, scroll-to-token and the wheel at 12 wedges (the wheel divides by `REGIONS.length` already; confirm labels fit).
 
 ### How we know it is done (autonomous)
-- [ ] `test/logic/battle-cues.test.js`: every battle event has cues; every sequence totals 1000 ms or less; entrance is 1000 ms or less.
-- [ ] `test/logic/battle-css.test.js` (reads `css/main.css` as text): every cue name has a matching `@keyframes`; every battle animation class is switched off inside a reduced-motion block; battle keyframes animate only `transform`, `opacity` and `filter`.
-- [ ] `test/e2e/battle-stage.test.js` on the test page:
-  - [ ] For each event, `getAnimations()` on the wild creature is non-empty while it plays and empty within 1.1 s.
-  - [ ] Frames differ: a screenshot at 0 ms and at mid-animation are not byte-identical, for every event.
-  - [ ] Idle is alive: two screenshots 400 ms apart differ for every one of the 36 species, and species with wings, tails or flames have a running animation on that part group.
-  - [ ] Nothing is clipped: for all 36 species in all 3 stages, the creature's bounding box stays inside the stage at the peak of hit, special, dodge and entrance, at phone (375 px) and tablet (1024 px) widths.
-  - [ ] Interrupt safety: firing 10 events in 300 ms leaves the heart row and pose matching the last event.
-  - [ ] Reduced motion (`page.emulateMedia({ reducedMotion: 'reduce' })`): no running animations, hearts and pose still update, live region text is correct.
-  - [ ] Zero console errors.
-- [ ] **Visual review loop:** run `tools/battle-filmstrip.mjs` for one species of each body shape plus all 9 arena species, open the contact sheets, and fix anything that reads badly (stiff, clipped, unreadable, too busy). Repeat until a pass finds nothing. Note the review in the commit message.
-- [ ] `npm run check` green.
+- [ ] `test/e2e/map.test.js` generalised and run at 12: 12 patches; every fogged land's `aria-label` carries its requirement ("Reach level 18 and 53 words mastered"); the keyboard-operable pins work for r10–r12.
+- [ ] **Geometry test** (new, in the same file): for every land the patch is fully inside the frame; centres of neighbouring patches are at least 200 apart (patch rx is 96); no patch covers another's Nest pin or name label; the fog sign text fits its box; the trail's last point is inside the frame.
+- [ ] **Walk test:** start at step 0 with all 12 lands unlocked, play 492 first-try steps through the real UI (or set `trailStep` stepwise), and assert the token reaches the end, each gate stops it at the right step, and every 10th step is a star.
+- [ ] Phone (390 px) and tablet (820 px) screenshots at three scroll positions (start, middle, end); I read them. No horizontal page scroll outside the map scroller.
+- [ ] Flag-9 map tests unchanged and green; `npm run check` green.
 
 ---
 
-## Phase 4: The battle screen
+## Phase 4: Nest, Arena, Creature book and battles in the new lands
 
-**Depends on:** Phases 1 and 3.
-**Leaves:** a playable battle at `#/battle/<land>` (flag on), start to summary, with plain practice untouched.
+**Depends on:** Phases 1, 2 and 3.
+**Leaves:** a trainer can fully play lands 10–12 with the flag at 12: hatch their species, battle their wild creatures, befriend the Arena creatures, see them in the book.
 
 ### Tasks
-- [ ] `js/ui/practice.js`: split the word prompt (clue buttons, answer box, miss feedback, get-ready pause, keyboard shortcuts) from the scene above it. Practice keeps its companion scene; behaviour and element ids do not change.
-- [ ] New `js/ui/battle.js`: the same prompt under the battle stage. After each `submit()` it calls `stage.play(result.battle.event)` and immediately asks the next word. No awaits between answer and next word.
-- [ ] `js/main.js`: `battle` route, guarded like `practice` (no battle in memory goes home) and by `arenaOn()`.
-- [ ] Toasts: "Hit!", "Special move!", "It dodged!", alongside the existing cricket reward text.
-- [ ] Charge indicator: three pips under the player creature that fill with the run, so the special is anticipated.
-- [ ] `js/ui/summary.js`: a battle result card above the usual summary: befriended (with the new creature and a link to the book), won (bonus crickets), or escaped ("It got away. You keep everything you earned!").
-- [ ] Leaving mid-battle behaves exactly as leaving practice does today: answers so far are saved, no win is recorded.
-- [ ] `npm run stamp` so the new modules are cached offline.
+- [ ] Walk every screen that is keyed by region and fix anything that assumes 9: Nest page (`#/nest/r10`), Arena page and flag (`arenaSpot` for the new patches), battle backdrop and wild pick, Creature book grouping and "x of 48 discovered" copy, hatch odds, trophy list, help text, summary "New region unlocked" message.
+- [ ] Make `help-content.js` and any "lands" wording read the count from the data rather than saying nine.
+- [ ] Check the Arena flag spots: the flag must stay clear of the trail, stars and Nest pin in the longer map.
 
 ### How we know it is done (autonomous)
-- [ ] All existing practice tests pass unchanged (`smoke`, `screens`, `words`, `playthrough`): proof the split changed nothing.
-- [ ] `test/e2e/battle.test.js` with a seeded level-3 trainer:
-  - [ ] Clean run: hearts fall 1, 1, 2; the special toast shows on the third; the win lands on the expected answer; the victory lap plays the remaining words; the summary shows the win.
-  - [ ] Miss: the dodge plays, the miss feedback and "type it correctly" step work as in practice, the word comes back later, the run pips reset.
-  - [ ] Escape: a script that gives up words ends with the escape card and the same crickets and XP as the model predicts.
-  - [ ] Befriend: forcing the arena-only wild creature ends with it in `profile.creatures` and on the summary card.
-  - [ ] **Typing is never blocked:** immediately after pressing Enter the answer box is focused, empty and accepts keys while the hit animation is still running; the next word is spoken within the same delay as in practice (measured against a practice run in the same test, tolerance 150 ms).
-  - [ ] Rapid play: answering 10 words with no pauses ends with the right heart count and outcome.
-  - [ ] Reduced motion run reaches the same end state.
-  - [ ] Stored state after a battle equals the state after the same answers in practice, apart from the prize and battle fields.
-  - [ ] Keyboard only, start to summary. Zero console errors.
-- [ ] `test/e2e/offline.test.js`: a battle works offline after one visit.
-- [ ] `npm run check` green.
+- [ ] `test/e2e/arena.test.js` generalised (flag 12): flags exist in all open lands; "every flag in all twelve lands can be clicked, and so can every star" (set `trailStep = TOTAL_STEPS`); `#/arena/r10..r12` open when the land is open and show the fog message when it is not.
+- [ ] `test/e2e/battle.test.js` at 12: one full battle each in r10, r11 and r12 (clean run wins, a miss dodges, escape keeps rewards, the Arena creature is befriended on the first win and appears in the book), with the right backdrop (`data-land`).
+- [ ] `test/e2e/collection.test.js` and `test/logic/collection.test.js`: hatching in r10–r12 yields only that land's three Nest species (10,000 seeded hatches); the 12 Arena creatures never come from eggs; the book reads "x of 48".
+- [ ] `test/e2e/help.test.js` and `test/logic/help-content.test.js` green, including `nest/r10`.
+- [ ] No page error or console error across every route in `test/e2e/screens.test.js` at 12.
+- [ ] `npm run check` green; `npm run check:12` failures narrowed to only the literal-count assertions in the two-week playthrough and a few files listed for Phase 5.
 
 ---
 
-## Phase 5: The Arena on the map
+## Phase 5: Playthrough, test literals, docs, switch on
 
-**Depends on:** Phase 4 (and Phase 2 for the book).
-**Leaves:** the full player journey, still behind the flag.
+**Depends on:** Phases 1–4.
+**Leaves:** 12 lands live for everyone, with the whole suite green at the new default and the docs telling the truth.
 
 ### Tasks
-- [ ] `js/ui/map.js`: an Arena pin beside the Nest pin in every open land. Below level 3 it shows locked with "Opens at level 3". Keyboard reachable with a clear label.
-- [ ] New `js/ui/arena.js` at `#/arena/<land>`: pick one owned creature (large tappable cards showing the `ready` pose), see which arena creature lives here (silhouette until befriended), then "Battle!". Remembers the last pick.
-- [ ] A one-time "The Arena is open!" moment when level 3 is reached (on the summary and the map).
-- [ ] `js/ui/trophies.js`: Champion shows progress (for example 4 of 10).
-- [ ] `js/ui/help-content.js`: plain-language FAQs: what a battle is, why you cannot lose, how the special move works, how to befriend arena creatures.
-- [ ] `js/ui/parent.js`: battles show in session history as "Battle"; per-word stats unchanged.
-- [ ] Befriended creatures behave like any other in the Sanctuary, care screens and games.
+- [ ] Replace every hardcoded `9`, `36`, `342`, `r9`, and nine-land region regex in the tests with values derived from `REGIONS`, `SPECIES`, `TOTAL_STEPS` (files found by the grep in Phase 1: `playthrough`, `map`, `arena`, `art`, `battle`, `battle-stage`, `collection` e2e tests and `test/COVERAGE.md`). After this, no test names a land count.
+- [ ] Extend the two-week playthrough so a trainer with a large list reaches at least one new land, and add a long-run variant that unlocks all 12.
+- [ ] Update `README.md` ("twelve lands", word-list note from D8) and `docs/changes-since-prd.md`; tick/adjust `TODO.md`; add the new criteria to `test/COVERAGE.md`.
+- [ ] Raise `LAND_COUNT` to 12 in `js/config.js`. Run `npm run stamp`.
+- [ ] Ask the user before pushing; then push to `main` and confirm the deploy.
 
 ### How we know it is done (autonomous)
-- [ ] `test/e2e/map.test.js`: with the flag off there is no Arena anywhere; flag on at level 2 shows locked pins; at level 3 they open; locked lands have none.
-- [ ] `test/e2e/arena.test.js`: full journey: reach level 3 by playing, see the unlock moment, open the pin, pick a creature, battle, win, befriend, find the creature in the Creature book and Sanctuary, feed it, see Champion progress 1 of 10.
-- [ ] The nothing-due and no-seen-words cases (D5) from the Arena screen.
-- [ ] `test/logic/help-content.test.js` covers the new FAQs; `test/e2e/help.test.js` still passes.
-- [ ] `test/e2e/parent.test.js`: backup, wipe, restore keeps befriended creatures and battle wins.
-- [ ] `npm run check` green.
+- [ ] `npm run check` is green with the new default (12), and `npm run check` is also green with `SPELLBEASTS_LANDS=9` (the old shape still works, which proves nothing is hardcoded either way).
+- [ ] The playthrough ends with the unlocked set, trail position, species count and trophies all matching what the data says, and `explorer-12` earned in the long run.
+- [ ] `grep -rnE "\b(342|36 species|nine lands|r9\b)"` over `js/` and `test/` finds no stale literal (a scripted check in `test/hygiene.test.js`, so it stays that way).
+- [ ] `test/logic/pwa.test.js` and `test/e2e/offline.test.js` green: the service worker version is bumped and the app still loads offline.
+- [ ] After the push, the live site loads, shows 12 lands and an existing 9-land save still opens (a Playwright run against the Pages URL, plus a manual iPad check, still pending from the Arena release).
 
 ---
 
-## Phase 6: Whole-game playthrough, polish and switching on
+## Risks
 
-**Depends on:** Phases 1 to 5.
-**Leaves:** the Arena live for players.
-
-### Tasks
-- [ ] Extend `test/e2e/playthrough.test.js`: on some simulated days the session is a battle. Add battles to the test's **independent** model (hearts, special cadence, outcome, prize, wins, Champion) written from this plan's decision table, not by importing `battle.js`.
-- [ ] `test/COVERAGE.md`: map each PRD §15 Phase 2 criterion and each decision D1 to D10 to its test.
-- [ ] Tuning pass using the fuzz harness from Phase 1: report win rate and "answer on which the win lands" for accuracy levels 60%, 80% and 100% across lands; adjust the constants if a typical 80% speller does not win almost always.
-- [ ] Final visual pass with the filmstrip tool across all 36 species at phone and tablet sizes.
-- [ ] `tools/screenshots.mjs`: add Arena and battle screenshots; update `README.md` (feature list, creature counts), `docs/changes-since-prd.md`, and tick off the Arena section in `TODO.md`.
-- [ ] Set `ARENA_ENABLED = true`, run `npm run stamp`, commit, push.
-- [ ] Still needs a person: a real-device check on the child's iPad (touch targets, sound, animation smoothness). List it in `TODO.md`.
-
-### How we know it is done (autonomous)
-- [ ] The playthrough passes with battles included and zero console errors.
-- [ ] `npm run check` green with the flag on by default, and again with `SPELLBEASTS_ARENA = false` forced in a smoke run to prove the off switch still hides everything.
-- [ ] After the push, fetch `version.json` from the live site until it matches, then run the smoke and battle end-to-end tests against the live URL.
-- [ ] Every row in `test/COVERAGE.md` names a test that exists and passes.
-
----
-
-## Risks to watch
-
-- **Art regroup breaking existing looks** (Phase 2): guarded by the byte-identical snapshot check.
-- **Animations delaying a fast typist** (Phases 3 and 4): guarded by the interrupt-safety and typing-never-blocked tests.
-- **Arena species leaking into eggs or "collect all" trophies** (Phase 2): guarded by the seeded hatch test and the existing playthrough.
-- **Befriending making eggs pointless** (D7): the 25% chance is one constant; the Phase 6 tuning report shows how often it happens.
-- **Playthrough test time** (currently up to 280 s): battles reuse session turns, so the cost is the model, not extra play. Raise the timeout only if measured.
+- **Art workload.** 12 creatures is the largest cost; a smaller release (3 lands, no new Arena species) is possible but breaks the one-Arena-creature-per-land pattern that tests and the book rely on.
+- **Late-game reachability.** Level 22 and 60 mastered words may take a very long time; D3 is deliberately a table so it can be tuned without code changes.
+- **`collector-all` regression feel.** A child who finished the book sees it drop from 36 of 36 to 36 of 48. The trophy stays earned (D6), but the copy on the book page should say "new creatures to find" rather than showing a lower fraction as a loss; decide in Phase 4.
+- **Map performance.** Ticks, props and fog grow with the trail; Phase 3 watches for jank on the oldest tablet before it ships.
