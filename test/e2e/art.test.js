@@ -9,9 +9,9 @@ let env;
 before(async () => { if (hasBrowser) env = await launch(); });
 after(async () => { await env?.close(); });
 
-test('all 108 creature SVGs are well-formed XML, self-contained and actually draw something', { skip }, async () => {
+test('every creature SVG (3 stages each) are well-formed XML, self-contained and actually draw something', { skip }, async () => {
   const svgs = SPECIES.flatMap((s) => [1, 2, 3].map((st) => ({ id: `${s.id}-${st}`, svg: creatureSvg(s.id, st) })));
-  assert.equal(svgs.length, 108);
+  assert.equal(svgs.length, SPECIES.length * 3);
   for (const { id, svg } of svgs) {                       // cheap static rules
     assert.match(svg, /viewBox="0 0 100 100"/, id);
     assert.doesNotMatch(svg, /<image|<script|href=|url\(|http/i, id);
@@ -24,7 +24,7 @@ test('all 108 creature SVGs are well-formed XML, self-contained and actually dra
   assert.deepEqual(bad, []);
   await page.setContent(`<div id="g">${svgs.map((x) => x.svg).join('')}</div>`);
   const sizes = await page.evaluate(() => [...document.querySelectorAll('#g svg')].map((s) => { const b = s.querySelector('.idle').getBBox(); return [b.width, b.height]; }));
-  assert.equal(sizes.length, 108);
+  assert.equal(sizes.length, SPECIES.length * 3);
   for (const [w, h] of sizes) assert.ok(w > 30 && h > 30, `tiny drawing ${w}x${h}`);
   await page.close();
 });
@@ -37,10 +37,10 @@ test('stages differ: every species changes between stage 1, 2 and 3', { skip }, 
 });
 
 const GROUPS = ['idle', 'c-glow', 'c-pose', 'c-back', 'c-tail', 'c-ears', 'c-feet', 'c-body', 'c-front', 'c-face', 'c-eyes', 'c-mouth'];
-test('battle poses: every species, stage and pose (36 x 3 x 7), facing both ways, is valid, fully grouped and stays in its box', { skip }, async () => {
+test('battle poses: every species, stage and pose (species x 3 x 7), facing both ways, is valid, fully grouped and stays in its box', { skip }, async () => {
   assert.equal(POSES.length, 7);
   const items = SPECIES.flatMap((s) => [1, 2, 3].flatMap((st) => POSES.flatMap((pose) => [false, true].map((flip) => ({ id: `${s.id}-${st}-${pose}${flip ? '-flip' : ''}`, svg: creatureSvg(s.id, st, { pose, flip, size: 100 }) })))));
-  assert.equal(items.length, 36 * 3 * 7 * 2);
+  assert.equal(items.length, SPECIES.length * 3 * 7 * 2);
   for (const { id, svg } of items) {
     assert.doesNotMatch(svg, /<image|<script|href=|url\(|http/i, id);
     assert.doesNotMatch(svg, /NaN|undefined/, id);

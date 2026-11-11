@@ -12,6 +12,13 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export async function launch() {
   const server = await startServer(ROOT);
   const browser = await chromium.launch({ executablePath: CHROMIUM, args: ['--no-sandbox'] });
+  // npm run check:12: every page opened from this browser (also plain browser.newPage()) sees the same land count as Node does.
+  const lands = process.env.SPELLBEASTS_LANDS ? Number(process.env.SPELLBEASTS_LANDS) : null;
+  if (lands !== null) {
+    const newContext = browser.newContext.bind(browser);
+    browser.newContext = async (o) => { const c = await newContext(o); await c.addInitScript((n) => { window.SPELLBEASTS_LANDS = n; }, lands); return c; };
+    browser.newPage = async (o) => (await browser.newContext(o)).newPage();
+  }
   return { server, browser, async close() { await browser.close(); await server.close(); } };
 }
 
