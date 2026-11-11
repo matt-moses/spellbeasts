@@ -4,15 +4,20 @@
 import { h, icon } from './dom.js';
 import { companionSvg } from './art.js';
 import { REGIONS } from '../logic/species.js';
+import { landCount } from '../config.js';
 import { arenaOn } from '../config.js';
 import { arenaOpen, ARENA_LEVEL } from '../logic/battle.js';
 import { awardTrophies } from '../logic/collection.js';
 import { TROPHIES } from '../logic/trophies.js';
 import { UNLOCKS, TOTAL_STEPS, REGION_END, regionStart, LANDMARKS, isReached, isClaimed, unlockRequirement, claimLandmark, regionOfStep } from '../logic/world.js';
 
-const W = 2800, H = 620;
+// The map is drawn for 9 lands (2800 wide) or all 12 (4100 wide): the twelve-land trail is the nine-land one, carried on.
+const TWELVE = landCount() >= 12;
+const W = TWELVE ? 4100 : 2800, H = 620;
 // One long winding trail through all the lands (Catmull-Rom through these points).
-const POINTS = [[60, 520], [170, 450], [290, 520], [400, 540], [520, 470], [640, 400], [760, 330], [880, 380], [990, 470], [1110, 530], [1240, 480], [1350, 400], [1450, 320], [1570, 280], [1690, 350], [1800, 450], [1910, 520], [2030, 500], [2140, 430], [2250, 350], [2350, 290], [2460, 330], [2560, 420], [2660, 480], [2740, 430]];
+const ALL_POINTS = [[60, 520], [170, 450], [290, 520], [400, 540], [520, 470], [640, 400], [760, 330], [880, 380], [990, 470], [1110, 530], [1240, 480], [1350, 400], [1450, 320], [1570, 280], [1690, 350], [1800, 450], [1910, 520], [2030, 500], [2140, 430], [2250, 350], [2350, 290], [2460, 330], [2560, 420], [2660, 480], [2740, 430],
+  [2850, 500], [2970, 540], [3090, 480], [3200, 400], [3310, 330], [3420, 290], [3530, 350], [3640, 450], [3750, 520], [3860, 500], [3960, 440], [4040, 400]];
+const POINTS = TWELVE ? ALL_POINTS : ALL_POINTS.slice(0, 25);
 function smooth(pts) {
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
   for (let i = 0; i < pts.length - 1; i++) {
@@ -22,7 +27,7 @@ function smooth(pts) {
   return d;
 }
 const TRAIL = smooth(POINTS);
-const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8'];
+const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8', '#e8a24a', '#e08fa8', '#9fb59a'].slice(0, REGIONS.length);
 const INK = '#1d2433';
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -74,6 +79,18 @@ const SCENERY = [
   // r9 Starfall Isles: fallen stars, moon rocks, comets
   ([x, y, k]) => k < 0.55 ? `<g transform="translate(${x} ${y})"><path d="M0-10L3 -3L10 -2L4 3L6 10L0 6L-6 10L-4 3L-10 -2L-3 -3Z" fill="#ffe27a" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/></g>`
     : `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="3" rx="11" ry="7" fill="#c9d4f5" stroke="${INK}" stroke-width="1.6"/><circle cx="-3" cy="1" r="2" fill="#a4b2e0"/><path d="M12 -6L26 -14" stroke="#fff3a8" stroke-width="2.4" stroke-linecap="round" opacity=".8"/></g>`,
+  // r10 Harvest Hollow: autumn trees, pumpkins, haystacks
+  ([x, y, k]) => k < 0.4 ? `<g transform="translate(${x} ${y})"><rect x="-2" y="2" width="4" height="9" fill="#7a4a24"/><circle r="9" cy="-3" fill="${k < 0.2 ? '#e8782a' : '#f0b030'}" stroke="${INK}" stroke-width="2"/><circle r="3" cx="-3" cy="-6" fill="#ffd27a"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="2" rx="9" ry="7" fill="#f08a24" stroke="${INK}" stroke-width="1.8"/><path d="M-3 -4Q0 6 3 -4M-6 -2Q-5 5 -2 6M6 -2Q5 5 2 6" fill="none" stroke="#b85a10" stroke-width="1.2"/><path d="M0 -5V-9" stroke="#3f7a35" stroke-width="2.4" stroke-linecap="round"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M-11 8Q-11 -8 0 -9Q11 -8 11 8Z" fill="#e8c25a" stroke="${INK}" stroke-width="1.8"/><path d="M-6 6L-4 -3M0 7V-5M6 6L4 -3" stroke="#b8902a" stroke-width="1.2"/></g>`,
+  // r11 Lantern Harbor: lamp posts, barrels, little boats
+  ([x, y, k]) => k < 0.4 ? `<g transform="translate(${x} ${y})"><circle cy="-15" r="9" fill="#ffe27a" opacity=".5"/><rect x="-1.6" y="-12" width="3.2" height="20" fill="#3c4660" stroke="${INK}" stroke-width="1.2"/><rect x="-4.5" y="-19" width="9" height="9" rx="2" fill="#ffd23f" stroke="${INK}" stroke-width="1.6"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><rect x="-7" y="-8" width="14" height="16" rx="4" fill="#a8693a" stroke="${INK}" stroke-width="1.8"/><path d="M-7 -3H7M-7 3H7" stroke="#5e3a1a" stroke-width="1.6"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M-13 2H13L8 9H-8Z" fill="#e5484d" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M0 2V-14" stroke="${INK}" stroke-width="2"/><path d="M1 -13L10 -2H1Z" fill="#fff" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/></g>`,
+  // r12 Wishing Ruins: broken pillars, glowing stones, vines
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><path d="M-6 9V-8L-3 -11L0 -7L3 -12L6 -8V9Z" fill="#c9c3b0" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-2 9V-4M2 9V-5" stroke="#9a947e" stroke-width="1.2"/><path d="M-6 2Q-9 -2 -7 -6" fill="none" stroke="#4f9a5a" stroke-width="2.2" stroke-linecap="round"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="3" rx="10" ry="6.5" fill="#b8b4a0" stroke="${INK}" stroke-width="1.6"/><path d="M0 -3L1.6 0.5L5 1L2.4 3.2L3.2 6.6L0 4.8L-3.2 6.6L-2.4 3.2L-5 1L-1.6 0.5Z" fill="#ffe27a" stroke="${INK}" stroke-width="1"/></g>`
+    : `<g transform="translate(${x} ${y})" fill="none" stroke="#4f9a5a" stroke-width="2.4" stroke-linecap="round"><path d="M-8 8Q-10 -2 -4 -6Q2 -10 4 -3Q6 3 10 2"/><ellipse cx="-5" cy="-2" rx="3" ry="1.8" fill="#7cc96a" stroke="${INK}" stroke-width="1"/><ellipse cx="5" cy="-1" rx="3" ry="1.8" fill="#7cc96a" stroke="${INK}" stroke-width="1"/></g>`,
 ];
 
 // ---------- park props (flat shapes, scattered on the grass away from the path) ----------
@@ -116,7 +133,7 @@ function starTile(state) {
   ${ready ? '<path class="twinkle" d="M16 -18L17.5 -14L21.5 -12.5L17.5 -11L16 -7L14.5 -11L10.5 -12.5L14.5 -14Z" fill="#ffc928" stroke="#1d2433" stroke-width="1"/>' : ''}</g>`;
 }
 
-const CLOUDS = [[40, 50, 1.0, 190], [620, 30, 0.8, 230], [1100, 90, 0.7, 260], [1600, 40, 1.0, 210], [2150, 80, 0.8, 240], [2600, 30, 0.9, 200]].map(([x, y, sc, dur], i) =>
+const CLOUDS = [[40, 50, 1.0, 190], [620, 30, 0.8, 230], [1100, 90, 0.7, 260], [1600, 40, 1.0, 210], [2150, 80, 0.8, 240], [2600, 30, 0.9, 200], ...(TWELVE ? [[3050, 60, 0.9, 220], [3500, 35, 0.8, 250], [3950, 80, 1.0, 210]] : [])].map(([x, y, sc, dur], i) =>
   `<g class="drift" style="animation-duration:${dur}s;animation-delay:${-i * 30}s" opacity=".95" pointer-events="none"><g transform="translate(${x} ${y}) scale(${sc})" fill="#fff"><ellipse cx="0" cy="0" rx="46" ry="14"/><circle cx="-14" cy="-10" r="14"/><circle cx="10" cy="-14" r="18"/><circle cx="28" cy="-6" r="11"/></g></g>`).join('');
 
 const DEFS = (colors) => `<defs>
@@ -211,7 +228,7 @@ export function mapSection(app) {
   // park props on the grass, away from the path and the region patches
   const rnd = prng(5), placed = [];
   const clear = (x, y, pad) => samples.every((s) => Math.hypot(s.x - x, s.y - y) > pad + 16) && centers.every((c) => ((x - c.x) / (96 + pad)) ** 2 + ((y - c.y) / (72 + pad)) ** 2 > 1) && placed.every((q) => Math.hypot(q[0] - x, q[1] - y) > 34);
-  for (let i = 0, tries = 0; i < 80 && tries < 2400; tries++) {
+  for (let i = 0, tries = 0; i < Math.round((80 * W) / 2800) && tries < 2400 * (W / 2800); tries++) {
     const x = 26 + rnd() * (W - 52), y = 185 + rnd() * (H - 210);
     if (!clear(x, y, 6)) continue;
     placed.push([x, y, rnd(), PROP_PICK[Math.floor(rnd() * PROP_PICK.length)]]); i++;

@@ -398,6 +398,9 @@ details.faq p { margin:.5rem 0 .2rem; font-size:1.05rem; }
 .battle-stage[data-land="r7"] { --bs-sky:#e8dff8; --bs-floor:#a897d8; --bs-floor-d:#7c69b4; }
 .battle-stage[data-land="r8"] { --bs-sky:#fff1d4; --bs-floor:#ecc680; --bs-floor-d:#c79a4c; }
 .battle-stage[data-land="r9"] { --bs-sky:#d8dcff; --bs-floor:#8796e4; --bs-floor-d:#5d6cbc; }
+.battle-stage[data-land="r10"] { --bs-sky:#ffecd0; --bs-floor:#e6a45a; --bs-floor-d:#b9772f; }
+.battle-stage[data-land="r11"] { --bs-sky:#ffe3ec; --bs-floor:#e79ab4; --bs-floor-d:#bd6f8c; }
+.battle-stage[data-land="r12"] { --bs-sky:#e9f0e2; --bs-floor:#a9c2a0; --bs-floor-d:#7f9a78; }
 .bs-field { position:relative; display:flex; justify-content:space-between; align-items:flex-end; padding:34px 8% 6px; border-radius:22px; overflow:hidden; box-shadow:0 6px 0 var(--lip);
   background:radial-gradient(120% 60% at 50% 100%, var(--bs-floor) 0 58%, transparent 59%), linear-gradient(180deg, var(--bs-sky), #fff 120%); }
 .bs-side { position:relative; width:44%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }
