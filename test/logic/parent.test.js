@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { SAMPLE_WORDS } from '../../data/sample-words.js';
 import assert from 'node:assert/strict';
 import { listUsers, unassignList, deleteList, isAdultBirthYear, birthYearChoices, statsRows, sortRows, mostMissed, previewImport, importIntoList, createListFromImport, renameList, editWord, deleteWord, resetSampleList, setActiveList, renameProfile, deleteProfile, resetProgress, exportJson, parseBackup } from '../../js/logic/parent.js';
 import { freshState, freshProfile } from '../../js/logic/storage-schema.js';
@@ -42,7 +43,7 @@ test('stats rows: attempts, accuracy, box, due, mastered, last missed; unseen wo
   assert.deepEqual([g.attempts, g.accuracy, g.box, g.nextDue, g.mastered, g.missed], [1, 100, 2, '2026-11-07', false, 0]);
   assert.deepEqual([i.attempts, i.accuracy, i.box, i.lastMissed, i.missed], [2, 0, 1, T, 1]);
   assert.deepEqual([u.attempts, u.accuracy, u.box, u.nextDue], [0, null, null, null]);
-  assert.equal(rows.length, 15);
+  assert.equal(rows.length, SAMPLE_WORDS.length);
 });
 test('sorting puts empty values last in both directions and is stable; most-missed ranks correctly', () => {
   const { state, p } = world();
@@ -52,7 +53,7 @@ test('sorting puts empty values last in both directions and is stable; most-miss
   const asc = sortRows(rows, 'accuracy', 'asc'), desc = sortRows(rows, 'accuracy', 'desc');
   assert.equal(asc.at(-1).accuracy, null); assert.equal(desc.at(-1).accuracy, null);
   assert.equal(desc[0].word, 'pencil');
-  assert.deepEqual(sortRows(rows, 'word', 'asc').slice(0, 2).map((r) => r.word), ['bicycle', 'Canada']);
+  assert.deepEqual(sortRows(rows, 'word', 'asc').slice(0, 2).map((r) => r.word), ['acquire', 'ambulance']);      // the first two of the bundled words, A to Z
   assert.deepEqual(mostMissed(rows).map((r) => r.word), ['island', 'garden']);
   assert.equal(mostMissed(rows, 1).length, 1);
 });
@@ -72,14 +73,14 @@ test('import: add keeps everything, reports words already present, and skips the
   assert.equal(pre.errors.length, 1); assert.equal(pre.words.length, 1);
   const r = importIntoList(state, 'sample', 'garden|n|x\nkettle|n|y', 'add');
   assert.equal(r.added, 1);
-  assert.equal(state.wordLists.sample.words.length, 16);
+  assert.equal(state.wordLists.sample.words.length, SAMPLE_WORDS.length + 1);
   assert.ok(p.wordStats.sample.garden);
 });
 test('import with nothing valid changes nothing', () => {
   const { state } = world();
   const r = importIntoList(state, 'sample', '# nothing\n|oops', 'replace');
   assert.equal(r.ok, false);
-  assert.equal(state.wordLists.sample.words.length, 15);
+  assert.equal(state.wordLists.sample.words.length, SAMPLE_WORDS.length);
   assert.equal(importIntoList(state, 'nope', 'a|b|c', 'add').ok, false);
 });
 test('a new named list can be created and chosen as a trainer\'s practice list', () => {
@@ -115,9 +116,9 @@ test('deleting a word removes its progress; resetting the sample list restores i
   assert.equal(deleteWord(state, 'sample', 'garden'), true);
   assert.equal(deleteWord(state, 'sample', 'garden'), false);
   assert.equal(p.wordStats.sample.garden, undefined);
-  assert.equal(state.wordLists.sample.words.length, 14);
+  assert.equal(state.wordLists.sample.words.length, SAMPLE_WORDS.length - 1);
   resetSampleList(state);
-  assert.equal(state.wordLists.sample.words.length, 15);
+  assert.equal(state.wordLists.sample.words.length, SAMPLE_WORDS.length);
   assert.ok(p.wordStats.sample.island);
 });
 

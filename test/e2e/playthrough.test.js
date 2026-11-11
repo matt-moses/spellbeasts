@@ -3,6 +3,7 @@
 // Once the trainer reaches level 3 each day also ends with a battle in the Arena (PRD 12), modelled the same way.
 // Nothing here imports game logic: the oracle below re-derives every number from the PRD.
 import test, { before, after } from 'node:test';
+import { SAMPLE_WORDS } from '../../data/sample-words.js';
 import assert from 'node:assert/strict';
 import { hasBrowser, launch, prepare, unlockParent } from './helpers.js';
 
@@ -12,7 +13,7 @@ before(async () => { if (hasBrowser) env = await launch(); });
 after(async () => { await env?.close(); });
 
 // ---------------------------------------------------------------- the oracle (PRD rules, re-derived)
-const SAMPLE = ['garden', 'rainbow', 'whisper', 'island', 'library', 'Monday', 'February', 'thunder', 'bicycle', 'mountain', 'kitchen', 'Canada', 'pencil', 'window', 'journey'];
+const SAMPLE = SAMPLE_WORDS.map((w) => w.word);                    // the bundled list: 15 everyday words, then 60 harder ones
 const N = Number(process.env.SPELLBEASTS_LANDS ?? 12);                 // lands in play: the shipped 12, or 9 with SPELLBEASTS_LANDS=9 (this oracle does not read the game's own tables)
 const PRICE = [20, 30, 40, 50, 60, 75, 90, 105, 125, 145, 165, 190].slice(0, N);
 const UNLOCK = [[1, 0], [2, 0], [4, 0], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50], [18, 53], [20, 56], [22, 60]].slice(0, N);
@@ -113,7 +114,7 @@ const canEvolve = (o) => (o.starter.stage === 1 ? o.starter.fed >= 30 && level(o
 const hash = (s) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
 function plan(word, dayIdx, appearance) {
   const h = hash(word);
-  if (word === 'Monday' && dayIdx === 0 && appearance === 1) return 'case';
+  if (appearance === 1 && /^[A-Z]/.test(word)) return 'case';                 // a capitalized word is first typed in lower case: the capitalization rule is always exercised
   if (appearance === 1) {
     if ((h + dayIdx) % 4 === 0) return /^[A-Z]/.test(word) && dayIdx % 2 === 0 ? 'case' : 'typo';
     if ((h + dayIdx) % 5 === 1) return 'trim';
@@ -470,8 +471,8 @@ test('whole game: two weeks of play checked against an independent model, with z
     const s = o.stats[w];
     assert.deepEqual([row[1], row[2], row[3], row[4], row[5]], [String(s.attempts), `${Math.round((100 * s.ftc) / s.ft)}%`, String(s.box), s.next, s.days.size >= 3 ? 'Yes' : 'No'], `parent stats for ${w}`);
   }
-  assert.match(await page.textContent('.summary-line'), new RegExp(`${mastered(o)} of 15 words mastered`));
-  assert.equal(await page.locator('.history li').count(), o.sessionsDone);
+  assert.match(await page.textContent('.summary-line'), new RegExp(`${mastered(o)} of ${SAMPLE.length} words mastered`));
+  assert.equal(await page.locator('.history li').count(), Math.min(30, o.sessionsDone));      // the Parent screen lists the latest 30
 
   // export -> reload -> state identical and the game still opens
   await page.click('.tab[data-tab=backup]');

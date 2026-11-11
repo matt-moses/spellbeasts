@@ -226,7 +226,7 @@ test('the chosen creature fights; with none chosen the companion does', () => {
 });
 
 test('nothing due: the battle uses the Bonus review words; no seen words means no battle', () => {
-  const t = trainer({ words: 15 });
+  const t = trainer({ words: 1000 });                              // every word in the list has been seen
   for (const s of Object.values(t.profile.wordStats.sample)) s.nextDue = '2026-12-01';   // every word seen, none due, none new
   assert.equal(startSession({ profile: structuredClone(t.profile), list: t.list, today: TODAY, rng: rng(1) }), null);
   const b = begin(t);

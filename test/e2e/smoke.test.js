@@ -1,4 +1,5 @@
 import test, { before, after } from 'node:test';
+import { SAMPLE_WORDS } from '../../data/sample-words.js';
 import assert from 'node:assert/strict';
 import { hasBrowser, launch, prepare, seededState, lastSpoken, playSession } from './helpers.js';
 
@@ -24,7 +25,7 @@ test('empty browser shows the trainer picker; a trainer can be created and reach
   await page.click('button[type=submit]');
   await page.waitForSelector('#practice');
   assert.match(await page.textContent('h1'), /Hi, Alex/);
-  assert.match(await page.textContent('.due'), /15 new words/);
+  assert.match(await page.textContent('.due'), new RegExp(`${SAMPLE_WORDS.length} new words`));
   assert.deepEqual(errors, []);
   await context.close();
 });

@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { SAMPLE_WORDS } from '../../data/sample-words.js';
 import { freshState, freshProfile, migrate, validate, capSessions } from '../../js/logic/storage-schema.js';
 
 test('fresh state is valid and ships the sample list', () => {
   const s = freshState();
   assert.equal(validate(s), true);
-  assert.equal(s.wordLists.sample.words.length, 15);
+  assert.equal(s.wordLists.sample.words.length, SAMPLE_WORDS.length);
+  assert.ok(SAMPLE_WORDS.length >= 75, 'big enough to master the requirement of every land');
   assert.ok(s.wordLists.sample.words.some((w) => w.word === 'Monday'));
 });
 test('missing key -> fresh state, no warning', () => assert.deepEqual(migrate(null), { state: freshState(), warning: false }));

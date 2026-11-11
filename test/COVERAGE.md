@@ -68,4 +68,6 @@ The win is saved the moment the last heart goes (not at the end of the session):
 | Map geometry: nothing leaves the map, lands and pins never overlap, the end can be scrolled to; the whole trail can be walked; the gate between lands stops the token | test/e2e/map.test.js |
 | Arena flags clear of the trail and stars in every land; a battle, win and befriend in each new land | test/e2e/arena.test.js, test/e2e/battle.test.js |
 | Nest prices, hatch targets and books for the new lands | test/e2e/collection.test.js, test/logic/collection.test.js |
-| The whole suite passes with 9 lands (what ships) and with 12 | `npm run check`, `npm run check:12` |
+| Each of the three newest lands opens through real play of the bundled 75-word list (level, mastery, summary message, map, Nest, egg price) | test/e2e/newlands.test.js |
+| The two-week playthrough runs on the 75-word list: 39 sessions, 8 lands, checked against an independent model | test/e2e/playthrough.test.js |
+| The whole suite passes with 12 lands (what ships) and with 9 | `npm run check`, `SPELLBEASTS_LANDS=9` |
