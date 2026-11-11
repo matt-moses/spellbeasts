@@ -6,6 +6,8 @@
     "test": "node --test \"test/**/*.test.js\"",
     "hygiene": "bash tools/hygiene.sh",
     "check": "bash tools/hygiene.sh && node --test \"test/**/*.test.js\"",
+    "test:12": "SPELLBEASTS_LANDS=12 node --import ./test/lands-env.mjs --test \"test/**/*.test.js\"",
+    "check:12": "bash tools/hygiene.sh && npm run test:12",
     "screenshots": "node tools/screenshots.mjs",
     "stamp": "node tools/stamp-version.mjs",
     "icons": "node tools/gen-icons.mjs"

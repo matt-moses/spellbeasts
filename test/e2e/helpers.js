@@ -26,15 +26,17 @@ export function seededState(words = ['Monday', 'garden', 'island']) {
 
 // Fake speech (records utterances) + optional pre-seeded storage; runs before app code.
 export async function prepare(context, { state = null, errors = [], arena = null } = {}) {
-  await context.addInitScript(({ state, arena }) => {
+  const lands = process.env.SPELLBEASTS_LANDS ? Number(process.env.SPELLBEASTS_LANDS) : null;      // npm run check:12 runs the whole suite with 12 lands
+  await context.addInitScript(({ state, arena, lands }) => {
     window.__spoken = [];
+    if (lands !== null) window.SPELLBEASTS_LANDS = lands;
     if (arena !== null) window.SPELLBEASTS_ARENA = arena;                                       // force the Arena switch (js/config.js) on or off; null leaves the shipped setting
     if (window.SPELLBEASTS_READY_DELAY === undefined) window.SPELLBEASTS_READY_DELAY = 0;      // tests skip the get-ready pause unless they test it
     const voice = { voiceURI: 'fake', lang: 'en-US', name: 'Fake' };
     window.SpeechSynthesisUtterance = class { constructor(t) { this.text = t; } };
     Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: { getVoices: () => [voice], cancel() {}, speak(u) { window.__spoken.push({ text: u.text, rate: u.rate }); } } });
     try { if (state && !localStorage.getItem('spellbeasts.v1')) localStorage.setItem('spellbeasts.v1', JSON.stringify(state)); } catch { /* about:blank etc. */ }
-  }, { state, arena });
+  }, { state, arena, lands });
   context.on('page', (p) => { p.on('pageerror', (e) => errors.push(String(e))); p.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); }); });
 }
 

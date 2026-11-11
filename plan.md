@@ -15,6 +15,7 @@
 |---|---|---|
 | Land and species data | `js/logic/species.js` | 3 `REGIONS`, 12 `SPECIES` (9 nest + 3 arena) |
 | Progression | `js/logic/world.js` | 3 `UNLOCKS` rows, 3 `REGION_STEPS` entries (`TOTAL_STEPS` 342 → 492) |
+| Egg prices | `js/logic/hatch.js` | `EGG_PRICES` is a 9-entry table; add 145, 165, 190 (found while building Phase 1: without them lands 10–12 would sell eggs for `undefined`) |
 | Battle difficulty | `js/logic/battle.js` | `heartTier` cap 2 → 3, comment updated |
 | Trophies | `js/logic/trophies.js` | `explorer-12` added; `explorer-9` text made "Open 9 lands" |
 | Map | `js/ui/map.js` | `W` 2800 → ~3750, more `POINTS`, 3 `COLORS`, 3 `SCENERY` functions, clouds, nothing else is per-land |
@@ -37,6 +38,7 @@ Saves store only `unlockedRegions` and `trailStep`, so old profiles need no migr
 | D5 | Battle difficulty | `heartTier = min(3, floor(landIndex / 3))`: lands 10–12 get +3 hearts. `wildHearts` already caps hearts at what a clean run can deal, so a clean run still always wins. |
 | D6 | Trophies | `explorer-12` "Open all 12 lands" is added. Existing earned trophies are never revoked. `collector-all` is checked: its condition is `speciesOwned >= speciesTotal`, so players who had 36 of 36 keep the badge they earned, and the book then shows 36 of 48. |
 | D7 | Rollout | Built behind a land-count flag, because every push to `main` goes live. `LAND_COUNT = 9` in `js/config.js`, with a `landCount()` helper that honours `globalThis.SPELLBEASTS_LANDS` (same pattern as `arenaOn()`). Tests switch it to 12 through that global; **all data for the new lands is present but filtered out** until the flag is raised. Phase 5 raises the default and is the go-live commit. |
+| D7a | Egg prices | 145, 165, 190 crickets for lands 10–12 (steps of +20, +20, +25, continuing the table's rising steps). `eggNeeded` is already a formula. |
 | D8 | Word-list size | Mastery thresholds above 50 only matter with a big custom list. The bundled sample list stays as is; the Parent area is unchanged. Noted in the README. |
 
 ## Ground rules for every phase

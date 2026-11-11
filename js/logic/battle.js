@@ -17,8 +17,8 @@ export const battleBonus = (landIndex) => 5 + 2 * landIndex;   // crickets for a
 
 export const arenaOpen = (profile) => (profile.level ?? 1) >= ARENA_LEVEL;
 
-// Later lands are a little tougher: 0 extra hearts in lands 1-3, 1 in lands 4-6, 2 in lands 7-9.
-export const heartTier = (landIndex) => Math.max(0, Math.min(2, Math.floor(landIndex / 3)));
+// Later lands are a little tougher: 0 extra hearts in lands 1-3, 1 in lands 4-6, 2 in lands 7-9, 3 in lands 10-12.
+export const heartTier = (landIndex) => Math.max(0, Math.min(3, Math.floor(landIndex / 3)));
 // How much a run of n correct answers with no miss takes off.
 export const cleanRunDamage = (n) => n * HIT_DAMAGE + Math.floor(n / SPECIAL_EVERY) * (SPECIAL_DAMAGE - HIT_DAMAGE);
 // Hearts scale with the session so the fight lasts it, capped so that a clean run always wins.

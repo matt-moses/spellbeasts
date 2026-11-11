@@ -13,3 +13,8 @@ export const SPELL_MASTER_ENABLED = false;
 // question that belongs to it. Tests force it either way with globalThis.SPELLBEASTS_ARENA = true / false.
 export const ARENA_ENABLED = true;
 export const arenaOn = () => globalThis.SPELLBEASTS_ARENA ?? ARENA_ENABLED;
+
+// How many lands are live (js/logic/species.js, world.js). The data holds 12; the shipped game shows this many of them, so
+// the newest lands can be built and tested before they go out. Tests force a count with globalThis.SPELLBEASTS_LANDS.
+export const LAND_COUNT = 9;
+export const landCount = () => globalThis.SPELLBEASTS_LANDS ?? LAND_COUNT;

@@ -1,5 +1,7 @@
 // Trophy conditions (PRD 9.3, extended). Pure: evaluate against a context snapshot.
-export const TROPHIES = [
+import { landCount } from '../config.js';
+
+const ALL_TROPHIES = [
   // first steps
   { id: 'first-hatch', name: 'First Hatch', desc: 'Hatch your first egg', test: (c) => c.eggsHatched >= 1 },
   { id: 'capital-idea', name: 'Capital Idea', desc: 'Spell a capitalized word correctly', test: (c) => !!c.turn?.correct && /^\p{Lu}/u.test(c.turn.word ?? '') },
@@ -31,7 +33,8 @@ export const TROPHIES = [
   // the world
   { id: 'explorer-3', name: 'Trailblazer', desc: 'Open 3 lands', test: (c) => c.regionsOpen >= 3 },
   { id: 'explorer-6', name: 'Adventurer', desc: 'Open 6 lands', test: (c) => c.regionsOpen >= 6 },
-  { id: 'explorer-9', name: 'World Traveler', desc: 'Open all 9 lands', test: (c) => c.regionsOpen >= 9 },
+  { id: 'explorer-9', name: 'World Traveler', desc: landCount() > 9 ? 'Open 9 lands' : 'Open all 9 lands', test: (c) => c.regionsOpen >= 9 },
+  { id: 'explorer-12', name: 'Master Explorer', desc: 'Open all 12 lands', test: (c) => c.regionsOpen >= 12 },
   { id: 'walk-50', name: 'Long Walk', desc: 'Walk 50 steps along the trail', test: (c) => c.trailStep >= 50 },
   { id: 'walk-150', name: 'Marathon Walker', desc: 'Walk 150 steps along the trail', test: (c) => c.trailStep >= 150 },
   { id: 'stars-5', name: 'Treasure Hunter', desc: 'Open 5 treasure stars', test: (c) => c.starsOpened >= 5 },
@@ -53,6 +56,8 @@ export const TROPHIES = [
   { id: 'sparkle-7', name: 'Pampered Pals', desc: 'Make creatures sparkle 7 times', test: (c) => c.sparkles >= 7 },
   { id: 'champion', name: 'Champion', desc: 'Win 10 battles', phase: 2, test: (c) => c.battlesWon >= 10 },
 ];
+// A trophy for opening every land only exists once those lands do.
+export const TROPHIES = ALL_TROPHIES.filter((t) => t.id !== 'explorer-12' || landCount() >= 12);
 
 // earned: {[id]: date}. Returns ids newly earned (never ones already earned).
 export function evaluateTrophies(ctx, earned = {}) {

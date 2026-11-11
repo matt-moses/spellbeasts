@@ -1,5 +1,5 @@
 // Eggs, hatching, feeding, evolution (PRD 11, 11A).
-export const EGG_PRICES = [20, 30, 40, 50, 60, 75, 90, 105, 125];
+export const EGG_PRICES = [20, 30, 40, 50, 60, 75, 90, 105, 125, 145, 165, 190];   // one per land; a table, so each land is a deliberate price
 export const RARITY_WEIGHTS = { common: 0.6, uncommon: 0.3, rare: 0.1 };
 export const eggPrice = (regionIndex) => EGG_PRICES[regionIndex];
 export const eggNeeded = (regionIndex) => 10 + 2 * regionIndex; // correct words to hatch
