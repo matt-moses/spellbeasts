@@ -5,6 +5,18 @@
 
 **Goal:** the map goes from 9 to 12 lands and the book from 36 to 48 species. Each new land has 3 Nest species (common, uncommon, rare) and 1 Arena-only species, a patch on the map, scenery, a fog gate with an unlock rule, a battle backdrop, and a longer trail.
 
+## Status (2026-11-11): built, committed locally, not pushed
+
+All five phases are done. `npm run check` (12 lands, the new default) passes: 347 tests, 0 failures, hygiene OK. The whole suite also passes with the original nine lands (`SPELLBEASTS_LANDS=9`), and `npm run check:12` runs the 12-land variant explicitly. **Pushing to `main` is the go-live and is waiting on the user.**
+
+Where the build differed from the plan:
+- **Egg prices** (`js/logic/hatch.js`): `EGG_PRICES` had only nine entries and would have priced new eggs as `undefined`. Added 145, 165, 190 (D7a).
+- **Arena flags** (`js/ui/map.js`): with 12 lands the flag for Crystal Caves landed 8 px from the trail. `arenaSpot` now keeps the old choice when it is clear and otherwise looks further out, judging the whole flag.
+- **Creature art:** the first drafts of seven creatures were near-recolours (the new `test/logic/species-art.test.js` caught four); they were redrawn with existing parts, so no new art parts were needed.
+- **Unlock rule:** `test/logic/world.test.js` used to require every land to be reachable with a 50-word list. Lands 10-12 need 53, 56 and 60 mastered (D3), so the test now allows 60 for them. A trainer with a short word list sees those lands stay fogged. Raise or lower the numbers in `js/logic/world.js` if that is not wanted.
+- **Playthrough:** the two-week model only reaches 4 lands (its sample list has 15 words), so it was extended to know the 12-land tables but does not exercise the new lands. They are covered by `lands.test.js`, `map.test.js`, `arena.test.js`, `battle.test.js` and `collection.test.js` instead. The planned "grep for stale literals" check was replaced by running the suite at both 9 and 12.
+- **Timeouts:** the two "nothing is clipped" tests and the idle test were given longer limits (48 species, run alongside the rest of the suite on a Raspberry Pi).
+
 **Out of scope:** new game modes, new creature body or part types unless the art review (Phase 2) shows a species is too similar to an existing one, rebalancing lands 1–9, new dependencies.
 
 ---

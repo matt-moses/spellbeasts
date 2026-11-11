@@ -16,7 +16,7 @@ test('each trophy triggers on its condition', () => {
     'sessions-25': { sessionsCompleted: 25 }, 'sessions-50': { sessionsCompleted: 50 }, 'perfect-5': { perfectSessions: 5 }, 'streak-20': { bestRun: 20 },
     'first-try-100': { firstTryTotal: 100 }, 'first-try-500': { firstTryTotal: 500 }, 'word-master': { wordsInList: 12, masteredCount: 12 },
     'day-streak-14': { dayStreak: 14 }, 'day-streak-30': { dayStreak: 30 }, 'level-5': { level: 5 }, 'level-10': { level: 10 }, 'level-15': { level: 15 },
-    'explorer-3': { regionsOpen: 3 }, 'explorer-6': { regionsOpen: 6 }, 'explorer-9': { regionsOpen: 9 }, 'walk-50': { trailStep: 50 }, 'walk-150': { trailStep: 150 },
+    'explorer-3': { regionsOpen: 3 }, 'explorer-6': { regionsOpen: 6 }, 'explorer-9': { regionsOpen: 9 }, ...(TROPHIES.some((t) => t.id === 'explorer-12') ? { 'explorer-12': { regionsOpen: 12 } } : {}), 'walk-50': { trailStep: 50 }, 'walk-150': { trailStep: 150 },
     'stars-5': { starsOpened: 5 }, 'stars-20': { starsOpened: 20 }, 'collector-20': { creaturesCount: 20 }, 'collector-all': { speciesOwned: 27, speciesTotal: 27 },
     'rare-find': { rareOwned: 1 }, 'hearts-5': { heartsTotal: 5 }, 'growing-family': { evolvedCount: 3 },
     'berries-25': { berriesFed: 25 }, 'baths-10': { baths: 10 }, 'pets-100': { pets: 100 }, 'games-10': { games: 10 }, 'sparkle-1': { sparkles: 1 }, 'sparkle-7': { sparkles: 7 },

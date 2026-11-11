@@ -103,7 +103,7 @@ test('tired and charged: few hearts left shows a worn-out wobble, a run of two s
   await context.close();
 });
 
-test('idle is alive for every species: the picture keeps changing and each moving part has its own animation', { skip, timeout: 120000 }, async () => {
+test('idle is alive for every species: the picture keeps changing and each moving part has its own animation', { skip, timeout: 300000 }, async () => {
   const { page, context, errors } = await open('wild=glowmoth');
   const PARTS = { wings: 'p-wings', bigwings: 'p-bigwings', batwings: 'p-batwings', stars: 'p-stars', crystals: 'p-crystals', bubbles: 'p-bubbles', lantern: 'p-lantern', bolts: 'p-bolts', antennae: 'p-antennae', flame: 'p-flame' };
   const tempos = new Set();
@@ -125,7 +125,7 @@ test('idle is alive for every species: the picture keeps changing and each movin
 });
 
 for (const width of [375, 1024]) {
-  test(`nothing is clipped at ${width}px: every species, all 3 stages, through hit, special, both dodges, attacks and the entrance`, { skip, timeout: 180000 }, async () => {
+  test(`nothing is clipped at ${width}px: every species, all 3 stages, through hit, special, both dodges, attacks and the entrance`, { skip, timeout: 600000 }, async () => {
     const { page, context, errors } = await open('wild=glowmoth', { width, height: 700 });
     const bad = await page.evaluate(async ({ ids, cues }) => {
       const { createBattleStage } = await import('../../js/ui/battle-stage.js');

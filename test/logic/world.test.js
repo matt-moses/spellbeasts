@@ -4,13 +4,14 @@ import { UNLOCKS, isUnlocked, unlockRequirement, updateUnlocks, maxStep, advance
 import { startSession } from '../../js/logic/session.js';
 import { freshProfile, freshState } from '../../js/logic/storage-schema.js';
 import { buyEgg } from '../../js/logic/collection.js';
+import { REGIONS } from '../../js/logic/species.js';
 import { rng } from '../helpers.js';
 
 const mk = (over = {}) => Object.assign(freshProfile({ name: 'T', avatarSpecies: 'x' }), over);
 const mastered = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`w${i}`, { correctDays: ['a', 'b', 'c'] }]));
 
 test('unlock table matches the PRD', () => {
-  assert.deepEqual(UNLOCKS, [{ level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 0 }, { level: 6, mastered: 15 }, { level: 8, mastered: 25 }, { level: 10, mastered: 40 }, { level: 12, mastered: 44 }, { level: 14, mastered: 47 }, { level: 16, mastered: 50 }]);
+  assert.deepEqual(UNLOCKS.slice(0, 9), [{ level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 0 }, { level: 6, mastered: 15 }, { level: 8, mastered: 25 }, { level: 10, mastered: 40 }, { level: 12, mastered: 44 }, { level: 14, mastered: 47 }, { level: 16, mastered: 50 }]);
 });
 test('a region needs BOTH level and mastery', () => {
   for (let i = 2; i < 9; i++) {
@@ -39,7 +40,7 @@ test('the token walks to the gate of the last unlocked region and waits', () => 
   assert.equal(p.map.trailStep, REGION_STEPS[0]);
   p.map.unlockedRegions.push('r2');
   assert.equal(advanceTrail(p).moved, true);
-  assert.equal(regionOfStep(1), 'r1'); assert.equal(regionOfStep(30), 'r1'); assert.equal(regionOfStep(31), 'r2'); assert.equal(regionOfStep(TOTAL_STEPS), 'r9');
+  assert.equal(regionOfStep(1), 'r1'); assert.equal(regionOfStep(30), 'r1'); assert.equal(regionOfStep(31), 'r2'); assert.equal(regionOfStep(TOTAL_STEPS), REGIONS.at(-1).id);
 });
 test('landmarks: every 10 steps, claimable once and only when reached', () => {
   assert.equal(LANDMARKS.length, Math.floor(TOTAL_STEPS / 10));
@@ -103,7 +104,8 @@ test('each land has a longer stretch of trail than the one before (progressively
   const p = mk(); p.map.unlockedRegions = ['r1', 'r2', 'r3'];
   assert.equal(maxStep(p), REGION_END[2]);
 });
-test('unlock requirements keep rising, and stay reachable with a 50-word list', () => {
+test('unlock requirements keep rising, and stay reachable with a 50-word list (60 for the three newest lands)', () => {
   for (let i = 1; i < UNLOCKS.length; i++) { assert.ok(UNLOCKS[i].level > UNLOCKS[i - 1].level); assert.ok(UNLOCKS[i].mastered >= UNLOCKS[i - 1].mastered); }
-  assert.ok(UNLOCKS.at(-1).mastered <= 50);
+  assert.ok(UNLOCKS.slice(0, 9).every((u) => u.mastered <= 50));
+  assert.ok(UNLOCKS.at(-1).mastered <= (UNLOCKS.length > 9 ? 60 : 50));      // lands 10-12 need a bigger custom list (plan.md D3, D8)
 });

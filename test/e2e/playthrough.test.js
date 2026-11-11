@@ -13,18 +13,19 @@ after(async () => { await env?.close(); });
 
 // ---------------------------------------------------------------- the oracle (PRD rules, re-derived)
 const SAMPLE = ['garden', 'rainbow', 'whisper', 'island', 'library', 'Monday', 'February', 'thunder', 'bicycle', 'mountain', 'kitchen', 'Canada', 'pencil', 'window', 'journey'];
-const PRICE = [20, 30, 40, 50, 60, 75, 90, 105, 125];
-const UNLOCK = [[1, 0], [2, 0], [4, 0], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50]];
-const TRAIL_END = [30, 32, 34, 36, 38, 40, 42, 44, 46].reduce((a, n) => [...a, (a.at(-1) ?? 0) + n], []);   // each land's stretch of trail is longer
-const RARE = new Set(['Glowmoth', 'Mossgolem', 'Stormwyrm', 'Starcub', 'Inkwell', 'Skycalf', 'Gemdrake', 'Sandwyrm', 'Solphoenix']);
+const N = Number(process.env.SPELLBEASTS_LANDS ?? 12);                 // lands in play: the shipped 12, or 9 with SPELLBEASTS_LANDS=9 (this oracle does not read the game's own tables)
+const PRICE = [20, 30, 40, 50, 60, 75, 90, 105, 125, 145, 165, 190].slice(0, N);
+const UNLOCK = [[1, 0], [2, 0], [4, 0], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50], [18, 53], [20, 56], [22, 60]].slice(0, N);
+const TRAIL_END = [30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52].slice(0, N).reduce((a, n) => [...a, (a.at(-1) ?? 0) + n], []);   // each land's stretch of trail is longer
+const RARE = new Set(['Glowmoth', 'Mossgolem', 'Stormwyrm', 'Starcub', 'Inkwell', 'Skycalf', 'Gemdrake', 'Sandwyrm', 'Solphoenix', 'Gourdwyrm', 'Anglerlight', 'Wishlion']);
 // Battles (PRD 12 and plan.md decisions D1-D8), re-derived here rather than imported.
-const ARENA_ONLY = ['Cloverknight', 'Reedwisp', 'Lavalynx', 'Aurorastag', 'Pearlcrab', 'Galeram', 'Echobat', 'Miragecat', 'Cosmoth'];   // one per land, in land order
-const LAND_NAMES = ['Sunny Meadow', 'Misty Marsh', 'Ember Peaks', 'Moonlit Highlands', 'Coral Reef', 'Cloudspire', 'Crystal Caves', 'Sunset Dunes', 'Starfall Isles'];
+const ARENA_ONLY = ['Cloverknight', 'Reedwisp', 'Lavalynx', 'Aurorastag', 'Pearlcrab', 'Galeram', 'Echobat', 'Miragecat', 'Cosmoth', 'Hollowfawn', 'Sealantern', 'Mythcat'].slice(0, N);   // one per land, in land order
+const LAND_NAMES = ['Sunny Meadow', 'Misty Marsh', 'Ember Peaks', 'Moonlit Highlands', 'Coral Reef', 'Cloudspire', 'Crystal Caves', 'Sunset Dunes', 'Starfall Isles', 'Harvest Hollow', 'Lantern Harbor', 'Wishing Ruins'].slice(0, N);
 const ARENA_LEVEL = 3;
-const heartsFor = (words, land) => Math.max(1, Math.min(words + Math.min(2, Math.floor(land / 3)), words + Math.floor(words / 3)));
+const heartsFor = (words, land) => Math.max(1, Math.min(words + Math.min(3, Math.floor(land / 3)), words + Math.floor(words / 3)));
 const cricketBag = (land) => 5 + 2 * land;
 const BOX_DAYS = [0, 2, 4, 7, 14];                                   // box 1..5 -> days until due
-const TROPHY_NAMES = { 'first-hatch': 'First Hatch', 'capital-idea': 'Capital Idea', comeback: 'Comeback', 'perfect-flight': 'Perfect Flight', 'busy-bee': 'Busy Bee', 'sessions-25': 'Practice Pro', 'sessions-50': 'Super Bee', 'perfect-5': 'Flawless Five', 'streak-10': 'Streak of 10', 'streak-20': 'Unstoppable', 'first-try-100': 'Sharp Speller', 'first-try-500': 'Word Wizard', 'mastered-10': '10 Mastered', 'mastered-25': '25 Mastered', 'mastered-50': '50 Mastered', 'word-master': 'Word Master', 'day-streak-3': '3-Day Streak', 'day-streak-7': '7-Day Streak', 'day-streak-14': 'Fortnight Fan', 'day-streak-30': 'Month of Magic', 'level-5': 'Rising Star', 'level-10': 'Trainer Pro', 'level-15': 'Legend', 'explorer-3': 'Trailblazer', 'explorer-6': 'Adventurer', 'explorer-9': 'World Traveler', 'walk-50': 'Long Walk', 'walk-150': 'Marathon Walker', 'stars-5': 'Treasure Hunter', 'stars-20': 'Star Collector', collector: 'Collector', 'collector-20': 'Big Collector', 'collector-all': 'Complete Collection', 'rare-find': 'Rare Find', 'hearts-5': 'Best Friends', 'fully-evolved': 'Fully Evolved', 'growing-family': 'Growing Family', champion: 'Champion' };
+const TROPHY_NAMES = { 'first-hatch': 'First Hatch', 'capital-idea': 'Capital Idea', comeback: 'Comeback', 'perfect-flight': 'Perfect Flight', 'busy-bee': 'Busy Bee', 'sessions-25': 'Practice Pro', 'sessions-50': 'Super Bee', 'perfect-5': 'Flawless Five', 'streak-10': 'Streak of 10', 'streak-20': 'Unstoppable', 'first-try-100': 'Sharp Speller', 'first-try-500': 'Word Wizard', 'mastered-10': '10 Mastered', 'mastered-25': '25 Mastered', 'mastered-50': '50 Mastered', 'word-master': 'Word Master', 'day-streak-3': '3-Day Streak', 'day-streak-7': '7-Day Streak', 'day-streak-14': 'Fortnight Fan', 'day-streak-30': 'Month of Magic', 'level-5': 'Rising Star', 'level-10': 'Trainer Pro', 'level-15': 'Legend', 'explorer-3': 'Trailblazer', 'explorer-6': 'Adventurer', 'explorer-9': 'World Traveler', 'explorer-12': 'Master Explorer', 'walk-50': 'Long Walk', 'walk-150': 'Marathon Walker', 'stars-5': 'Treasure Hunter', 'stars-20': 'Star Collector', collector: 'Collector', 'collector-20': 'Big Collector', 'collector-all': 'Complete Collection', 'rare-find': 'Rare Find', 'hearts-5': 'Best Friends', 'fully-evolved': 'Fully Evolved', 'growing-family': 'Growing Family', champion: 'Champion' };
 const addDays = (d, n) => { const t = new Date(`${d}T00:00:00Z`); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 const dayDiff = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 864e5);
 const mondayOf = (d) => addDays(d, -((new Date(`${d}T00:00:00Z`).getUTCDay() + 6) % 7));
@@ -88,9 +89,9 @@ function satisfied(o, f = {}) {
   add(f.inSession && SAMPLE.length >= 10 && m >= SAMPLE.length, 'word-master');   // only checked while practising
   [[3, 'day-streak-3'], [7, 'day-streak-7'], [14, 'day-streak-14'], [30, 'day-streak-30']].forEach(([n, id]) => add(o.streak.cur >= n, id));
   [[5, 'level-5'], [10, 'level-10'], [15, 'level-15']].forEach(([n, id]) => add(lv >= n, id));
-  [[3, 'explorer-3'], [6, 'explorer-6'], [9, 'explorer-9']].forEach(([n, id]) => add(o.unlocked.size >= n, id));
+  [[3, 'explorer-3'], [6, 'explorer-6'], [9, 'explorer-9'], ...(N >= 12 ? [[12, 'explorer-12']] : [])].forEach(([n, id]) => add(o.unlocked.size >= n, id));
   add(o.trail >= 50, 'walk-50'); add(o.trail >= 150, 'walk-150'); add(o.claimed.size >= 5, 'stars-5'); add(o.claimed.size >= 20, 'stars-20');
-  add(o.creatures >= 10, 'collector'); add(o.creatures >= 20, 'collector-20'); add(o.species.size >= 36, 'collector-all'); add(o.battlesWon >= 10, 'champion');
+  add(o.creatures >= 10, 'collector'); add(o.creatures >= 20, 'collector-20'); add(o.species.size >= N * 4, 'collector-all'); add(o.battlesWon >= 10, 'champion');
   add([...o.species].some((n) => RARE.has(n)), 'rare-find'); add(o.hearts >= 5, 'hearts-5');
   add(o.starter.stage >= 3, 'fully-evolved'); add((o.starter.stage >= 2 ? 1 : 0) >= 3, 'growing-family');
   return ids;
@@ -197,7 +198,7 @@ test('whole game: two weeks of play checked against an independent model, with z
     assert.equal(await page.locator('.nest-link').count(), o.unlocked.size, `home ${day}: open nests`);
     assert.equal(await page.locator('.arena-link').count(), level(o) >= ARENA_LEVEL ? o.unlocked.size : 0, `home ${day}: open Arena flags`);
     assert.equal(await page.locator('.arena-pin-locked').count(), level(o) >= ARENA_LEVEL ? 0 : o.unlocked.size, `home ${day}: locked Arena flags`);
-    assert.equal(await page.locator('.fog[data-locked=true]').count(), 9 - o.unlocked.size, `home ${day}: fogged regions`);
+    assert.equal(await page.locator('.fog[data-locked=true]').count(), N - o.unlocked.size, `home ${day}: fogged regions`);
     assert.equal(await page.locator('.hungry').count(), o.sessionDays.has(day) ? 0 : 1, `home ${day}: hungry reminder`);
 
     // ---- treasure stars (every 10 steps, once each)
@@ -381,7 +382,7 @@ test('whole game: two weeks of play checked against an independent model, with z
       const names = await page.$$eval('.new-trophies .trophy-card strong', (e) => e.map((x) => x.textContent));
       assert.deepEqual(names.sort(), [...newTrophies].map((t) => TROPHY_NAMES[t]).sort(), `${day}: trophies on summary`);
       const regionMsg = (await page.locator('.region-unlocked').count()) ? await page.textContent('.region-unlocked') : '';
-      assert.equal((regionMsg.match(/Misty Marsh|Ember Peaks|Moonlit Highlands|Coral Reef|Cloudspire|Crystal Caves|Sunset Dunes|Starfall Isles/g) ?? []).length, s.unlocked.length, `${day}: unlock message`);
+      assert.equal((regionMsg.match(/Misty Marsh|Ember Peaks|Moonlit Highlands|Coral Reef|Cloudspire|Crystal Caves|Sunset Dunes|Starfall Isles|Harvest Hollow|Lantern Harbor|Wishing Ruins/g) ?? []).length, s.unlocked.length, `${day}: unlock message`);
       assert.equal((await page.locator('#levelup-ok').count()) === 1, s.leveled, `${day}: level-up celebration`);
       if (s.leveled) assert.match(await page.textContent('.levelup-overlay h2'), new RegExp(`Level ${lvlAfter}!`));
       await noJunk(`summary ${day}`);
@@ -459,7 +460,7 @@ test('whole game: two weeks of play checked against an independent model, with z
   assert.deepEqual(earnedNames.sort(), [...o.trophies].map((t) => TROPHY_NAMES[t]).sort(), 'trophy case matches');
   await page.goto(`${env.server.url}#/book`);
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), new RegExp(`${o.species.size} of 36 discovered`));
+  assert.match(await page.textContent('.book p'), new RegExp(`${o.species.size} of ${N * 4} discovered`));
 
   await page.goto(`${env.server.url}#/parent`);
   await unlockParent(page);
