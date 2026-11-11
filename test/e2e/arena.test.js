@@ -2,6 +2,10 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { hasBrowser, launch, prepare, battleState, savedProfile, startBattleFromMap, answer, hearts, playSession, unlockParent } from './helpers.js';
+import { REGIONS } from '../../js/logic/species.js';
+import { TOTAL_STEPS } from '../../js/logic/world.js';
+
+const N = REGIONS.length;                      // 9 shipped, 12 with npm run check:12
 
 const skip = hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
 let env;
@@ -36,7 +40,7 @@ test('Arena flags: grey and locked below level 3, open on every open land from l
   assert.equal(await page.locator('.arena-pin-locked').count(), 0);
   assert.deepEqual(await page.$$eval('.arena-link', (els) => els.map((e) => [e.dataset.region, e.getAttribute('aria-label'), e.getAttribute('role'), e.getAttribute('tabindex')])),
     [['r1', 'Open Sunny Meadow Arena', 'link', '0'], ['r2', 'Open Misty Marsh Arena', 'link', '0']]);
-  assert.equal(await page.locator('.fog[data-locked=true]').count(), 7);
+  assert.equal(await page.locator('.fog[data-locked=true]').count(), N - 2);
   await go(page, '#/arena/r5');                                                        // a land still in the fog
   await page.waitForSelector('#practice');
   assert.equal(await page.locator('.arena').count(), 0);
@@ -155,12 +159,12 @@ test('help explains battles in plain words once the Arena is on', { skip }, asyn
   await context.close();
 });
 
-test('Arena flags never cover the trail, a treasure star or a Nest: every flag in all nine lands can be clicked, and so can every star', { skip }, async () => {
+test('Arena flags never cover the trail, a treasure star or a Nest: every flag in every land can be clicked, and so can every star', { skip }, async () => {
   const state = battleState(undefined, { level: 16, xp: 6800 });
   const p = state.profiles.p1;
-  p.map.unlockedRegions = ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9']; p.map.trailStep = 342;
+  p.map.unlockedRegions = REGIONS.map((r) => r.id); p.map.trailStep = TOTAL_STEPS;
   const { page, context, errors } = await open({ state });
-  assert.equal(await page.locator('.arena-link').count(), 9);
+  assert.equal(await page.locator('.arena-link').count(), N);
   // what is really on top at the middle of each star, nest and flag?
   const blocked = await page.evaluate(() => {
     const out = [];
@@ -179,7 +183,7 @@ test('Arena flags never cover the trail, a treasure star or a Nest: every flag i
     return out;
   });
   assert.deepEqual(blocked, []);
-  for (const r of ['r1', 'r5', 'r9']) {
+  for (const r of ['r1', 'r5', ...REGIONS.slice(8).map((x) => x.id)]) {
     await page.click(`.arena-link[data-region=${r}]`); await page.waitForSelector(`.arena[data-region=${r}]`);
     await page.click('#arena-back'); await page.waitForSelector('.world-map .token[data-settled=true]');
   }

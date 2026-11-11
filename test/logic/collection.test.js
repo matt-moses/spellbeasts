@@ -6,15 +6,16 @@ import { SPECIES, NEST_SPECIES, ARENA_SPECIES, REGIONS, STARTER_IDS, speciesInRe
 import { rng } from '../helpers.js';
 import { PART_NAMES, ART_KEYS } from '../../js/assets/creatures.js';
 
+const N = REGIONS.length;                      // 9 shipped, 12 with npm run check:12
 const mk = (over = {}) => Object.assign(freshProfile({ name: 'T', avatarSpecies: 'x' }), over);
 
-test('species data: 36 species, each land has 3 egg species (one of each rarity) and 1 arena-only species, unique ids', () => {
-  assert.equal(SPECIES.length, 36);
-  assert.equal(NEST_SPECIES.length, 27);
-  assert.equal(ARENA_SPECIES.length, 9);
-  assert.equal(REGIONS.length, 9);
-  assert.equal(new Set(SPECIES.map((s) => s.id)).size, 36);
-  assert.equal(new Set(SPECIES.map((s) => s.name)).size, 36);
+test('species data: 4 species per land (3 egg species and 1 arena-only), each land has 3 egg species (one of each rarity) and 1 arena-only species, unique ids', () => {
+  assert.equal(SPECIES.length, N * 4);
+  assert.equal(NEST_SPECIES.length, N * 3);
+  assert.equal(ARENA_SPECIES.length, N);
+  assert.ok(N === 9 || N === 12);
+  assert.equal(new Set(SPECIES.map((s) => s.id)).size, N * 4);
+  assert.equal(new Set(SPECIES.map((s) => s.name)).size, N * 4);
   for (const r of REGIONS) {
     const here = SPECIES.filter((s) => s.region === r.id);
     assert.deepEqual(here.map((s) => s.rarity).sort(), ['arena', 'common', 'rare', 'uncommon']);
@@ -33,7 +34,7 @@ test('arena-only species never come out of an egg: 10,000 seeded hatches across 
   p.map.unlockedRegions = REGIONS.map((x) => x.id);
   const seen = new Set();
   for (let i = 0; i < 10000; i++) {
-    const region = REGIONS[i % 9].id;
+    const region = REGIONS[i % N].id;
     const egg = buyEgg(p, region).egg;
     egg.progress = egg.needed;
     const res = hatchEgg(p, egg.id, r);
@@ -41,16 +42,16 @@ test('arena-only species never come out of an egg: 10,000 seeded hatches across 
     assert.equal(isArenaSpecies(res.species), false, res.species);
     seen.add(res.species);
   }
-  assert.equal(seen.size, 27);                                   // and every egg species does turn up
+  assert.equal(seen.size, N * 3);                                   // and every egg species does turn up
   assert.ok(p.creatures.every((c) => !isArenaSpecies(c.species)));
 });
-test('the Creature book counts 36 species, or 27 with the Arena switched off', () => {
+test('the Creature book counts every species, or only the egg species with the Arena switched off', () => {
   const p = mk(); addStarter(p, 'burrowby');
   try {
     globalThis.SPELLBEASTS_ARENA = false;
-    assert.equal(bookSpecies().length, 27); assert.equal(trophyContext(p).speciesTotal, 27);
+    assert.equal(bookSpecies().length, N * 3); assert.equal(trophyContext(p).speciesTotal, N * 3);
     globalThis.SPELLBEASTS_ARENA = true;
-    assert.equal(bookSpecies().length, 36); assert.equal(trophyContext(p).speciesTotal, 36);
+    assert.equal(bookSpecies().length, N * 4); assert.equal(trophyContext(p).speciesTotal, N * 4);
   } finally { delete globalThis.SPELLBEASTS_ARENA; }
 });
 test('species art only uses parts the builder knows', () => {

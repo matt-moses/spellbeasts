@@ -149,16 +149,28 @@ ${colors.map((c, i) => `<radialGradient id="rg${i}" cx=".45" cy=".4" r=".8"><sto
 // Where a land's Arena flag stands: on the rim of the land's patch, as far as possible from the trail (so it never
 // covers a path tile or a treasure star) and clear of the Nest pin and its name label above the centre.
 function arenaSpot(mid, samples) {
+  const clear = (x, y) => Math.min(...samples.map((p) => Math.hypot(Math.max(x - 40 - p.x, 0, p.x - (x + 28)), Math.max(y - 54 - p.y, 0, p.y - (y + 30)))));   // gap from the whole flag to the trail
+  const free = (x, y) => y <= H - 60 && y >= 200 && x >= 50 && x <= W - 50;
   let best = null;
-  for (let deg = 0; deg < 360; deg += 10) {
+  for (let deg = 0; deg < 360; deg += 10) {          // first choice: on the rim of the patch, as far from the trail and the Nest pin as possible
     const a = (deg * Math.PI) / 180, x = mid.x + Math.cos(a) * 98, y = mid.y + Math.sin(a) * 78;
-    if (y > H - 60 || y < 200 || x < 50 || x > W - 50) continue;
+    if (!free(x, y)) continue;
     const trail = Math.min(...samples.map((p) => Math.hypot(p.x - x, p.y - y)));
     const nest = Math.min(Math.hypot(mid.x - x, mid.y - 50 - y), Math.hypot(mid.x - x, mid.y - 92 - y) + 10);
     const score = Math.min(trail, nest);
     if (!best || score > best.score) best = { x, y, score };
   }
-  return best ?? { x: mid.x + 70, y: mid.y + 40 };
+  if (best && clear(best.x, best.y) >= 20) return best;
+  // The trail runs too close to that spot (it can when lands sit close together): look further out, judging the whole flag.
+  let wide = null;
+  for (const [rx, ry] of [[98, 78], [112, 90], [126, 102], [140, 112]]) for (let deg = 0; deg < 360; deg += 10) {
+    const a = (deg * Math.PI) / 180, x = mid.x + Math.cos(a) * rx, y = mid.y + Math.sin(a) * ry;
+    if (!free(x, y)) continue;
+    const nest = Math.min(Math.hypot(mid.x - x, mid.y - 50 - y), Math.hypot(mid.x - x, mid.y - 92 - y) + 10);
+    const score = Math.min(clear(x, y), nest - 20);
+    if (!wide || score > wide.score) wide = { x, y, score };
+  }
+  return wide ?? best ?? { x: mid.x + 70, y: mid.y + 40 };
 }
 
 // The Arena flag beside a land's Nest (PRD 12). Locked (grey, not a link) until the trainer reaches the Arena level.

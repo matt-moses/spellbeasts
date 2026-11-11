@@ -2,6 +2,8 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { hasBrowser, launch, prepare, battleState, seededState, savedProfile, startBattleFromMap, answer, hearts, lastSpoken } from './helpers.js';
+import { SPECIES, REGIONS, arenaSpeciesOf } from '../../js/logic/species.js';
+import { wildHearts } from '../../js/logic/battle.js';
 
 const skip = hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
 let env;
@@ -74,7 +76,7 @@ test('a clean battle: hits, the special move, the win, a new friend, the victory
   assert.deepEqual(p.arena.befriended, ['cloverknight']); assert.deepEqual(p.arena.wins, { r1: 1 });
 
   await page.click('#see-friend'); await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), /2 of 36 discovered/);
+  assert.match(await page.textContent('.book p'), new RegExp(`2 of ${SPECIES.length} discovered`));
   assert.match(await page.textContent('.book-entry[data-species=cloverknight]'), /Cloverknight/);
   assert.equal(await page.locator('.book-entry[data-species=cloverknight] .silhouette').count(), 0);
   // it lives in the Sanctuary like any other creature, and Champion shows progress
@@ -300,4 +302,25 @@ test('with the Arena switched off there is no way in: no flags, no Arena or batt
   assert.doesNotMatch(await page.textContent('#help-dialog'), /battle/i);
   assert.deepEqual(errors, []);
   await context.close();
+});
+
+test('a battle in each of the newest lands: its own backdrop and creature, its tougher hearts, a win that befriends the arena creature', { skip: skip || (REGIONS.length < 12 && 'only with 12 lands'), timeout: 180000 }, async () => {
+  for (const [i, id] of [[9, 'r10'], [10, 'r11'], [11, 'r12']]) {
+    const state = battleState(); state.profiles.p1.map.unlockedRegions = REGIONS.map((r) => r.id);
+    const { page, context, errors } = await open({ state, reducedMotion: 'reduce' });
+    const arena = SPECIES.find((s) => s.id === arenaSpeciesOf(id));
+    await startBattleFromMap(page, id);
+    assert.equal(await page.getAttribute('.battle-stage', 'data-land'), id);
+    assert.equal(await page.textContent('.bs-banner'), `A wild ${arena.name} appears!`);
+    assert.equal(await hearts(page), wildHearts(10, i));
+    for (let k = 0; k < 12 && !page.url().endsWith('#/summary'); k++) await answer(page);     // with the toughest hearts a clean run wins on the very last word
+    await page.waitForSelector('.summary');
+    assert.equal(await page.getAttribute('.battle-card', 'data-prize'), 'befriend');
+    const p = await savedProfile(page);
+    assert.deepEqual(p.arena.befriended, [arena.id]); assert.deepEqual(p.arena.wins, { [id]: 1 });
+    await page.click('#see-friend'); await page.waitForSelector('.book');
+    assert.match(await page.textContent(`.book-entry[data-species=${arena.id}]`), new RegExp(arena.name));
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
 });

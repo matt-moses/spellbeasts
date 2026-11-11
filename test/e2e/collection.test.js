@@ -2,6 +2,10 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { hasBrowser, launch, prepare, seededState, playSession } from './helpers.js';
 
+import { SPECIES, REGIONS } from '../../js/logic/species.js';
+import { eggPrice, eggNeeded } from '../../js/logic/hatch.js';
+const N = REGIONS.length;                      // 9 shipped, 12 with npm run check:12
+
 const skip = hasBrowser ? false : 'no Chromium found (set CHROMIUM_PATH)';
 let env;
 before(async () => { if (hasBrowser) env = await launch(); });
@@ -31,8 +35,8 @@ test('choosing a starter puts it in the Sanctuary and the Creature book', { skip
   assert.match(await page.textContent('.hungry'), /hungry/);
   await page.click('button:text-is("Creature book")');
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), /1 of 36 discovered/);
-  assert.equal(await page.locator('.book-entry.unknown').count(), 35);
+  assert.match(await page.textContent('.book p'), new RegExp(`1 of ${SPECIES.length} discovered`));
+  assert.equal(await page.locator('.book-entry.unknown').count(), SPECIES.length - 1);
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -62,7 +66,7 @@ test('an egg warmed by correct answers hatches, shows up everywhere, and pays Fi
   assert.equal(await page.locator('.creature-card').count(), 2);
   await page.click('button:text-is("Creature book")');
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), /2 of 36 discovered/);
+  assert.match(await page.textContent('.book p'), new RegExp(`2 of ${SPECIES.length} discovered`));
   assert.equal(await page.locator('.book-entry.owned[data-species=glowmoth]').count(), 1);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('spellbeasts.v1')).profiles.p1);
   assert.equal(saved.eggsHatched, 1);
@@ -105,17 +109,17 @@ test('buying eggs spends crickets; locked regions are closed; feeding and evolvi
   await context.close();
 });
 
-test('with the Arena on, the Creature book lists 36 creatures: each land shows its arena-only one as a silhouette with a hint', { skip }, async () => {
+test('with the Arena on, the Creature book lists every creature: each land shows its arena-only one as a silhouette with a hint', { skip }, async () => {
   const state = seededState();
   const { page, context, errors } = await newPage({ state, arena: true });
   await page.goto(env.server.url);
   await page.click('.card'); await page.waitForSelector('#practice');
   await page.evaluate(() => { location.hash = '#/book'; });
   await page.waitForSelector('.book');
-  assert.match(await page.textContent('.book p'), /1 of 36 discovered/);
-  assert.equal(await page.locator('.book-entry').count(), 36);
-  assert.equal(await page.locator('.book-entry.arena-only').count(), 9);
-  assert.equal(await page.locator('.book-entry.arena-only .silhouette').count(), 9);
+  assert.match(await page.textContent('.book p'), new RegExp(`1 of ${SPECIES.length} discovered`));
+  assert.equal(await page.locator('.book-entry').count(), SPECIES.length);
+  assert.equal(await page.locator('.book-entry.arena-only').count(), N);
+  assert.equal(await page.locator('.book-entry.arena-only .silhouette').count(), N);
   assert.match(await page.textContent('.book-entry[data-species=cloverknight]'), /\?\?\?.*Meet it in the Sunny Meadow Arena\./s);
   assert.doesNotMatch(await page.textContent('.book-entry[data-species=cloverknight]'), /Cloverknight/);
   // the Nest still offers only the three egg species
@@ -125,14 +129,36 @@ test('with the Arena on, the Creature book lists 36 creatures: each land shows i
   assert.deepEqual(errors, []);
   await context.close();
 });
-test('with the Arena off, the book still shows 27 creatures and no arena entries', { skip }, async () => {
+test('with the Arena off, the book still shows only the egg creatures and no arena entries', { skip }, async () => {
   const { page, context, errors } = await newPage({ state: seededState(), arena: false });
   await page.goto(env.server.url);
   await page.click('.card'); await page.waitForSelector('#practice');
   await page.evaluate(() => { location.hash = '#/book'; });
   await page.waitForSelector('.book');
-  assert.equal(await page.locator('.book-entry').count(), 27);
+  assert.equal(await page.locator('.book-entry').count(), N * 3);
   assert.equal(await page.locator('.book-entry.arena-only').count(), 0);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('the newest lands have a Nest of their own: the right price, the right hatch target, their own three creatures in the book', { skip: skip || (N < 12 && 'only with 12 lands') }, async () => {
+  const st = seededState();
+  const p = st.profiles.p1; p.crickets = 1000; p.level = 30; p.map.unlockedRegions = REGIONS.map((r) => r.id);
+  const { page, context, errors } = await newPage({ state: st });
+  await page.goto(env.server.url);
+  await page.click('.card'); await page.waitForSelector('#practice');
+  let spent = 0;
+  for (const [i, id] of [[9, 'r10'], [10, 'r11'], [11, 'r12']]) {
+    await page.click(`.nest-link[data-region=${id}]`);
+    await page.waitForSelector(`.nest[data-region=${id}]`);
+    assert.match(await page.textContent('.nest h1, .nest h2'), new RegExp(REGIONS[i].name));
+    await page.click('#buy-egg');
+    await page.waitForSelector('.egg-card');
+    spent += eggPrice(i);
+    assert.match(await page.textContent('.nest .stats'), new RegExp(`${1000 - spent} crickets`));
+    assert.match(await page.locator('.egg-card').last().textContent(), new RegExp(`0 of ${eggNeeded(i)}`));
+    await page.goBack(); await page.waitForSelector('#practice');
+  }
   assert.deepEqual(errors, []);
   await context.close();
 });
