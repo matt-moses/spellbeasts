@@ -2,6 +2,7 @@
 import { h, fill } from './dom.js';
 import * as P from '../logic/parent.js';
 import { spokenWord } from '../logic/pronounce.js';
+import { formatDuration, recentTotals } from '../logic/playtime.js';
 import { localDateString } from '../logic/leitner.js';
 
 const TABS = [['words', 'Word lists'], ['stats', 'Stats'], ['trainers', 'Trainers'], ['backup', 'Backup']];
@@ -155,6 +156,13 @@ export function parentView(app) {
     const list = st().wordLists[profile.activeListId] ?? st().wordLists.sample;
     out.append(h('div', { class: 'panel row' }, h('label', {}, 'Trainer ', h('select', { id: 'stats-profile', onchange: (e) => { ui.profileId = e.target.value; redraw(); } },
       profiles.map(([id, p]) => h('option', { value: id, selected: id === ui.profileId }, p.name)))), h('span', {}, `Practicing “${list.name}”`)));
+    const time = profile.time ?? {}, week = recentTotals(profile.time, app.today(), 7);
+    out.append(h('div', { class: 'panel time-spent' }, h('h2', {}, 'Time spent'),
+      h('table', { class: 'time-table' }, h('thead', {}, h('tr', {}, ['', 'In the game', 'Practicing words'].map((t) => h('th', {}, t)))),
+        h('tbody', {},
+          h('tr', { 'data-row': 'week' }, h('th', { scope: 'row' }, 'Last 7 days'), h('td', { class: 'play' }, formatDuration(week.playMs)), h('td', { class: 'practice' }, formatDuration(week.practiceMs))),
+          h('tr', { 'data-row': 'total' }, h('th', { scope: 'row' }, 'All time'), h('td', { class: 'play' }, formatDuration(time.playMs)), h('td', { class: 'practice' }, formatDuration(time.practiceMs))))),
+      h('p', { class: 'small' }, 'Counted while the game is open and being used. Time in this Parent area is not counted. “Practicing” covers practice sessions, battles and the learn screen.')));
     const rows = P.statsRows(profile, list);
     const mastered = rows.filter((r) => r.mastered).length;
     out.append(h('p', { class: 'summary-line' }, `${mastered} of ${rows.length} words mastered.`));

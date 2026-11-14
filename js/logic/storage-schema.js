@@ -1,5 +1,6 @@
 // State shape, defaults, migration (PRD 13). Pure: no localStorage here.
 import { SCHEMA_VERSION } from './version.js';
+import { freshTime } from './playtime.js';
 import { freshCareStats, START_BERRIES } from './care.js';
 import { SAMPLE_LIST_ID, SAMPLE_LIST_NAME, SAMPLE_WORDS } from '../../data/sample-words.js';
 
@@ -24,7 +25,7 @@ export function freshProfile({ name, avatarSpecies, now = new Date().toISOString
     wordStats: {},
     creatures: [], eggs: [],
     map: { trailStep: 0, claimedLandmarks: [], unlockedRegions: ['r1'] },
-    trophies: {}, sessions: [],
+    trophies: {}, sessions: [], time: freshTime(),
     battlesWon: 0, arena: { befriended: [], wins: {}, lastCreature: null },
   };
 }

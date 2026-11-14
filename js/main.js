@@ -20,6 +20,7 @@ import { careView, playView } from './ui/care.js';
 import { settingsView } from './ui/settings.js';
 import { startUpdateWatch } from './ui/update.js';
 import { BUILD_VERSION } from './logic/build.js';
+import { addTime, isPracticeRoute, IDLE_MS } from './logic/playtime.js';
 import { loadAnalytics } from './platform/analytics.js';
 
 const store = createStore();
@@ -53,6 +54,7 @@ function render() {
   if (!(name in routes)) name = '';
   if (name !== '' && name !== 'parent' && name !== 'settings' && !app.profile) { app.go('/'); return; }
   if (name !== 'parent') app.parentUnlocked = false;
+  else flushTime();                                  // the Parent area reads and exports state: keep storage in step with memory
   if (name === 'practice' && !app.session) name = 'home';
   if (name === 'battle' && !app.battle) name = arg ? 'arena' : 'home';
   const route = name === '' ? '/' : `/${name}`;
@@ -62,6 +64,24 @@ function render() {
   if (route !== '/practice' && route !== '/battle') first?.setAttribute('tabindex', '-1');
 }
 window.addEventListener('hashchange', render);
+
+// Time in the game, and (separately) time on word practice, per trainer. Counts only while the tab is visible and the
+// player has touched something in the last IDLE_MS. Stored on the profile; saved every 15 s and when the tab is hidden.
+let lastTick = Date.now(), lastInput = lastTick, lastSave = lastTick, unsaved = false;
+for (const ev of ['pointerdown', 'keydown', 'touchstart']) window.addEventListener(ev, () => { lastInput = Date.now(); }, { passive: true, capture: true });
+function trackTime() {
+  const now = Date.now(), elapsed = now - lastTick;
+  lastTick = now;
+  const route = location.hash.replace(/^#\/?/, '').split('/')[0];
+  if (document.hidden || !app.profile || now - lastInput > IDLE_MS || route === 'parent') return;
+  const counted = addTime(app.profile, elapsed, { practicing: isPracticeRoute(route), date: localDateString() });
+  if (counted) unsaved = true;
+  if (unsaved && now - lastSave >= 15000) flushTime();
+}
+function flushTime() { if (unsaved) { store.save(); unsaved = false; } lastSave = Date.now(); }
+setInterval(trackTime, 1000);
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushTime(); else { lastTick = Date.now(); } });
+window.addEventListener('pagehide', flushTime);
 loadAnalytics();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => { /* offline support is a bonus: the game works without it */ });
