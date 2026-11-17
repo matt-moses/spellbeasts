@@ -143,19 +143,19 @@ test('with the Arena off, the book still shows only the egg creatures and no are
 
 test('the newest lands have a Nest of their own: the right price, the right hatch target, their own three creatures in the book', { skip: skip || (N < 12 && 'only with 12 lands') }, async () => {
   const st = seededState();
-  const p = st.profiles.p1; p.crickets = 1000; p.level = 30; p.map.unlockedRegions = REGIONS.map((r) => r.id);
+  const p = st.profiles.p1; p.crickets = 5000; p.level = 30; p.map.unlockedRegions = REGIONS.map((r) => r.id);
   const { page, context, errors } = await newPage({ state: st });
   await page.goto(env.server.url);
   await page.click('.card'); await page.waitForSelector('#practice');
   let spent = 0;
-  for (const [i, id] of [[9, 'r10'], [10, 'r11'], [11, 'r12']]) {
+  for (const [i, id] of REGIONS.map((r, i) => [i, r.id]).slice(9)) {
     await page.click(`.nest-link[data-region=${id}]`);
     await page.waitForSelector(`.nest[data-region=${id}]`);
     assert.match(await page.textContent('.nest h1, .nest h2'), new RegExp(REGIONS[i].name));
     await page.click('#buy-egg');
     await page.waitForSelector('.egg-card');
     spent += eggPrice(i);
-    assert.match(await page.textContent('.nest .stats'), new RegExp(`${1000 - spent} crickets`));
+    assert.match(await page.textContent('.nest .stats'), new RegExp(`${5000 - spent} crickets`));
     assert.match(await page.locator('.egg-card').last().textContent(), new RegExp(`0 of ${eggNeeded(i)}`));
     await page.goBack(); await page.waitForSelector('#practice');
   }

@@ -9,10 +9,11 @@ const ALL_UNLOCKS = [
   { level: 6, mastered: 15 }, { level: 8, mastered: 25 }, { level: 10, mastered: 40 },
   { level: 12, mastered: 44 }, { level: 14, mastered: 47 }, { level: 16, mastered: 50 },   // the new lands
   { level: 18, mastered: 53 }, { level: 20, mastered: 56 }, { level: 22, mastered: 60 },   // lands 10-12
+  { level: 24, mastered: 64 }, { level: 26, mastered: 68 }, { level: 28, mastered: 72 },   // lands 13-15
 ];
 export const UNLOCKS = ALL_UNLOCKS.slice(0, landCount());
 // Each land's stretch of trail is a little longer than the one before, so progress gets steadily harder.
-export const REGION_STEPS = [30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52].slice(0, landCount());
+export const REGION_STEPS = [30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58].slice(0, landCount());
 export const REGION_END = REGION_STEPS.reduce((acc, n) => [...acc, (acc.at(-1) ?? 0) + n], []);
 export const regionStart = (i) => (i === 0 ? 0 : REGION_END[i - 1]);
 export const LANDMARK_EVERY = 10;

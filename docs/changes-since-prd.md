@@ -8,7 +8,7 @@ The PRD (`spelling-bee-creature-game-prd.md`) is the approved starting point. Th
 | Creatures | 18 (+6 arena-only in Phase 2) | **36** Nest creatures (3 per land), 108 SVGs. Egg prices continue 90, 105, 125, 145, 165, 190 |
 | Trail | 30 steps per region, flat | Longer each land: 30, 32, 34 ... 52 steps (progressively harder), 492 in all |
 | Map | One screen | A wide, **scrollable** world (drag, swipe, arrows, keyboard) that follows the token |
-| Trophies | 14 | **45**, including care trophies and one for opening all 12 lands; star tiles award trophies when opened |
+| Trophies | 14 | **45**, including care trophies and one for opening 12 lands and all 15; star tiles award trophies when opened |
 | Care and play | none | Four meters per creature (fed, clean, loved, fun), berries, bath, petting, three mini-games (Berry Catch, Hop Run, Memory Match), a daily "sparkle" gift of 3 crickets. Games cost 3 crickets (1 back for a great game) and the gift needs a practice session that day, so care always leads back to spelling |
 | Berries | none | +2 per practice session, +1 per treasure star. Games no longer pay berries |
 | Characters | decorative | Tap-to-play: every click runs the next action in a shuffled rotation (animation, sound, effect, speech bubble) |

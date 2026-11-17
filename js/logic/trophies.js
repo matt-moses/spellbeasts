@@ -34,7 +34,8 @@ const ALL_TROPHIES = [
   { id: 'explorer-3', name: 'Trailblazer', desc: 'Open 3 lands', test: (c) => c.regionsOpen >= 3 },
   { id: 'explorer-6', name: 'Adventurer', desc: 'Open 6 lands', test: (c) => c.regionsOpen >= 6 },
   { id: 'explorer-9', name: 'World Traveler', desc: landCount() > 9 ? 'Open 9 lands' : 'Open all 9 lands', test: (c) => c.regionsOpen >= 9 },
-  { id: 'explorer-12', name: 'Master Explorer', desc: 'Open all 12 lands', test: (c) => c.regionsOpen >= 12 },
+  { id: 'explorer-12', name: 'Master Explorer', desc: landCount() > 12 ? 'Open 12 lands' : 'Open all 12 lands', test: (c) => c.regionsOpen >= 12 },
+  { id: 'explorer-15', name: 'World Champion', desc: 'Open all 15 lands', test: (c) => c.regionsOpen >= 15 },
   { id: 'walk-50', name: 'Long Walk', desc: 'Walk 50 steps along the trail', test: (c) => c.trailStep >= 50 },
   { id: 'walk-150', name: 'Marathon Walker', desc: 'Walk 150 steps along the trail', test: (c) => c.trailStep >= 150 },
   { id: 'stars-5', name: 'Treasure Hunter', desc: 'Open 5 treasure stars', test: (c) => c.starsOpened >= 5 },
@@ -57,7 +58,7 @@ const ALL_TROPHIES = [
   { id: 'champion', name: 'Champion', desc: 'Win 10 battles', phase: 2, test: (c) => c.battlesWon >= 10 },
 ];
 // A trophy for opening every land only exists once those lands do.
-export const TROPHIES = ALL_TROPHIES.filter((t) => t.id !== 'explorer-12' || landCount() >= 12);
+export const TROPHIES = ALL_TROPHIES.filter((t) => (t.id !== 'explorer-12' || landCount() >= 12) && (t.id !== 'explorer-15' || landCount() >= 15));
 
 // earned: {[id]: date}. Returns ids newly earned (never ones already earned).
 export function evaluateTrophies(ctx, earned = {}) {

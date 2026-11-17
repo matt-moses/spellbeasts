@@ -16,6 +16,9 @@ export const ALL_REGIONS = [
   { id: 'r10', name: 'Harvest Hollow' },
   { id: 'r11', name: 'Lantern Harbor' },
   { id: 'r12', name: 'Wishing Ruins' },
+  { id: 'r13', name: 'Frostwood' },
+  { id: 'r14', name: 'Sunken Bazaar' },
+  { id: 'r15', name: 'Starfall Summit' },
 ];
 export const REGIONS = ALL_REGIONS.slice(0, landCount());
 
@@ -103,6 +106,27 @@ export const ALL_SPECIES = [
     art: { pal: ['#d9a43a', '#7a5410', '#fff1c0'], body: 'tall', ears: 'long', tail: 'none', face: 'sleepy', s1: ['stars'], s2: ['stars', 'cheeks'], s3: ['crown', 'stars', 'bigwings'] } },
   { id: 'wishlion', name: 'Wishlion', region: 'r12', rarity: 'rare', flavor: 'Its mane is full of tiny stars, and it saves the brightest for you.',
     art: { pal: ['#f6e08a', '#b58a2a', '#fffbe6'], body: 'round', ears: 'round', tail: 'fluff', face: 'fierce', s1: ['mane'], s2: ['mane', 'wings'], s3: ['bigwings', 'crown', 'stars'] } },
+
+  { id: 'flurrit', name: 'Flurrit', region: 'r13', rarity: 'common', flavor: 'Hops through fresh snow and leaves tiny heart-shaped tracks for friends to follow.',
+    art: { pal: ['#6fc3e8', '#2f7fb0', '#e6f6ff'], body: 'round', ears: 'long', tail: 'tuft', face: 'happy', s1: ['cheeks'], s2: ['cheeks', 'whiskers'], s3: ['crown', 'stars'] } },
+  { id: 'pinelet', name: 'Pinelet', region: 'r13', rarity: 'uncommon', flavor: 'Dozes standing up, and woodpeckers have been known to leave it a thank-you note.',
+    art: { pal: ['#3f8f6a', '#1f5238', '#d4f2e0'], body: 'tall', ears: 'point', tail: 'tuft', face: 'sleepy', s1: ['leafy'], s2: ['leafy', 'spikes'], s3: ['crown', 'stars', 'leafy'] } },
+  { id: 'blizzowl', name: 'Blizzowl', region: 'r13', rarity: 'rare', flavor: 'Hoots the snowstorm to a stop, then stays to make sure everyone got home.',
+    art: { pal: ['#e8eef8', '#7f93b8', '#ffffff'], body: 'wide', ears: 'round', tail: 'none', face: 'owl', s1: ['beak'], s2: ['wings', 'beak'], s3: ['bigwings', 'crown', 'stars'] } },
+
+  { id: 'coinfin', name: 'Coinfin', region: 'r14', rarity: 'common', flavor: 'Jingles with every flick of its tail and always gives you the correct change.',
+    art: { pal: ['#e0b83a', '#8a6a10', '#fff3c0'], body: 'round', ears: 'fin', tail: 'curl', face: 'happy', s1: ['bubbles'], s2: ['bubbles', 'cheeks'], s3: ['crown', 'stars'] } },
+  { id: 'silkjelly', name: 'Silkjelly', region: 'r14', rarity: 'uncommon', flavor: 'Drifts between the market stalls trailing ribbons that nobody can resist touching.',
+    art: { pal: ['#c46fd0', '#7a2f8a', '#f7dcfa'], body: 'tall', ears: 'none', tail: 'none', face: 'sleepy', s1: ['tentacles'], s2: ['tentacles', 'bubbles'], s3: ['crown', 'stars', 'bubbles'] } },
+  { id: 'rugtle', name: 'Rugtle', region: 'r14', rarity: 'rare', flavor: 'Carries a flying carpet on its shell and offers rides to anyone who says please.',
+    art: { pal: ['#2fb5a8', '#126a66', '#d0f7f0'], body: 'wide', ears: 'none', tail: 'tuft', face: 'smirk', s1: ['shell'], s2: ['shell', 'wings'], s3: ['bigwings', 'crown', 'stars'] } },
+
+  { id: 'twinklet', name: 'Twinklet', region: 'r15', rarity: 'common', flavor: 'Blinks on and off like a far-off star, and giggles each time you blink back.',
+    art: { pal: ['#8a7fe8', '#4a3fa8', '#e8e4ff'], body: 'round', ears: 'point', tail: 'tuft', face: 'wide', s1: ['stars'], s2: ['stars', 'cheeks'], s3: ['crown', 'stars'] } },
+  { id: 'moonmot', name: 'Moonmot', region: 'r15', rarity: 'uncommon', flavor: 'Whistles a lullaby up the mountain so the moon always knows when to rise.',
+    art: { pal: ['#b8bfd6', '#6a7390', '#f2f4fb'], body: 'wide', ears: 'round', tail: 'fluff', face: 'sleepy', s1: ['whiskers'], s2: ['cheeks', 'crystals'], s3: ['crown', 'stars', 'crystals'] } },
+  { id: 'galaxolotl', name: 'Galaxolotl', region: 'r15', rarity: 'rare', flavor: 'Swims through the night sky and wears a swirl of galaxies on its frilly gills.',
+    art: { pal: ['#d65fb0', '#7a1f6a', '#ffd9f0'], body: 'long', ears: 'fin', tail: 'fluff', face: 'happy', s1: ['antennae'], s2: ['antennae', 'stars'], s3: ['bigwings', 'crown', 'stars'] } },
   // Arena-only species: one per land, befriended only by winning a battle there (js/logic/battle.js). Never in eggs.
   { id: 'cloverknight', name: 'Cloverknight', region: 'r1', rarity: 'arena', flavor: 'Guards the meadow with a four-leaf shield and a very loud hello.',
     art: { pal: ['#6fbf5a', '#3d7a34', '#eaf7c8'], body: 'tall', ears: 'round', tail: 'tuft', face: 'fierce', s1: ['leafy'], s2: ['cape', 'helmet'], s3: ['stars', 'crown'] } },
@@ -128,6 +152,12 @@ export const ALL_SPECIES = [
     art: { pal: ['#7f8fa6', '#46546a', '#eaf0f7'], body: 'long', ears: 'none', tail: 'none', face: 'happy', s1: ['whiskers'], s2: ['lantern', 'cape'], s3: ['crown', 'stars'] } },
   { id: 'mythcat', name: 'Mythcat', region: 'r12', rarity: 'arena', flavor: 'Guards the oldest stones and purrs out riddles to anyone who asks nicely.',
     art: { pal: ['#4f9a5a', '#2a5e34', '#d8f2d4'], body: 'round', ears: 'point', tail: 'curl', face: 'wide', s1: ['leafy', 'whiskers'], s2: ['cape', 'claws'], s3: ['crown', 'stars', 'flame'] } },
+  { id: 'rimefox', name: 'Rimefox', region: 'r13', rarity: 'arena', flavor: 'Frosts the trail behind it so nobody forgets which way the fun went.',
+    art: { pal: ['#a99be0', '#5a4aa8', '#ece8ff'], body: 'long', ears: 'point', tail: 'fluff', face: 'smirk', s1: ['whiskers'], s2: ['cape', 'crystals'], s3: ['crown', 'stars', 'bigwings'] } },
+  { id: 'haggleotter', name: 'Haggleotter', region: 'r14', rarity: 'arena', flavor: 'Will trade you a pearl for a joke, and then a joke for the pearl back.',
+    art: { pal: ['#8a5a3a', '#4a2a16', '#f0d8c0'], body: 'long', ears: 'round', tail: 'curl', face: 'wide', s1: ['whiskers'], s2: ['hat', 'cheeks'], s3: ['crown', 'stars', 'bubbles'] } },
+  { id: 'zenithawk', name: 'Zenithawk', region: 'r15', rarity: 'arena', flavor: 'Perches on the highest peak to count shooting stars and never loses count.',
+    art: { pal: ['#2f3f7a', '#141c44', '#c8d4ff'], body: 'tall', ears: 'point', tail: 'fluff', face: 'fierce', s1: ['beak'], s2: ['wings', 'bolts'], s3: ['bigwings', 'crown', 'stars'] } },
 ];
 
 export const SPECIES = ALL_SPECIES.filter((s) => REGIONS.some((r) => r.id === s.region));

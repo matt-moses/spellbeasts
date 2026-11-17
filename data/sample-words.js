@@ -1,5 +1,5 @@
-// Sample list: 15 everyday words, then 60 harder ones, with definitions and sentences written for this project.
-// 75 words is enough to master every land's requirement (the last land needs 60 mastered).
+// Sample list: 15 everyday words, then 75 harder ones, with definitions and sentences written for this project.
+// 90 words is enough to master every land's requirement (the last land needs 72 mastered).
 export const SAMPLE_LIST_ID = 'sample';
 export const SAMPLE_LIST_NAME = 'Sample words';
 export const SAMPLE_WORDS = [
@@ -79,4 +79,19 @@ export const SAMPLE_WORDS = [
   ['variety', 'noun', 'A mix of different kinds of things.', 'The market sells a variety of fresh fruit.'],
   ['Wednesday', 'noun', 'The day of the week after Tuesday.', 'Choir practice is every Wednesday.'],
   ['Australia', 'noun', 'A country and continent in the Southern Hemisphere.', 'Kangaroos are found in Australia.'],
+  ['avalanche', 'noun', 'A huge slide of snow rushing down a mountain.', 'The skiers heard the avalanche rumble far away.'],
+  ['crystallize', 'verb', 'To form into crystals, like sugar or ice.', 'The sugar will crystallize as the syrup cools.'],
+  ['bargain', 'noun', 'Something bought for less than its usual price.', 'The scarf was such a bargain that I bought two.'],
+  ['merchant', 'noun', 'A person who buys and sells goods.', 'The merchant set out silk and spices on the table.'],
+  ['lantern', 'noun', 'A case with a light inside that can be carried.', 'We hung a lantern by the tent door.'],
+  ['observatory', 'noun', 'A building with telescopes for studying the stars.', 'The observatory opens at night for star gazing.'],
+  ['constellation', 'noun', 'A group of stars that makes a picture in the sky.', 'Orion is my favorite constellation.'],
+  ['meteor', 'noun', 'A bright streak of light made by a rock burning up in the sky.', 'We made a wish on the meteor.'],
+  ['hibernate', 'verb', 'To spend the winter in a deep sleep.', 'Bears hibernate until spring.'],
+  ['mysterious', 'adjective', 'Strange and hard to explain.', 'A mysterious glow came from the cave.'],
+  ['spectacular', 'adjective', 'Very impressive to look at.', 'The fireworks were spectacular.'],
+  ['wilderness', 'noun', 'A wild place where few people live.', 'They hiked through the wilderness for three days.'],
+  ['exchange', 'verb', 'To give one thing and get another in return.', 'We exchange stickers at recess.'],
+  ['horizon', 'noun', 'The line where the sky seems to meet the land or sea.', 'The sun sank below the horizon.'],
+  ['adventure', 'noun', 'An exciting and unusual experience.', 'Camping in the snow was a real adventure.'],
 ].map(([word, partOfSpeech, definition, sentence]) => ({ id: word, word, partOfSpeech, definition, sentence }));

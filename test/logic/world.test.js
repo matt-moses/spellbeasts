@@ -104,8 +104,8 @@ test('each land has a longer stretch of trail than the one before (progressively
   const p = mk(); p.map.unlockedRegions = ['r1', 'r2', 'r3'];
   assert.equal(maxStep(p), REGION_END[2]);
 });
-test('unlock requirements keep rising, and stay reachable with a 50-word list (60 for the three newest lands)', () => {
+test('unlock requirements keep rising, and stay reachable with a 50-word list (60 for lands 10-12, 72 for 13-15)', () => {
   for (let i = 1; i < UNLOCKS.length; i++) { assert.ok(UNLOCKS[i].level > UNLOCKS[i - 1].level); assert.ok(UNLOCKS[i].mastered >= UNLOCKS[i - 1].mastered); }
   assert.ok(UNLOCKS.slice(0, 9).every((u) => u.mastered <= 50));
-  assert.ok(UNLOCKS.at(-1).mastered <= (UNLOCKS.length > 9 ? 60 : 50));      // lands 10-12 need a bigger custom list (plan.md D3, D8)
+  assert.ok(UNLOCKS.at(-1).mastered <= (UNLOCKS.length > 12 ? 72 : UNLOCKS.length > 9 ? 60 : 50));      // lands 10-12 need a bigger custom list (plan.md D3, D8)
 });

@@ -6,14 +6,14 @@ import { SPECIES, NEST_SPECIES, ARENA_SPECIES, REGIONS, STARTER_IDS, speciesInRe
 import { rng } from '../helpers.js';
 import { PART_NAMES, ART_KEYS } from '../../js/assets/creatures.js';
 
-const N = REGIONS.length;                      // 9 shipped, 12 with npm run check:12
+const N = REGIONS.length;                      // 15 shipped; 9 and 12 with the land-count switch
 const mk = (over = {}) => Object.assign(freshProfile({ name: 'T', avatarSpecies: 'x' }), over);
 
 test('species data: 4 species per land (3 egg species and 1 arena-only), each land has 3 egg species (one of each rarity) and 1 arena-only species, unique ids', () => {
   assert.equal(SPECIES.length, N * 4);
   assert.equal(NEST_SPECIES.length, N * 3);
   assert.equal(ARENA_SPECIES.length, N);
-  assert.ok(N === 9 || N === 12);
+  assert.ok(N === 9 || N === 12 || N === 15);
   assert.equal(new Set(SPECIES.map((s) => s.id)).size, N * 4);
   assert.equal(new Set(SPECIES.map((s) => s.name)).size, N * 4);
   for (const r of REGIONS) {

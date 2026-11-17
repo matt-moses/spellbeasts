@@ -11,13 +11,14 @@ import { awardTrophies } from '../logic/collection.js';
 import { TROPHIES } from '../logic/trophies.js';
 import { UNLOCKS, TOTAL_STEPS, REGION_END, regionStart, LANDMARKS, isReached, isClaimed, unlockRequirement, claimLandmark, regionOfStep } from '../logic/world.js';
 
-// The map is drawn for 9 lands (2800 wide) or all 12 (4100 wide): the twelve-land trail is the nine-land one, carried on.
-const TWELVE = landCount() >= 12;
-const W = TWELVE ? 4100 : 2800, H = 620;
+// The map is drawn for 9 lands (2800 wide), 12 (4100) or all 15 (5400): each trail is the previous one, carried on.
+const LANDS = landCount();
+const W = LANDS >= 15 ? 5400 : LANDS >= 12 ? 4100 : 2800, H = 620;
 // One long winding trail through all the lands (Catmull-Rom through these points).
 const ALL_POINTS = [[60, 520], [170, 450], [290, 520], [400, 540], [520, 470], [640, 400], [760, 330], [880, 380], [990, 470], [1110, 530], [1240, 480], [1350, 400], [1450, 320], [1570, 280], [1690, 350], [1800, 450], [1910, 520], [2030, 500], [2140, 430], [2250, 350], [2350, 290], [2460, 330], [2560, 420], [2660, 480], [2740, 430],
-  [2850, 500], [2970, 540], [3090, 480], [3200, 400], [3310, 330], [3420, 290], [3530, 350], [3640, 450], [3750, 520], [3860, 500], [3960, 440], [4040, 400]];
-const POINTS = TWELVE ? ALL_POINTS : ALL_POINTS.slice(0, 25);
+  [2850, 500], [2970, 540], [3090, 480], [3200, 400], [3310, 330], [3420, 290], [3530, 350], [3640, 450], [3750, 520], [3860, 500], [3960, 440], [4040, 400],
+  [4150, 500], [4270, 540], [4390, 480], [4500, 400], [4610, 330], [4720, 290], [4830, 350], [4940, 450], [5050, 520], [5160, 500], [5260, 440], [5340, 400]];
+const POINTS = ALL_POINTS.slice(0, LANDS >= 15 ? 49 : LANDS >= 12 ? 37 : 25);
 function smooth(pts) {
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
   for (let i = 0; i < pts.length - 1; i++) {
@@ -27,7 +28,7 @@ function smooth(pts) {
   return d;
 }
 const TRAIL = smooth(POINTS);
-const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8', '#e8a24a', '#e08fa8', '#9fb59a'].slice(0, REGIONS.length);
+const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8', '#e8a24a', '#e08fa8', '#9fb59a', '#8fd0ec', '#2fb5a8', '#7a74e0'].slice(0, REGIONS.length);
 const INK = '#1d2433';
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -91,6 +92,18 @@ const SCENERY = [
   ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><path d="M-6 9V-8L-3 -11L0 -7L3 -12L6 -8V9Z" fill="#c9c3b0" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-2 9V-4M2 9V-5" stroke="#9a947e" stroke-width="1.2"/><path d="M-6 2Q-9 -2 -7 -6" fill="none" stroke="#4f9a5a" stroke-width="2.2" stroke-linecap="round"/></g>`
     : k < 0.75 ? `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="3" rx="10" ry="6.5" fill="#b8b4a0" stroke="${INK}" stroke-width="1.6"/><path d="M0 -3L1.6 0.5L5 1L2.4 3.2L3.2 6.6L0 4.8L-3.2 6.6L-2.4 3.2L-5 1L-1.6 0.5Z" fill="#ffe27a" stroke="${INK}" stroke-width="1"/></g>`
     : `<g transform="translate(${x} ${y})" fill="none" stroke="#4f9a5a" stroke-width="2.4" stroke-linecap="round"><path d="M-8 8Q-10 -2 -4 -6Q2 -10 4 -3Q6 3 10 2"/><ellipse cx="-5" cy="-2" rx="3" ry="1.8" fill="#7cc96a" stroke="${INK}" stroke-width="1"/><ellipse cx="5" cy="-1" rx="3" ry="1.8" fill="#7cc96a" stroke="${INK}" stroke-width="1"/></g>`,
+  // r13 Frostwood: snowy pines, snowmen, ice crystals
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><rect x="-2" y="4" width="4" height="7" fill="#6b4a2a"/><path d="M0-17L9-4H-9Z M0-9L12 4H-12Z" fill="#3f8f6a" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-4-9L0-14L4-9ZM-7-1L0-6L7-1Z" fill="#fff" opacity=".9"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><circle cy="5" r="7.5" fill="#fff" stroke="${INK}" stroke-width="1.8"/><circle cy="-5" r="5.5" fill="#fff" stroke="${INK}" stroke-width="1.8"/><circle cx="-2" cy="-6" r="0.9" fill="${INK}"/><circle cx="2" cy="-6" r="0.9" fill="${INK}"/><path d="M0-4L4-3" stroke="#f08a24" stroke-width="1.8" stroke-linecap="round"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M0-12L5-2L0 8L-5-2Z" fill="#bfe8ff" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M0-12V8M-5-2H5" stroke="#fff" stroke-width="1.2" opacity=".8"/><path d="M8 8L13-2L16 8Z" fill="#9fd4f2" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/></g>`,
+  // r14 Sunken Bazaar: striped awnings, pots, coins
+  ([x, y, k]) => k < 0.4 ? `<g transform="translate(${x} ${y})"><rect x="-10" y="-3" width="20" height="12" fill="#f5e2b0" stroke="${INK}" stroke-width="1.8"/><path d="M-12-3Q-12-12 0-12Q12-12 12-3Z" fill="#e5484d" stroke="${INK}" stroke-width="1.8"/><path d="M-4-3Q-4-12 0-12M4-3Q4-12 0-12" fill="none" stroke="#fff" stroke-width="2"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M-6-8H6L9 2Q9 9 0 9Q-9 9-9 2Z" fill="#2fb5a8" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-7-3H8" stroke="#d0f7f0" stroke-width="1.6"/><ellipse cy="-8" rx="6" ry="2" fill="#126a66" stroke="${INK}" stroke-width="1.4"/></g>`
+    : `<g transform="translate(${x} ${y})"><circle cx="-4" cy="4" r="6" fill="#ffd23f" stroke="${INK}" stroke-width="1.6"/><circle cx="5" cy="1" r="6" fill="#ffe27a" stroke="${INK}" stroke-width="1.6"/><path d="M5-2V4" stroke="#b8902a" stroke-width="1.6"/><circle cx="12" cy="-8" r="2" fill="#bfeee9" opacity=".8"/></g>`,
+  // r15 Starfall Summit: rocky peaks, shooting stars, moon rocks
+  ([x, y, k]) => k < 0.4 ? `<g transform="translate(${x} ${y})"><path d="M-14 9L-3-12L4-3L8-9L16 9Z" fill="#8a93c0" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-6-4L-3-12L1-6L-2-3Z" fill="#fff"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M0-10L3-3L10-2L4 3L6 10L0 6L-6 10L-4 3L-10-2L-3-3Z" fill="#e9e4ff" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M12-8L28-18" stroke="#c8d4ff" stroke-width="2.4" stroke-linecap="round" opacity=".8"/></g>`
+    : `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="3" rx="11" ry="7" fill="#c8cbe8" stroke="${INK}" stroke-width="1.6"/><circle cx="3" cy="1" r="2.6" fill="#a4a8d0"/><circle cx="-4" cy="5" r="1.6" fill="#a4a8d0"/></g>`,
 ];
 
 // ---------- park props (flat shapes, scattered on the grass away from the path) ----------
@@ -133,7 +146,7 @@ function starTile(state) {
   ${ready ? '<path class="twinkle" d="M16 -18L17.5 -14L21.5 -12.5L17.5 -11L16 -7L14.5 -11L10.5 -12.5L14.5 -14Z" fill="#ffc928" stroke="#1d2433" stroke-width="1"/>' : ''}</g>`;
 }
 
-const CLOUDS = [[40, 50, 1.0, 190], [620, 30, 0.8, 230], [1100, 90, 0.7, 260], [1600, 40, 1.0, 210], [2150, 80, 0.8, 240], [2600, 30, 0.9, 200], ...(TWELVE ? [[3050, 60, 0.9, 220], [3500, 35, 0.8, 250], [3950, 80, 1.0, 210]] : [])].map(([x, y, sc, dur], i) =>
+const CLOUDS = [[40, 50, 1.0, 190], [620, 30, 0.8, 230], [1100, 90, 0.7, 260], [1600, 40, 1.0, 210], [2150, 80, 0.8, 240], [2600, 30, 0.9, 200], ...(LANDS >= 12 ? [[3050, 60, 0.9, 220], [3500, 35, 0.8, 250], [3950, 80, 1.0, 210]] : []), ...(LANDS >= 15 ? [[4350, 55, 0.9, 230], [4800, 35, 1.0, 215], [5250, 85, 0.8, 245]] : [])].map(([x, y, sc, dur], i) =>
   `<g class="drift" style="animation-duration:${dur}s;animation-delay:${-i * 30}s" opacity=".95" pointer-events="none"><g transform="translate(${x} ${y}) scale(${sc})" fill="#fff"><ellipse cx="0" cy="0" rx="46" ry="14"/><circle cx="-14" cy="-10" r="14"/><circle cx="10" cy="-14" r="18"/><circle cx="28" cy="-6" r="11"/></g></g>`).join('');
 
 const DEFS = (colors) => `<defs>

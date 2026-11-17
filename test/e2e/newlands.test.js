@@ -1,4 +1,4 @@
-// The three newest lands, reached the way a player reaches them: practising the bundled 75-word list until the level and
+// The three newest lands, reached the way a player reaches them: practising the bundled 90-word list until the level and
 // mastery requirement is met (plan.md, "bigger default word list"). Each case starts a trainer one session short.
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -41,8 +41,8 @@ test('the bundled list is big enough: every land asks for no more mastered words
   assert.ok(SAMPLE_WORDS.length >= Math.max(...UNLOCKS.map((u) => u.mastered)) + 12);
 });
 
-for (const index of [9, 10, 11]) {
-  test(`${REGIONS[index]?.name ?? `land ${index + 1}`}: opens after a session that reaches level ${UNLOCKS[index]?.level} and ${UNLOCKS[index]?.mastered} mastered words`, { skip: skip || (REGIONS.length < 12 && 'only with 12 lands'), timeout: 120000 }, async () => {
+for (const index of [9, 10, 11, 12, 13, 14]) {
+  test(`${REGIONS[index]?.name ?? `land ${index + 1}`}: opens after a session that reaches level ${UNLOCKS[index]?.level} and ${UNLOCKS[index]?.mastered} mastered words`, { skip: skip || (REGIONS.length <= index && `only with ${index + 1} lands`), timeout: 120000 }, async () => {
     const land = REGIONS[index], need = UNLOCKS[index];
     const context = await env.browser.newContext({ reducedMotion: 'reduce', viewport: { width: 1000, height: 1100 } });
     const errors = [];

@@ -53,7 +53,7 @@ test('sorting puts empty values last in both directions and is stable; most-miss
   const asc = sortRows(rows, 'accuracy', 'asc'), desc = sortRows(rows, 'accuracy', 'desc');
   assert.equal(asc.at(-1).accuracy, null); assert.equal(desc.at(-1).accuracy, null);
   assert.equal(desc[0].word, 'pencil');
-  assert.deepEqual(sortRows(rows, 'word', 'asc').slice(0, 2).map((r) => r.word), ['acquire', 'ambulance']);      // the first two of the bundled words, A to Z
+  assert.deepEqual(sortRows(rows, 'word', 'asc').slice(0, 2).map((r) => r.word), ['acquire', 'adventure']);      // the first two of the bundled words, A to Z
   assert.deepEqual(mostMissed(rows).map((r) => r.word), ['island', 'garden']);
   assert.equal(mostMissed(rows, 1).length, 1);
 });

@@ -2,7 +2,7 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { hasBrowser, launch, prepare, seededState, playSession } from './helpers.js';
 import { REGIONS } from '../../js/logic/species.js';
-import { TOTAL_STEPS, REGION_END, LANDMARKS } from '../../js/logic/world.js';
+import { TOTAL_STEPS, REGION_END, LANDMARKS, UNLOCKS } from '../../js/logic/world.js';
 
 const N = REGIONS.length;                      // 9 shipped, 12 with npm run check:12
 const ALL = REGIONS.map((r) => r.id);
@@ -121,19 +121,23 @@ test('reaching the level for a new region says so on the summary', { skip }, asy
 
 const unlockAll = (n = N, step = 0) => (p) => { p.level = 30; p.map.unlockedRegions = ALL.slice(0, n); p.map.trailStep = step; };
 
-test('the newest lands are fogged with their own rules and open with them (twelve lands only)', { skip: skip || (N < 12 && 'only with 12 lands') }, async () => {
+test('the newest lands are fogged with their own rules and open with them (twelve lands or more)', { skip: skip || (N < 12 && 'only with 12 lands') }, async () => {
   const { page, context, errors } = await open();
   const say = (id) => page.getAttribute(`.fog[data-region=${id}]`, 'aria-label');
+  for (let i = 9; i < N; i++) {                                                          // every land from the tenth on, with its own name and rule
+    const { id, name } = REGIONS[i], need = `Reach level ${UNLOCKS[i].level} and ${UNLOCKS[i].mastered} words mastered`;
+    assert.equal(await say(id), `${name} is locked. ${need}`, id);
+    assert.equal(await page.$$eval(`.fog[data-region=${id}] tspan`, (t) => t.map((x) => x.textContent).join(' ')).then((t) => t.includes(need)), true, `${id} sign`);
+  }
   assert.match(await say('r10'), /Harvest Hollow is locked\. Reach level 18 and 53 words mastered/);
-  assert.match(await say('r11'), /Lantern Harbor is locked\. Reach level 20 and 56 words mastered/);
-  assert.match(await say('r12'), /Wishing Ruins is locked\. Reach level 22 and 60 words mastered/);
-  assert.match(await page.$$eval('.fog[data-region=r12] tspan', (t) => t.map((x) => x.textContent).join(' ')), /Reach level 22 and 60 words mastered/);
+  if (N >= 15) assert.match(await say('r15'), /Starfall Summit is locked\. Reach level 28 and 72 words mastered/);
   assert.deepEqual(errors, []);
   await context.close();
   const open12 = await open(unlockAll());
-  for (const id of ['r10', 'r11', 'r12']) assert.equal(await open12.page.locator(`.nest-link[data-region=${id}]`).count(), 1, id);
-  await open12.page.focus('.nest-link[data-region=r12]'); await open12.page.keyboard.press('Enter');
-  await open12.page.waitForSelector('.nest[data-region=r12]');
+  for (const { id } of REGIONS.slice(9)) assert.equal(await open12.page.locator(`.nest-link[data-region=${id}]`).count(), 1, id);
+  const last = REGIONS.at(-1).id;
+  await open12.page.focus(`.nest-link[data-region=${last}]`); await open12.page.keyboard.press('Enter');
+  await open12.page.waitForSelector(`.nest[data-region=${last}]`);
   await open12.context.close();
 });
 

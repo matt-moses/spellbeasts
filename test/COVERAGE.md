@@ -71,3 +71,14 @@ The win is saved the moment the last heart goes (not at the end of the session):
 | Each of the three newest lands opens through real play of the bundled 75-word list (level, mastery, summary message, map, Nest, egg price) | test/e2e/newlands.test.js |
 | The two-week playthrough runs on the 75-word list: 39 sessions, 8 lands, checked against an independent model | test/e2e/playthrough.test.js |
 | The whole suite passes with 12 lands (what ships) and with 9 | `npm run check`, `SPELLBEASTS_LANDS=9` |
+
+## Fifteen lands (Frostwood, Sunken Bazaar, Starfall Summit) → tests
+
+| What | Where |
+|---|---|
+| 15 lands, 60 species, one common / uncommon / rare / arena per land; unlock rules (levels 24, 26, 28; 64, 68, 72 words), trail (660 steps), egg prices (215, 240, 270), fifth battle tier, `explorer-15` trophy | test/logic/lands15.test.js |
+| A save from the twelve-land game keeps its place and finds the trail extended | test/logic/lands15.test.js ("a save from the twelve-land game") |
+| The new creatures look like their own animals (outline and colour checks cover r10-r15) | test/logic/species-art.test.js |
+| Each of lands 10-15 opens through real play of the bundled 90-word list | test/e2e/newlands.test.js |
+| Fog signs, Nest, battle backdrop and arena befriending for every land from the tenth on | test/e2e/map.test.js, collection.test.js, battle.test.js |
+| The whole suite passes with 15 lands (what ships), 12 and 9 | `npm run check`, `npm run check:12`, `SPELLBEASTS_LANDS=9` |

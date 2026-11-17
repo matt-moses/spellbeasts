@@ -17,10 +17,10 @@ const { addStarter, buyEgg, hatchEgg, warmEggs } = await import('../../js/logic/
 const mk = (over = {}) => Object.assign(freshProfile({ name: 'T', avatarSpecies: 'x' }), over);
 const mastered = (n) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`w${i}`, { correctDays: ['a', 'b', 'c'] }]));
 
-test('twelve lands, r1 to r12 in order, and everything the data holds is live', () => {
+test('twelve lands, r1 to r12 in order, and only those are live', () => {
   assert.deepEqual(REGIONS.map((r) => r.id), Array.from({ length: 12 }, (_, i) => `r${i + 1}`));
-  assert.equal(REGIONS.length, ALL_REGIONS.length);
-  assert.equal(SPECIES.length, ALL_SPECIES.length);
+  assert.equal(REGIONS.length, 12);                    // the data holds more; only the first 12 are live here
+  assert.equal(SPECIES.length, ALL_SPECIES.filter((s) => REGIONS.some((r) => r.id === s.region)).length);
   assert.equal(new Set(REGIONS.map((r) => r.name)).size, 12);
 });
 test('48 species: ids and names unique, and every land has one common, uncommon, rare and arena creature', () => {
@@ -104,7 +104,6 @@ test('landmark chests pay out in the new lands', () => {
   assert.equal(claimLandmark(p, 'L490').ok, false);
 });
 test('eggs have a price and a hatch target in every land, rising all the way', () => {
-  assert.equal(EGG_PRICES.length, 12);
   for (let i = 0; i < 12; i++) {
     assert.ok(Number.isInteger(eggPrice(i)) && eggPrice(i) > 0, `price ${i}`);
     assert.ok(eggNeeded(i) > 0 && duplicateCrickets(i) > 0);
