@@ -14,16 +14,16 @@ after(async () => { await env?.close(); });
 
 // ---------------------------------------------------------------- the oracle (PRD rules, re-derived)
 const SAMPLE = SAMPLE_WORDS.map((w) => w.word);                    // the bundled list: 15 everyday words, then 60 harder ones
-const N = Number(process.env.SPELLBEASTS_LANDS ?? 15);                 // lands in play: the shipped 12, or 9 with SPELLBEASTS_LANDS=9 (this oracle does not read the game's own tables)
-const PRICE = [20, 30, 40, 50, 60, 75, 90, 105, 125, 145, 165, 190, 215, 240, 270].slice(0, N);
-const UNLOCK = [[1, 0], [2, 0], [4, 0], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50], [18, 53], [20, 56], [22, 60], [24, 64], [26, 68], [28, 72]].slice(0, N);
-const TRAIL_END = [30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58].slice(0, N).reduce((a, n) => [...a, (a.at(-1) ?? 0) + n], []);   // each land's stretch of trail is longer
-const RARE = new Set(['Glowmoth', 'Mossgolem', 'Stormwyrm', 'Starcub', 'Inkwell', 'Skycalf', 'Gemdrake', 'Sandwyrm', 'Solphoenix', 'Gourdwyrm', 'Anglerlight', 'Wishlion', 'Blizzowl', 'Rugtle', 'Galaxolotl']);
+const N = Number(process.env.SPELLBEASTS_LANDS ?? 21);                 // lands in play: the shipped 12, or 9 with SPELLBEASTS_LANDS=9 (this oracle does not read the game's own tables)
+const PRICE = [20, 30, 40, 50, 60, 75, 90, 105, 125, 145, 165, 190, 215, 240, 270, 300, 335, 370, 410, 450, 500].slice(0, N);
+const UNLOCK = [[1, 0], [2, 0], [4, 0], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50], [18, 53], [20, 56], [22, 60], [24, 64], [26, 68], [28, 72], [30, 76], [32, 80], [34, 84], [36, 88], [38, 92], [40, 96]].slice(0, N);
+const TRAIL_END = [30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70].slice(0, N).reduce((a, n) => [...a, (a.at(-1) ?? 0) + n], []);   // each land's stretch of trail is longer
+const RARE = new Set(['Glowmoth', 'Mossgolem', 'Stormwyrm', 'Starcub', 'Inkwell', 'Skycalf', 'Gemdrake', 'Sandwyrm', 'Solphoenix', 'Gourdwyrm', 'Anglerlight', 'Wishlion', 'Blizzowl', 'Rugtle', 'Galaxolotl', 'Thundrake', 'Gearwyrm', 'Mycodrake', 'Koigon', 'Krakenpup', 'Arcalope']);
 // Battles (PRD 12 and plan.md decisions D1-D8), re-derived here rather than imported.
-const ARENA_ONLY = ['Cloverknight', 'Reedwisp', 'Lavalynx', 'Aurorastag', 'Pearlcrab', 'Galeram', 'Echobat', 'Miragecat', 'Cosmoth', 'Hollowfawn', 'Sealantern', 'Mythcat', 'Rimefox', 'Haggleotter', 'Zenithawk'].slice(0, N);   // one per land, in land order
-const LAND_NAMES = ['Sunny Meadow', 'Misty Marsh', 'Ember Peaks', 'Moonlit Highlands', 'Coral Reef', 'Cloudspire', 'Crystal Caves', 'Sunset Dunes', 'Starfall Isles', 'Harvest Hollow', 'Lantern Harbor', 'Wishing Ruins', 'Frostwood', 'Sunken Bazaar', 'Starfall Summit'].slice(0, N);
+const ARENA_ONLY = ['Cloverknight', 'Reedwisp', 'Lavalynx', 'Aurorastag', 'Pearlcrab', 'Galeram', 'Echobat', 'Miragecat', 'Cosmoth', 'Hollowfawn', 'Sealantern', 'Mythcat', 'Rimefox', 'Haggleotter', 'Zenithawk', 'Tempestrel', 'Pendulark', 'Fungeist', 'Sagecrane', 'Cutlassfin', 'Chromarch'].slice(0, N);   // one per land, in land order
+const LAND_NAMES = ['Sunny Meadow', 'Misty Marsh', 'Ember Peaks', 'Moonlit Highlands', 'Coral Reef', 'Cloudspire', 'Crystal Caves', 'Sunset Dunes', 'Starfall Isles', 'Harvest Hollow', 'Lantern Harbor', 'Wishing Ruins', 'Frostwood', 'Sunken Bazaar', 'Starfall Summit', 'Stormbreak Cliffs', 'Clockwork Glen', 'Glowcap Grotto', 'Bamboo Falls', 'Treasure Cove', 'Rainbow Reach'].slice(0, N);
 const ARENA_LEVEL = 3;
-const heartsFor = (words, land) => Math.max(1, Math.min(words + Math.min(4, Math.floor(land / 3)), words + Math.floor(words / 3)));
+const heartsFor = (words, land) => Math.max(1, Math.min(words + Math.min(6, Math.floor(land / 3)), words + Math.floor(words / 3)));
 const cricketBag = (land) => 5 + 2 * land;
 const BOX_DAYS = [0, 2, 4, 7, 14];                                   // box 1..5 -> days until due
 const TROPHY_NAMES = { 'first-hatch': 'First Hatch', 'capital-idea': 'Capital Idea', comeback: 'Comeback', 'perfect-flight': 'Perfect Flight', 'busy-bee': 'Busy Bee', 'sessions-25': 'Practice Pro', 'sessions-50': 'Super Bee', 'perfect-5': 'Flawless Five', 'streak-10': 'Streak of 10', 'streak-20': 'Unstoppable', 'first-try-100': 'Sharp Speller', 'first-try-500': 'Word Wizard', 'mastered-10': '10 Mastered', 'mastered-25': '25 Mastered', 'mastered-50': '50 Mastered', 'word-master': 'Word Master', 'day-streak-3': '3-Day Streak', 'day-streak-7': '7-Day Streak', 'day-streak-14': 'Fortnight Fan', 'day-streak-30': 'Month of Magic', 'level-5': 'Rising Star', 'level-10': 'Trainer Pro', 'level-15': 'Legend', 'explorer-3': 'Trailblazer', 'explorer-6': 'Adventurer', 'explorer-9': 'World Traveler', 'explorer-12': 'Master Explorer', 'walk-50': 'Long Walk', 'walk-150': 'Marathon Walker', 'stars-5': 'Treasure Hunter', 'stars-20': 'Star Collector', collector: 'Collector', 'collector-20': 'Big Collector', 'collector-all': 'Complete Collection', 'rare-find': 'Rare Find', 'hearts-5': 'Best Friends', 'fully-evolved': 'Fully Evolved', 'growing-family': 'Growing Family', champion: 'Champion' };
@@ -90,7 +90,7 @@ function satisfied(o, f = {}) {
   add(f.inSession && SAMPLE.length >= 10 && m >= SAMPLE.length, 'word-master');   // only checked while practising
   [[3, 'day-streak-3'], [7, 'day-streak-7'], [14, 'day-streak-14'], [30, 'day-streak-30']].forEach(([n, id]) => add(o.streak.cur >= n, id));
   [[5, 'level-5'], [10, 'level-10'], [15, 'level-15']].forEach(([n, id]) => add(lv >= n, id));
-  [[3, 'explorer-3'], [6, 'explorer-6'], [9, 'explorer-9'], ...(N >= 12 ? [[12, 'explorer-12']] : []), ...(N >= 15 ? [[15, 'explorer-15']] : [])].forEach(([n, id]) => add(o.unlocked.size >= n, id));
+  [[3, 'explorer-3'], [6, 'explorer-6'], [9, 'explorer-9'], ...(N >= 12 ? [[12, 'explorer-12']] : []), ...(N >= 15 ? [[15, 'explorer-15']] : []), ...(N >= 21 ? [[21, 'explorer-21']] : [])].forEach(([n, id]) => add(o.unlocked.size >= n, id));
   add(o.trail >= 50, 'walk-50'); add(o.trail >= 150, 'walk-150'); add(o.claimed.size >= 5, 'stars-5'); add(o.claimed.size >= 20, 'stars-20');
   add(o.creatures >= 10, 'collector'); add(o.creatures >= 20, 'collector-20'); add(o.species.size >= N * 4, 'collector-all'); add(o.battlesWon >= 10, 'champion');
   add([...o.species].some((n) => RARE.has(n)), 'rare-find'); add(o.hearts >= 5, 'hearts-5');
@@ -384,7 +384,7 @@ test('whole game: two weeks of play checked against an independent model, with z
       const names = await page.$$eval('.new-trophies .trophy-card strong', (e) => e.map((x) => x.textContent));
       assert.deepEqual(names.sort(), [...newTrophies].map((t) => TROPHY_NAMES[t]).sort(), `${day}: trophies on summary`);
       const regionMsg = (await page.locator('.region-unlocked').count()) ? await page.textContent('.region-unlocked') : '';
-      assert.equal((regionMsg.match(/Misty Marsh|Ember Peaks|Moonlit Highlands|Coral Reef|Cloudspire|Crystal Caves|Sunset Dunes|Starfall Isles|Harvest Hollow|Lantern Harbor|Wishing Ruins|Frostwood|Sunken Bazaar|Starfall Summit/g) ?? []).length, s.unlocked.length, `${day}: unlock message`);
+      assert.equal((regionMsg.match(/Misty Marsh|Ember Peaks|Moonlit Highlands|Coral Reef|Cloudspire|Crystal Caves|Sunset Dunes|Starfall Isles|Harvest Hollow|Lantern Harbor|Wishing Ruins|Frostwood|Sunken Bazaar|Starfall Summit|Stormbreak Cliffs|Clockwork Glen|Glowcap Grotto|Bamboo Falls|Treasure Cove|Rainbow Reach/g) ?? []).length, s.unlocked.length, `${day}: unlock message`);
       assert.equal((await page.locator('#levelup-ok').count()) === 1, s.leveled, `${day}: level-up celebration`);
       if (s.leveled) assert.match(await page.textContent('.levelup-overlay h2'), new RegExp(`Level ${lvlAfter}!`));
       await noJunk(`summary ${day}`);

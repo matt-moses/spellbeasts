@@ -11,14 +11,16 @@ import { awardTrophies } from '../logic/collection.js';
 import { TROPHIES } from '../logic/trophies.js';
 import { UNLOCKS, TOTAL_STEPS, REGION_END, regionStart, LANDMARKS, isReached, isClaimed, unlockRequirement, claimLandmark, regionOfStep } from '../logic/world.js';
 
-// The map is drawn for 9 lands (2800 wide), 12 (4100) or all 15 (5400): each trail is the previous one, carried on.
+// The map is drawn for 9 lands (2800 wide), 12 (4100), 15 (5400) or all 21 (8000): each trail is the previous one, carried on.
 const LANDS = landCount();
-const W = LANDS >= 15 ? 5400 : LANDS >= 12 ? 4100 : 2800, H = 620;
+const W = LANDS >= 21 ? 8000 : LANDS >= 15 ? 5400 : LANDS >= 12 ? 4100 : 2800, H = 620;
 // One long winding trail through all the lands (Catmull-Rom through these points).
 const ALL_POINTS = [[60, 520], [170, 450], [290, 520], [400, 540], [520, 470], [640, 400], [760, 330], [880, 380], [990, 470], [1110, 530], [1240, 480], [1350, 400], [1450, 320], [1570, 280], [1690, 350], [1800, 450], [1910, 520], [2030, 500], [2140, 430], [2250, 350], [2350, 290], [2460, 330], [2560, 420], [2660, 480], [2740, 430],
   [2850, 500], [2970, 540], [3090, 480], [3200, 400], [3310, 330], [3420, 290], [3530, 350], [3640, 450], [3750, 520], [3860, 500], [3960, 440], [4040, 400],
   [4150, 500], [4270, 540], [4390, 480], [4500, 400], [4610, 330], [4720, 290], [4830, 350], [4940, 450], [5050, 520], [5160, 500], [5260, 440], [5340, 400]];
-const POINTS = ALL_POINTS.slice(0, LANDS >= 15 ? 49 : LANDS >= 12 ? 37 : 25);
+// Lands 16-21 repeat the shape of lands 10-12, carried on 2600 and 3900 further than where it first sat.
+ALL_POINTS.push(...[1300, 2600].flatMap((dx) => ALL_POINTS.slice(37, 49).map(([x, y]) => [x + dx, y])));
+const POINTS = ALL_POINTS.slice(0, LANDS >= 21 ? 73 : LANDS >= 15 ? 49 : LANDS >= 12 ? 37 : 25);
 function smooth(pts) {
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
   for (let i = 0; i < pts.length - 1; i++) {
@@ -28,7 +30,7 @@ function smooth(pts) {
   return d;
 }
 const TRAIL = smooth(POINTS);
-const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8', '#e8a24a', '#e08fa8', '#9fb59a', '#8fd0ec', '#2fb5a8', '#7a74e0'].slice(0, REGIONS.length);
+const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8', '#e8a24a', '#e08fa8', '#9fb59a', '#8fd0ec', '#2fb5a8', '#7a74e0', '#8a9ac8', '#c9a06a', '#6f6ab0', '#7fc78a', '#e6cf94', '#b79be6'].slice(0, REGIONS.length);
 const INK = '#1d2433';
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -104,6 +106,30 @@ const SCENERY = [
   ([x, y, k]) => k < 0.4 ? `<g transform="translate(${x} ${y})"><path d="M-14 9L-3-12L4-3L8-9L16 9Z" fill="#8a93c0" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-6-4L-3-12L1-6L-2-3Z" fill="#fff"/></g>`
     : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M0-10L3-3L10-2L4 3L6 10L0 6L-6 10L-4 3L-10-2L-3-3Z" fill="#e9e4ff" stroke="${INK}" stroke-width="1.6" stroke-linejoin="round"/><path d="M12-8L28-18" stroke="#c8d4ff" stroke-width="2.4" stroke-linecap="round" opacity=".8"/></g>`
     : `<g transform="translate(${x} ${y})"><ellipse cx="0" cy="3" rx="11" ry="7" fill="#c8cbe8" stroke="${INK}" stroke-width="1.6"/><circle cx="3" cy="1" r="2.6" fill="#a4a8d0"/><circle cx="-4" cy="5" r="1.6" fill="#a4a8d0"/></g>`,
+  // r16 Stormbreak Cliffs: storm clouds, jagged cliffs, lightning
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><circle cx="-7" cy="-6" r="7" fill="#7f8aa8" stroke="${INK}" stroke-width="1.8"/><circle cx="3" cy="-10" r="9" fill="#929db8" stroke="${INK}" stroke-width="1.8"/><circle cx="11" cy="-5" r="6" fill="#7f8aa8" stroke="${INK}" stroke-width="1.8"/><path d="M2-2L-3 6H1L-1 13L6 3H2Z" fill="#ffe14d" stroke="${INK}" stroke-width="1.4" stroke-linejoin="round"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M-12 9L-8-8L-2 0L3-12L9-1L13 9Z" fill="#7a86a8" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-8-8L-5-2M3-12L5-5" stroke="#c8d0e8" stroke-width="1.6"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M-3-14L3-2H-1L2 10L-6-3H-2Z" fill="#ffe14d" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><ellipse cy="11" rx="9" ry="3" fill="#8a93b0" opacity=".6"/></g>`,
+  // r17 Clockwork Glen: gears, clock posts, springs
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><circle r="10" fill="#d8a02a" stroke="${INK}" stroke-width="1.8"/><circle r="4" fill="#fff3c0" stroke="${INK}" stroke-width="1.4"/><path d="M0-14V-10M0 10V14M-14 0H-10M10 0H14M-10-10L-7-7M10-10L7-7M-10 10L-7 7M10 10L7 7" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><rect x="-2" y="-2" width="4" height="12" fill="#8a5a2e"/><circle cy="-10" r="9" fill="#fff6dc" stroke="${INK}" stroke-width="1.8"/><path d="M0-10V-15M0-10L4-8" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M-6 9H6M-6 4H6M-6-1H6M-6-6H6" stroke="${INK}" stroke-width="2.6" stroke-linecap="round"/><path d="M-6 9Q-9 6.5-6 4M6 4Q9 1.5 6-1M-6-1Q-9-3.5-6-6" fill="none" stroke="#b0b8c4" stroke-width="2"/></g>`,
+  // r18 Glowcap Grotto: giant mushrooms, glowing spores
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><rect x="-3" y="-2" width="6" height="12" fill="#f4e6d0" stroke="${INK}" stroke-width="1.8"/><path d="M-14-2Q-14-16 0-16Q14-16 14-2Z" fill="#e8647a" stroke="${INK}" stroke-width="1.8"/><circle cx="-5" cy="-9" r="2" fill="#fff"/><circle cx="4" cy="-7" r="2.4" fill="#fff"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><rect x="-2" y="0" width="4" height="9" fill="#d8f4f0" stroke="${INK}" stroke-width="1.6"/><path d="M-9 0Q-9-10 0-10Q9-10 9 0Z" fill="#35b8c4" stroke="${INK}" stroke-width="1.8"/><circle cy="-16" r="6" fill="#bff7ff" opacity=".45"/></g>`
+    : `<g transform="translate(${x} ${y})"><circle cx="-6" cy="2" r="2.6" fill="#c8f4f8" opacity=".9"/><circle cx="4" cy="-6" r="2" fill="#ecd8ff" opacity=".9"/><circle cx="9" cy="5" r="3" fill="#ffd8e0" opacity=".9"/><circle cx="-2" cy="-10" r="1.6" fill="#fff"/></g>`,
+  // r19 Bamboo Falls: bamboo, waterfalls, stepping stones
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><path d="M-6 9V-14M0 9V-18M6 9V-12" stroke="#4a8a24" stroke-width="4.5" stroke-linecap="round"/><path d="M-8-3H-4M-2-7H2M4-1H8" stroke="${INK}" stroke-width="1.4"/><path d="M0-14Q8-16 11-11" fill="none" stroke="#8fcf5a" stroke-width="3" stroke-linecap="round"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M-8-12H8L10 10H-10Z" fill="#8a93a0" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-3-12V10M3-12V10" stroke="#bfe6fa" stroke-width="3.5"/><ellipse cy="11" rx="12" ry="3.5" fill="#d4eefa" stroke="${INK}" stroke-width="1.4"/></g>`
+    : `<g transform="translate(${x} ${y})"><ellipse cx="-5" cy="5" rx="7" ry="3.5" fill="#b8c0c8" stroke="${INK}" stroke-width="1.6"/><ellipse cx="7" cy="0" rx="6" ry="3" fill="#c8d0d8" stroke="${INK}" stroke-width="1.6"/><path d="M-12 9Q-8 7-4 9M2 4Q6 2 10 4" fill="none" stroke="#9fd4f2" stroke-width="1.6"/></g>`,
+  // r20 Treasure Cove: chests, palms, anchors
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><rect x="-11" y="-2" width="22" height="12" rx="2" fill="#a8693a" stroke="${INK}" stroke-width="1.8"/><path d="M-11-2Q-11-12 0-12Q11-12 11-2Z" fill="#c4833f" stroke="${INK}" stroke-width="1.8"/><rect x="-2" y="-3" width="4" height="6" fill="#ffd23f" stroke="${INK}" stroke-width="1.2"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M0 10Q-3-4 2-14" fill="none" stroke="#8a5a2e" stroke-width="4" stroke-linecap="round"/><path d="M2-14Q-8-16-12-8M2-14Q12-18 14-9M2-14Q-2-22 6-22" fill="none" stroke="#3fb870" stroke-width="3.5" stroke-linecap="round"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M0-12V8M-6-6H6M-9 2Q-9 9 0 9Q9 9 9 2" fill="none" stroke="#46546a" stroke-width="3" stroke-linecap="round"/><circle cy="-13" r="2.6" fill="none" stroke="#46546a" stroke-width="2.2"/></g>`,
+  // r21 Rainbow Reach: rainbows, prism crystals, sparkles
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><path d="M-16 8Q-16-14 0-14Q16-14 16 8" fill="none" stroke="#ef5a5a" stroke-width="3.6"/><path d="M-12 8Q-12-10 0-10Q12-10 12 8" fill="none" stroke="#ffd23f" stroke-width="3.6"/><path d="M-8 8Q-8-6 0-6Q8-6 8 8" fill="none" stroke="#5cbfe8" stroke-width="3.6"/><circle cx="-18" cy="9" r="4" fill="#fff"/><circle cx="18" cy="9" r="4" fill="#fff"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M0-13L8-3L0 9L-8-3Z" fill="#e0c8ff" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M0-13V9M-8-3H8" stroke="#fff" stroke-width="1.2" opacity=".8"/><path d="M11-8L16-12M12-3H18" stroke="#ff9fd0" stroke-width="2" stroke-linecap="round"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M0-10L2.5-3L10-2L4 3L6 10L0 6L-6 10L-4 3L-10-2L-2.5-3Z" fill="#fff6a8" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="-8" r="2" fill="#ff9fd0"/><circle cx="-12" cy="-6" r="1.6" fill="#9fe0ff"/></g>`,
 ];
 
 // ---------- park props (flat shapes, scattered on the grass away from the path) ----------
@@ -146,7 +172,7 @@ function starTile(state) {
   ${ready ? '<path class="twinkle" d="M16 -18L17.5 -14L21.5 -12.5L17.5 -11L16 -7L14.5 -11L10.5 -12.5L14.5 -14Z" fill="#ffc928" stroke="#1d2433" stroke-width="1"/>' : ''}</g>`;
 }
 
-const CLOUDS = [[40, 50, 1.0, 190], [620, 30, 0.8, 230], [1100, 90, 0.7, 260], [1600, 40, 1.0, 210], [2150, 80, 0.8, 240], [2600, 30, 0.9, 200], ...(LANDS >= 12 ? [[3050, 60, 0.9, 220], [3500, 35, 0.8, 250], [3950, 80, 1.0, 210]] : []), ...(LANDS >= 15 ? [[4350, 55, 0.9, 230], [4800, 35, 1.0, 215], [5250, 85, 0.8, 245]] : [])].map(([x, y, sc, dur], i) =>
+const CLOUDS = [[40, 50, 1.0, 190], [620, 30, 0.8, 230], [1100, 90, 0.7, 260], [1600, 40, 1.0, 210], [2150, 80, 0.8, 240], [2600, 30, 0.9, 200], ...(LANDS >= 12 ? [[3050, 60, 0.9, 220], [3500, 35, 0.8, 250], [3950, 80, 1.0, 210]] : []), ...(LANDS >= 15 ? [[4350, 55, 0.9, 230], [4800, 35, 1.0, 215], [5250, 85, 0.8, 245]] : []), ...(LANDS >= 21 ? [[5650, 50, 0.9, 225], [6100, 85, 0.8, 240], [6550, 35, 1.0, 210], [7000, 70, 0.9, 235], [7450, 40, 0.8, 250], [7850, 80, 1.0, 220]] : [])].map(([x, y, sc, dur], i) =>
   `<g class="drift" style="animation-duration:${dur}s;animation-delay:${-i * 30}s" opacity=".95" pointer-events="none"><g transform="translate(${x} ${y}) scale(${sc})" fill="#fff"><ellipse cx="0" cy="0" rx="46" ry="14"/><circle cx="-14" cy="-10" r="14"/><circle cx="10" cy="-14" r="18"/><circle cx="28" cy="-6" r="11"/></g></g>`).join('');
 
 const DEFS = (colors) => `<defs>

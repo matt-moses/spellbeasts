@@ -20,7 +20,7 @@ const NEW = ['r13', 'r14', 'r15'];
 
 test('fifteen lands, r1 to r15 in order, the last three named as chosen', () => {
   assert.deepEqual(REGIONS.map((r) => r.id), Array.from({ length: 15 }, (_, i) => `r${i + 1}`));
-  assert.equal(REGIONS.length, ALL_REGIONS.length);
+  assert.equal(REGIONS.length, 15);                    // the data holds more; only the first 15 are live here
   assert.deepEqual(REGIONS.slice(12).map((r) => r.name), ['Frostwood', 'Sunken Bazaar', 'Starfall Summit']);
   assert.equal(new Set(REGIONS.map((r) => r.name)).size, 15);
 });
@@ -89,8 +89,7 @@ test('a save from the twelve-land game keeps its place and finds the trail exten
   assert.deepEqual(advanceTrail(old), { moved: true, atGate: false });
 });
 test('eggs are priced and take longer in every land, rising all the way', () => {
-  assert.deepEqual(EGG_PRICES.slice(12), [215, 240, 270]);
-  assert.equal(EGG_PRICES.length, 15);
+  assert.deepEqual(EGG_PRICES.slice(12, 15), [215, 240, 270]);
   for (let i = 1; i < 15; i++) { assert.ok(eggPrice(i) > eggPrice(i - 1)); assert.ok(eggNeeded(i) > eggNeeded(i - 1)); }
 });
 test('eggs from lands 13 to 15 hatch only that land\'s three Nest creatures, never the arena one', () => {

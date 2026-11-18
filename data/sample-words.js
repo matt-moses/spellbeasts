@@ -1,5 +1,5 @@
-// Sample list: 15 everyday words, then 75 harder ones, with definitions and sentences written for this project.
-// 90 words is enough to master every land's requirement (the last land needs 72 mastered).
+// Sample list: 15 everyday words, then 99 harder ones, with definitions and sentences written for this project.
+// 114 words is enough to master every land's requirement (the last land needs 96 mastered).
 export const SAMPLE_LIST_ID = 'sample';
 export const SAMPLE_LIST_NAME = 'Sample words';
 export const SAMPLE_WORDS = [
@@ -94,4 +94,28 @@ export const SAMPLE_WORDS = [
   ['exchange', 'verb', 'To give one thing and get another in return.', 'We exchange stickers at recess.'],
   ['horizon', 'noun', 'The line where the sky seems to meet the land or sea.', 'The sun sank below the horizon.'],
   ['adventure', 'noun', 'An exciting and unusual experience.', 'Camping in the snow was a real adventure.'],
+  ['thunderstorm', 'noun', 'A storm with thunder, lightning and heavy rain.', 'We watched the thunderstorm from the porch.'],
+  ['mechanism', 'noun', 'The moving parts that make a machine work.', 'The mechanism inside the clock was tiny.'],
+  ['precise', 'adjective', 'Exact and carefully correct.', 'Use a precise measurement when you bake.'],
+  ['fungus', 'noun', 'A living thing, such as a mushroom, that grows on damp ground.', 'A fungus grew on the fallen log.'],
+  ['luminous', 'adjective', 'Giving off a soft glow of light.', 'The jellyfish was luminous in the dark water.'],
+  ['cavern', 'noun', 'A large cave.', 'Our voices echoed in the cavern.'],
+  ['bamboo', 'noun', 'A tall, fast-growing grass with hollow stems.', 'Pandas munch on bamboo all day.'],
+  ['waterfall', 'noun', 'Water falling from a high place over rocks.', 'Mist rose from the waterfall.'],
+  ['tranquil', 'adjective', 'Calm and peaceful.', 'The lake was tranquil at dawn.'],
+  ['treasure', 'noun', 'A collection of gold, jewels or other precious things.', 'The map led us to the buried treasure.'],
+  ['voyage', 'noun', 'A long trip, especially by sea.', 'The voyage across the ocean took a week.'],
+  ['anchor', 'noun', 'A heavy hook that keeps a boat from drifting.', 'The sailors dropped the anchor in the bay.'],
+  ['prism', 'noun', 'A piece of glass that splits light into colors.', 'The prism threw a rainbow on the wall.'],
+  ['shimmer', 'verb', 'To shine with a soft, flickering light.', 'The lake seemed to shimmer in the sun.'],
+  ['delicate', 'adjective', 'Easily broken or damaged.', 'The delicate teacup sat on the shelf.'],
+  ['magnificent', 'adjective', 'Very grand and beautiful.', 'The castle looked magnificent at sunset.'],
+  ['triumph', 'noun', 'A great success or victory.', 'Finishing the race was a triumph.'],
+  ['courageous', 'adjective', 'Brave when facing something scary.', 'The courageous firefighter rescued the kitten.'],
+  ['ancient', 'adjective', 'Very, very old.', 'We visited an ancient temple.'],
+  ['energy', 'noun', 'The power to be active or to make things work.', 'The solar panels make energy from sunlight.'],
+  ['gravity', 'noun', 'The force that pulls things toward the ground.', 'Gravity keeps our feet on the earth.'],
+  ['harmony', 'noun', 'Musical notes or people fitting together well.', 'The choir sang in perfect harmony.'],
+  ['victorious', 'adjective', 'Having won a contest.', 'The victorious team cheered.'],
+  ['celebrate', 'verb', 'To do something fun for a special day or event.', 'We celebrate birthdays with cake.'],
 ].map(([word, partOfSpeech, definition, sentence]) => ({ id: word, word, partOfSpeech, definition, sentence }));

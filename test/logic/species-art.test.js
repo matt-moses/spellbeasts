@@ -2,13 +2,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-globalThis.SPELLBEASTS_LANDS = 15;
+globalThis.SPELLBEASTS_LANDS = 21;
 const { SPECIES } = await import('../../js/logic/species.js');
 const { ART_KEYS, PART_NAMES } = await import('../../js/assets/creatures.js');
 
 const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 const dist = (a, b) => Math.hypot(...rgb(a).map((v, i) => v - rgb(b)[i]));
-const NEW = new Set(['r10', 'r11', 'r12', 'r13', 'r14', 'r15']);
+const NEW = new Set(['r10', 'r11', 'r12', 'r13', 'r14', 'r15', 'r16', 'r17', 'r18', 'r19', 'r20', 'r21']);
 const shape = (s) => `${s.art.body}/${s.art.ears}/${s.art.tail}`;      // the outline; the face alone does not make a different animal
 const stagesOf = (s) => ['s1', 's2', 's3'].flatMap((k) => s.art[k] ?? []);
 

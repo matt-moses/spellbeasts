@@ -20,6 +20,7 @@ import { careView, playView } from './ui/care.js';
 import { settingsView } from './ui/settings.js';
 import { startUpdateWatch } from './ui/update.js';
 import { BUILD_VERSION } from './logic/build.js';
+import { applySeason } from './logic/season.js';
 import { addTime, isPracticeRoute, IDLE_MS } from './logic/playtime.js';
 import { loadAnalytics } from './platform/analytics.js';
 
@@ -39,6 +40,7 @@ const app = {
 };
 
 const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, words: wordsView, ...(SPELL_MASTER_ENABLED ? { learn: learnView } : {}), nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView, care: careView, play: playView, settings: settingsView, ...(arenaOn() ? { arena: arenaView, battle: battleView } : {}) };
+applySeason();      // Thanksgiving and Christmas looks (js/logic/season.js, css/main.css)
 const root = document.getElementById('app');
 
 function banners() {
