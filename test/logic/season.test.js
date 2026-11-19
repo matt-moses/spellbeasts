@@ -1,4 +1,4 @@
-// Seasonal looks: Thanksgiving from the week before Thanksgiving week, Christmas for all of December.
+// Seasonal looks: Thanksgiving for November up to Thanksgiving Day, Christmas from the day after through December.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { seasonFor, thanksgivingDay } from '../../js/logic/season.js';
@@ -11,19 +11,19 @@ test('Thanksgiving is the fourth Thursday of November', () => {
   assert.equal(thanksgivingDay(2028), 23);
   assert.equal(thanksgivingDay(2029), 22);
 });
-test('2026: the Thanksgiving look runs Monday Nov 16 (the week before Thanksgiving week) to Sunday Nov 29', () => {
-  assert.equal(on(2026, 11, 15), null);
-  for (let d = 16; d <= 29; d++) assert.equal(on(2026, 11, d), 'thanksgiving', `Nov ${d}`);
-  assert.equal(on(2026, 11, 30), null);
+test('2026: Thanksgiving look all of November up to Thanksgiving Day (Nov 26), then Christmas', () => {
+  assert.equal(on(2026, 10, 31), null);
+  for (let d = 1; d <= 26; d++) assert.equal(on(2026, 11, d), 'thanksgiving', `Nov ${d}`);
+  for (let d = 27; d <= 30; d++) assert.equal(on(2026, 11, d), 'christmas', `Nov ${d}`);
 });
-test('the window always starts on a Monday and ends on a Sunday', () => {
+test('the switch always happens the day after Thanksgiving, whichever date that is', () => {
   for (let y = 2024; y <= 2035; y++) {
     const t = thanksgivingDay(y);
-    assert.equal(new Date(y, 10, t - 10).getDay(), 1, `${y} start`);
-    assert.equal(new Date(y, 10, t + 3).getDay(), 0, `${y} end`);
-    assert.equal(on(y, 11, t - 11), null);
-    assert.equal(on(y, 11, t - 10), 'thanksgiving');
-    if (t + 3 <= 30) { assert.equal(on(y, 11, t + 3), 'thanksgiving'); assert.equal(on(y, 11, t + 4), t + 4 <= 30 ? null : 'christmas'); }   // a Nov 28 Thanksgiving runs into December, where Christmas wins
+    assert.equal(new Date(y, 10, t).getDay(), 4, `${y} is a Thursday`);
+    assert.equal(on(y, 11, 1), 'thanksgiving');
+    assert.equal(on(y, 11, t), 'thanksgiving');
+    assert.equal(on(y, 11, t + 1), 'christmas');
+    assert.equal(on(y, 11, 30), 'christmas');
   }
 });
 test('Christmas covers every day of December and nothing else', () => {

@@ -78,7 +78,7 @@ The win is saved the moment the last heart goes (not at the end of the session):
 |---|---|
 | 15 lands, 60 species, one common / uncommon / rare / arena per land; unlock rules (levels 24, 26, 28; 64, 68, 72 words), trail (660 steps), egg prices (215, 240, 270), fifth battle tier, `explorer-15` trophy | test/logic/lands15.test.js |
 | 21 lands, 84 species, one common / uncommon / rare / arena per land; unlock rules (levels 30-40; 76-96 words), trail (1050 steps), egg prices (300-500), sixth and seventh battle tiers, `explorer-21` trophy, a fifteen-land save keeps its place | test/logic/lands21.test.js |
-| Seasonal looks: Thanksgiving window (Monday of the week before Thanksgiving week to the Sunday after), all of December, overrides | test/logic/season.test.js |
+| Seasonal looks: Thanksgiving for November up to Thanksgiving Day, Christmas from the day after through December, overrides | test/logic/season.test.js |
 | A save from the twelve-land game keeps its place and finds the trail extended | test/logic/lands15.test.js ("a save from the twelve-land game") |
 | The new creatures look like their own animals (outline and colour checks cover r10-r21) | test/logic/species-art.test.js |
 | Each of lands 10-21 opens through real play of the bundled 114-word list | test/e2e/newlands.test.js |

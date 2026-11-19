@@ -1,7 +1,6 @@
 // Seasonal theming: which holiday look the game wears on a given day.
-//   thanksgiving: from the Monday of the week before Thanksgiving week, through the Sunday after Thanksgiving
-//                 (Thanksgiving is the fourth Thursday of November, US).
-//   christmas:    all of December.
+//   thanksgiving: all of November up to and including Thanksgiving Day (the fourth Thursday of November, US).
+//   christmas:    the day after Thanksgiving through the end of December.
 // Pure and local-time, so it is easy to test. `override` ('thanksgiving' | 'christmas' | 'none') is for previewing and tests.
 export const SEASONS = ['thanksgiving', 'christmas'];
 
@@ -14,10 +13,7 @@ export function seasonFor(date = new Date(), override = null) {
   if (override) return SEASONS.includes(override) ? override : null;
   const y = date.getFullYear(), m = date.getMonth(), d = date.getDate();
   if (m === 11) return 'christmas';
-  if (m === 10) {
-    const t = thanksgivingDay(y);
-    if (d >= t - 10 && d <= t + 3) return 'thanksgiving';
-  }
+  if (m === 10) return d <= thanksgivingDay(y) ? 'thanksgiving' : 'christmas';
   return null;
 }
 
