@@ -410,6 +410,12 @@ details.faq p { margin:.5rem 0 .2rem; font-size:1.05rem; }
 .battle-stage[data-land="r19"] { --bs-sky:#e2f5e0; --bs-floor:#7fc78a; --bs-floor-d:#4f9a5c; }
 .battle-stage[data-land="r20"] { --bs-sky:#dff1f7; --bs-floor:#e6cf94; --bs-floor-d:#b9a164; }
 .battle-stage[data-land="r21"] { --bs-sky:#fde6f3; --bs-floor:#b79be6; --bs-floor-d:#8b6fc0; }
+.battle-stage[data-land="r22"] { --bs-sky:#ffe6f1; --bs-floor:#f2a5c8; --bs-floor-d:#c97a9f; }
+.battle-stage[data-land="r23"] { --bs-sky:#f8ecd2; --bs-floor:#cfb27a; --bs-floor-d:#a38a52; }
+.battle-stage[data-land="r24"] { --bs-sky:#dff4f4; --bs-floor:#a8dcee; --bs-floor-d:#6fb0c9; }
+.battle-stage[data-land="r25"] { --bs-sky:#f6e3e6; --bs-floor:#a7c96a; --bs-floor-d:#7a9c3f; }
+.battle-stage[data-land="r26"] { --bs-sky:#f1e6d0; --bs-floor:#a47a52; --bs-floor-d:#7a5636; }
+.battle-stage[data-land="r27"] { --bs-sky:#cfd0f2; --bs-floor:#6a68b8; --bs-floor-d:#454393; }
 .bs-field { position:relative; display:flex; justify-content:space-between; align-items:flex-end; padding:34px 8% 6px; border-radius:22px; overflow:hidden; box-shadow:0 6px 0 var(--lip);
   background:radial-gradient(120% 60% at 50% 100%, var(--bs-floor) 0 58%, transparent 59%), linear-gradient(180deg, var(--bs-sky), #fff 120%); }
 .bs-side { position:relative; width:44%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }

@@ -7,7 +7,7 @@ test('fresh state is valid and ships the sample list', () => {
   const s = freshState();
   assert.equal(validate(s), true);
   assert.equal(s.wordLists.sample.words.length, SAMPLE_WORDS.length);
-  assert.ok(SAMPLE_WORDS.length >= 114, 'big enough to master the requirement of every land');
+  assert.ok(SAMPLE_WORDS.length >= 138, 'big enough to master the requirement of every land');
   assert.ok(s.wordLists.sample.words.some((w) => w.word === 'Monday'));
 });
 test('missing key -> fresh state, no warning', () => assert.deepEqual(migrate(null), { state: freshState(), warning: false }));

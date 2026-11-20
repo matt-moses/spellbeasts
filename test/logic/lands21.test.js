@@ -21,7 +21,7 @@ const NEW = ['r16', 'r17', 'r18', 'r19', 'r20', 'r21'];
 
 test('twenty-one lands, r1 to r21 in order, the last six named as chosen', () => {
   assert.deepEqual(REGIONS.map((r) => r.id), Array.from({ length: 21 }, (_, i) => `r${i + 1}`));
-  assert.equal(REGIONS.length, ALL_REGIONS.length);
+  assert.equal(REGIONS.length, 21);                    // the data holds more; only the first 21 are live here
   assert.deepEqual(REGIONS.slice(15).map((r) => r.name), ['Stormbreak Cliffs', 'Clockwork Glen', 'Glowcap Grotto', 'Bamboo Falls', 'Treasure Cove', 'Rainbow Reach']);
   assert.equal(new Set(REGIONS.map((r) => r.name)).size, 21);
 });
@@ -90,8 +90,7 @@ test('a save from the fifteen-land game keeps its place and finds the trail exte
   assert.deepEqual(advanceTrail(old), { moved: true, atGate: false });
 });
 test('eggs are priced and take longer in every land, rising all the way', () => {
-  assert.deepEqual(EGG_PRICES.slice(15), [300, 335, 370, 410, 450, 500]);
-  assert.equal(EGG_PRICES.length, 21);
+  assert.deepEqual(EGG_PRICES.slice(15, 21), [300, 335, 370, 410, 450, 500]);
   for (let i = 1; i < 21; i++) { assert.ok(eggPrice(i) > eggPrice(i - 1)); assert.ok(eggNeeded(i) > eggNeeded(i - 1)); }
 });
 test('eggs from lands 16 to 21 hatch only that land\'s three Nest creatures, never the arena one', () => {

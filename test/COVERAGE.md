@@ -78,9 +78,10 @@ The win is saved the moment the last heart goes (not at the end of the session):
 |---|---|
 | 15 lands, 60 species, one common / uncommon / rare / arena per land; unlock rules (levels 24, 26, 28; 64, 68, 72 words), trail (660 steps), egg prices (215, 240, 270), fifth battle tier, `explorer-15` trophy | test/logic/lands15.test.js |
 | 21 lands, 84 species, one common / uncommon / rare / arena per land; unlock rules (levels 30-40; 76-96 words), trail (1050 steps), egg prices (300-500), sixth and seventh battle tiers, `explorer-21` trophy, a fifteen-land save keeps its place | test/logic/lands21.test.js |
+| 27 lands, 108 species, one common / uncommon / rare / arena per land; unlock rules (levels 42-52; 100-120 words), trail (1512 steps), egg prices (550-850), eighth and ninth battle tiers, `explorer-27` trophy, a twenty-one-land save keeps its place | test/logic/lands27.test.js |
 | Seasonal looks: Thanksgiving for November up to Thanksgiving Day, Christmas from the day after through December, overrides | test/logic/season.test.js |
 | A save from the twelve-land game keeps its place and finds the trail extended | test/logic/lands15.test.js ("a save from the twelve-land game") |
-| The new creatures look like their own animals (outline and colour checks cover r10-r21) | test/logic/species-art.test.js |
-| Each of lands 10-21 opens through real play of the bundled 114-word list | test/e2e/newlands.test.js |
+| The new creatures look like their own animals (outline and colour checks cover r10-r27) | test/logic/species-art.test.js |
+| Each of lands 10-27 opens through real play of the bundled 138-word list | test/e2e/newlands.test.js |
 | Fog signs, Nest, battle backdrop and arena befriending for every land from the tenth on | test/e2e/map.test.js, collection.test.js, battle.test.js |
-| The whole suite passes with 21 lands (what ships), 15, 12 and 9 | `npm run check`, `npm run check:12`, `SPELLBEASTS_LANDS=9` |
+| The whole suite passes with 27 lands (what ships), 21, 15, 12 and 9 | `npm run check`, `npm run check:12`, `SPELLBEASTS_LANDS=9` |

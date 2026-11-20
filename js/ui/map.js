@@ -11,16 +11,16 @@ import { awardTrophies } from '../logic/collection.js';
 import { TROPHIES } from '../logic/trophies.js';
 import { UNLOCKS, TOTAL_STEPS, REGION_END, regionStart, LANDMARKS, isReached, isClaimed, unlockRequirement, claimLandmark, regionOfStep } from '../logic/world.js';
 
-// The map is drawn for 9 lands (2800 wide), 12 (4100), 15 (5400) or all 21 (8000): each trail is the previous one, carried on.
+// The map is drawn for 9 lands (2800 wide), 12 (4100), 15 (5400), 21 (8000) or all 27 (10600): each trail is the previous one, carried on.
 const LANDS = landCount();
-const W = LANDS >= 21 ? 8000 : LANDS >= 15 ? 5400 : LANDS >= 12 ? 4100 : 2800, H = 620;
+const W = LANDS >= 27 ? 10600 : LANDS >= 21 ? 8000 : LANDS >= 15 ? 5400 : LANDS >= 12 ? 4100 : 2800, H = 620;
 // One long winding trail through all the lands (Catmull-Rom through these points).
 const ALL_POINTS = [[60, 520], [170, 450], [290, 520], [400, 540], [520, 470], [640, 400], [760, 330], [880, 380], [990, 470], [1110, 530], [1240, 480], [1350, 400], [1450, 320], [1570, 280], [1690, 350], [1800, 450], [1910, 520], [2030, 500], [2140, 430], [2250, 350], [2350, 290], [2460, 330], [2560, 420], [2660, 480], [2740, 430],
   [2850, 500], [2970, 540], [3090, 480], [3200, 400], [3310, 330], [3420, 290], [3530, 350], [3640, 450], [3750, 520], [3860, 500], [3960, 440], [4040, 400],
   [4150, 500], [4270, 540], [4390, 480], [4500, 400], [4610, 330], [4720, 290], [4830, 350], [4940, 450], [5050, 520], [5160, 500], [5260, 440], [5340, 400]];
-// Lands 16-21 repeat the shape of lands 10-12, carried on 2600 and 3900 further than where it first sat.
-ALL_POINTS.push(...[1300, 2600].flatMap((dx) => ALL_POINTS.slice(37, 49).map(([x, y]) => [x + dx, y])));
-const POINTS = ALL_POINTS.slice(0, LANDS >= 21 ? 73 : LANDS >= 15 ? 49 : LANDS >= 12 ? 37 : 25);
+// Lands 16-27 repeat the shape of lands 10-12, carried on 1300 further each time.
+ALL_POINTS.push(...[1300, 2600, 3900, 5200].flatMap((dx) => ALL_POINTS.slice(37, 49).map(([x, y]) => [x + dx, y])));
+const POINTS = ALL_POINTS.slice(0, LANDS >= 27 ? 97 : LANDS >= 21 ? 73 : LANDS >= 15 ? 49 : LANDS >= 12 ? 37 : 25);
 function smooth(pts) {
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
   for (let i = 0; i < pts.length - 1; i++) {
@@ -30,7 +30,7 @@ function smooth(pts) {
   return d;
 }
 const TRAIL = smooth(POINTS);
-const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8', '#e8a24a', '#e08fa8', '#9fb59a', '#8fd0ec', '#2fb5a8', '#7a74e0', '#8a9ac8', '#c9a06a', '#6f6ab0', '#7fc78a', '#e6cf94', '#b79be6'].slice(0, REGIONS.length);
+const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8', '#e8a24a', '#e08fa8', '#9fb59a', '#8fd0ec', '#2fb5a8', '#7a74e0', '#8a9ac8', '#c9a06a', '#6f6ab0', '#7fc78a', '#e6cf94', '#b79be6', '#f2a5c8', '#cfb27a', '#a8dcee', '#a7c96a', '#a47a52', '#6a68b8'].slice(0, REGIONS.length);
 const INK = '#1d2433';
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -130,6 +130,30 @@ const SCENERY = [
   ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><path d="M-16 8Q-16-14 0-14Q16-14 16 8" fill="none" stroke="#ef5a5a" stroke-width="3.6"/><path d="M-12 8Q-12-10 0-10Q12-10 12 8" fill="none" stroke="#ffd23f" stroke-width="3.6"/><path d="M-8 8Q-8-6 0-6Q8-6 8 8" fill="none" stroke="#5cbfe8" stroke-width="3.6"/><circle cx="-18" cy="9" r="4" fill="#fff"/><circle cx="18" cy="9" r="4" fill="#fff"/></g>`
     : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M0-13L8-3L0 9L-8-3Z" fill="#e0c8ff" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M0-13V9M-8-3H8" stroke="#fff" stroke-width="1.2" opacity=".8"/><path d="M11-8L16-12M12-3H18" stroke="#ff9fd0" stroke-width="2" stroke-linecap="round"/></g>`
     : `<g transform="translate(${x} ${y})"><path d="M0-10L2.5-3L10-2L4 3L6 10L0 6L-6 10L-4 3L-10-2L-2.5-3Z" fill="#fff6a8" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="-8" r="2" fill="#ff9fd0"/><circle cx="-12" cy="-6" r="1.6" fill="#9fe0ff"/></g>`,
+  // r22 Sugarplum Meadows: gumdrops, lollipops, candy canes
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><path d="M-5-4H5V3Q5 9 0 9Q-5 9-5 3Z" fill="#f58ab8" stroke="${INK}" stroke-width="1.8"/><path d="M-5-4Q-5-12 0-12Q5-12 5-4" fill="#ffd1e6" stroke="${INK}" stroke-width="1.8"/><circle cx="-1.5" cy="-1" r="1.2" fill="#fff"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><rect x="-1.6" y="-2" width="3.2" height="12" fill="#fff" stroke="${INK}" stroke-width="1.4"/><circle cy="-10" r="9" fill="#f5a14a" stroke="${INK}" stroke-width="1.8"/><path d="M0-10m-5 0a5 5 0 1 1 5 5" fill="none" stroke="#fff" stroke-width="2"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M-6 9V-6Q-6-14 2-14Q10-14 10-8" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><path d="M-6 9V-6Q-6-14 2-14Q10-14 10-8" fill="none" stroke="#e5484d" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"/></g>`,
+  // r23 Fossil Flats: bone arches, dino eggs, ferns
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><path d="M-14 6Q-14-6 0-6Q14-6 14 6" fill="none" stroke="#f3e7c9" stroke-width="3.5" stroke-linecap="round"/><path d="M-10 6V-2M-5 6V-5M0 6V-6M5 6V-5M10 6V-2" stroke="${INK}" stroke-width="2" stroke-linecap="round"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><ellipse cy="2" rx="8" ry="10" fill="#e8d9a8" stroke="${INK}" stroke-width="1.8"/><path d="M-5-3L-2 0L-5 3M3-5L5-2L2 0" fill="none" stroke="#a38a52" stroke-width="1.5"/><circle cx="2" cy="6" r="1.6" fill="#a38a52"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M0 10Q-2 0 0-8" fill="none" stroke="#4a8a3a" stroke-width="3" stroke-linecap="round"/><path d="M0-8Q-12-10-14 0M0-4Q-10-4-12 4M0-8Q12-10 14 0M0-4Q10-4 12 4" fill="none" stroke="#6fb040" stroke-width="3" stroke-linecap="round"/></g>`,
+  // r24 Aurora Ice Shelf: icebergs, igloos, aurora ribbons
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><path d="M-12 9L-6-6L0 0L5-12L13 9Z" fill="#d6eefa" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M5-12L2-4L7-2" fill="none" stroke="#fff" stroke-width="2"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M-11 9Q-11-6 0-6Q11-6 11 9Z" fill="#fff" stroke="${INK}" stroke-width="1.8"/><path d="M-3 9V3Q-3 0 0 0Q3 0 3 3V9" fill="#6fb0c9" stroke="${INK}" stroke-width="1.5"/><path d="M-9 2H9M-6-3H6" stroke="#cfe3f0" stroke-width="1.2"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M-14-2Q-6-14 0-4Q6-14 14-2" fill="none" stroke="#5ad0c0" stroke-width="4" stroke-linecap="round" opacity=".85"/><path d="M-12 4Q-5-6 0 2Q5-6 12 4" fill="none" stroke="#a090d8" stroke-width="3" stroke-linecap="round" opacity=".85"/></g>`,
+  // r25 Moonberry Orchard: fruit trees, baskets, fallen fruit
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><rect x="-2" y="2" width="4" height="9" fill="#7a4a2a" stroke="${INK}" stroke-width="1.4"/><circle r="10" cy="-5" fill="#a7c96a" stroke="${INK}" stroke-width="1.8"/><circle cx="-4" cy="-6" r="2.4" fill="#e5484d"/><circle cx="4" cy="-3" r="2.4" fill="#e5484d"/><circle cx="1" cy="-10" r="2.4" fill="#e5484d"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M-9-2H9L7 9H-7Z" fill="#c9a06a" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M-9-2Q0-14 9-2" fill="none" stroke="#7a4a2a" stroke-width="2.4"/><circle cx="-3" cy="-4" r="3" fill="#e5484d" stroke="${INK}" stroke-width="1.2"/><circle cx="3" cy="-5" r="3" fill="#f0a070" stroke="${INK}" stroke-width="1.2"/></g>`
+    : `<g transform="translate(${x} ${y})"><circle cx="-4" cy="3" r="6" fill="#e5484d" stroke="${INK}" stroke-width="1.6"/><circle cx="6" cy="5" r="5" fill="#8ab83a" stroke="${INK}" stroke-width="1.6"/><path d="M-4-3Q-2-7 1-7" fill="none" stroke="#4a8a3a" stroke-width="2" stroke-linecap="round"/></g>`,
+  // r26 Lexicon Library: book stacks, scrolls, candles
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><rect x="-12" y="5" width="24" height="5" fill="#a03a4a" stroke="${INK}" stroke-width="1.6"/><rect x="-10" y="0" width="20" height="5" fill="#3a5a9a" stroke="${INK}" stroke-width="1.6"/><rect x="-8" y="-5" width="16" height="5" fill="#c8a050" stroke="${INK}" stroke-width="1.6"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><path d="M-8-8H6Q10-8 10-4V6Q10 10 6 10H-8Z" fill="#f3e7c9" stroke="${INK}" stroke-width="1.8"/><path d="M-4-3H5M-4 1H5M-4 5H3" stroke="#a38a52" stroke-width="1.4"/><circle cx="-8" cy="1" r="3" fill="#e0c88a" stroke="${INK}" stroke-width="1.4"/></g>`
+    : `<g transform="translate(${x} ${y})"><rect x="-3" y="-2" width="6" height="12" fill="#f5e9c8" stroke="${INK}" stroke-width="1.6"/><path d="M0-3Q-4-9 0-14Q4-9 0-3Z" fill="#ffb347" stroke="${INK}" stroke-width="1.4"/><ellipse cy="10" rx="8" ry="2.5" fill="#a47a52" stroke="${INK}" stroke-width="1.2"/></g>`,
+  // r27 Slumber Sky: crescent moons, pillow clouds, stars
+  ([x, y, k]) => k < 0.45 ? `<g transform="translate(${x} ${y})"><path d="M-6-12Q-14 0-4 11Q-10 0-2-8Q0-10-6-12Z" fill="#fff6a8" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M0-12Q14-6 8 7Q4 11-4 11Q8 4 0-12Z" fill="#f6e46a" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/></g>`
+    : k < 0.75 ? `<g transform="translate(${x} ${y})"><ellipse cx="-4" cy="3" rx="10" ry="6" fill="#d9d8ff" stroke="${INK}" stroke-width="1.8"/><ellipse cx="6" cy="-2" rx="8" ry="5" fill="#ece8ff" stroke="${INK}" stroke-width="1.8"/><path d="M-8 3Q-4 6 0 3" fill="none" stroke="#8a86d6" stroke-width="1.4"/></g>`
+    : `<g transform="translate(${x} ${y})"><path d="M0-10L2.5-3L10-2L4 3L6 10L0 6L-6 10L-4 3L-10-2L-2.5-3Z" fill="#ffe27a" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="-8" r="2" fill="#c8d4ff"/><circle cx="-12" cy="-6" r="1.6" fill="#fff"/></g>`,
 ];
 
 // ---------- park props (flat shapes, scattered on the grass away from the path) ----------
@@ -172,7 +196,7 @@ function starTile(state) {
   ${ready ? '<path class="twinkle" d="M16 -18L17.5 -14L21.5 -12.5L17.5 -11L16 -7L14.5 -11L10.5 -12.5L14.5 -14Z" fill="#ffc928" stroke="#1d2433" stroke-width="1"/>' : ''}</g>`;
 }
 
-const CLOUDS = [[40, 50, 1.0, 190], [620, 30, 0.8, 230], [1100, 90, 0.7, 260], [1600, 40, 1.0, 210], [2150, 80, 0.8, 240], [2600, 30, 0.9, 200], ...(LANDS >= 12 ? [[3050, 60, 0.9, 220], [3500, 35, 0.8, 250], [3950, 80, 1.0, 210]] : []), ...(LANDS >= 15 ? [[4350, 55, 0.9, 230], [4800, 35, 1.0, 215], [5250, 85, 0.8, 245]] : []), ...(LANDS >= 21 ? [[5650, 50, 0.9, 225], [6100, 85, 0.8, 240], [6550, 35, 1.0, 210], [7000, 70, 0.9, 235], [7450, 40, 0.8, 250], [7850, 80, 1.0, 220]] : [])].map(([x, y, sc, dur], i) =>
+const CLOUDS = [[40, 50, 1.0, 190], [620, 30, 0.8, 230], [1100, 90, 0.7, 260], [1600, 40, 1.0, 210], [2150, 80, 0.8, 240], [2600, 30, 0.9, 200], ...(LANDS >= 12 ? [[3050, 60, 0.9, 220], [3500, 35, 0.8, 250], [3950, 80, 1.0, 210]] : []), ...(LANDS >= 15 ? [[4350, 55, 0.9, 230], [4800, 35, 1.0, 215], [5250, 85, 0.8, 245]] : []), ...(LANDS >= 21 ? [[5650, 50, 0.9, 225], [6100, 85, 0.8, 240], [6550, 35, 1.0, 210], [7000, 70, 0.9, 235], [7450, 40, 0.8, 250], [7850, 80, 1.0, 220]] : []), ...(LANDS >= 27 ? [[8250, 55, 0.9, 232], [8700, 80, 0.8, 244], [9150, 35, 1.0, 212], [9600, 70, 0.9, 238], [10050, 45, 0.8, 248], [10450, 85, 1.0, 222]] : [])].map(([x, y, sc, dur], i) =>
   `<g class="drift" style="animation-duration:${dur}s;animation-delay:${-i * 30}s" opacity=".95" pointer-events="none"><g transform="translate(${x} ${y}) scale(${sc})" fill="#fff"><ellipse cx="0" cy="0" rx="46" ry="14"/><circle cx="-14" cy="-10" r="14"/><circle cx="10" cy="-14" r="18"/><circle cx="28" cy="-6" r="11"/></g></g>`).join('');
 
 const DEFS = (colors) => `<defs>
@@ -188,7 +212,7 @@ ${colors.map((c, i) => `<radialGradient id="rg${i}" cx=".45" cy=".4" r=".8"><sto
 // Where a land's Arena flag stands: on the rim of the land's patch, as far as possible from the trail (so it never
 // covers a path tile or a treasure star) and clear of the Nest pin and its name label above the centre.
 function arenaSpot(mid, samples) {
-  const clear = (x, y) => Math.min(...samples.map((p) => Math.hypot(Math.max(x - 40 - p.x, 0, p.x - (x + 28)), Math.max(y - 54 - p.y, 0, p.y - (y + 30)))));   // gap from the whole flag to the trail
+  const clear = (x, y) => Math.min(...samples.map((p) => Math.hypot(Math.max(x - 38 - p.x, 0, p.x - (x + 38)), Math.max(y - 50 - p.y, 0, p.y - (y + 44)))));   // gap from the whole flag to the trail
   const free = (x, y) => y <= H - 60 && y >= 200 && x >= 50 && x <= W - 50;
   let best = null;
   for (let deg = 0; deg < 360; deg += 10) {          // first choice: on the rim of the patch, as far from the trail and the Nest pin as possible
@@ -202,11 +226,11 @@ function arenaSpot(mid, samples) {
   if (best && clear(best.x, best.y) >= 20) return best;
   // The trail runs too close to that spot (it can when lands sit close together): look further out, judging the whole flag.
   let wide = null;
-  for (const [rx, ry] of [[98, 78], [112, 90], [126, 102], [140, 112]]) for (let deg = 0; deg < 360; deg += 10) {
+  for (const [rx, ry] of [[98, 78], [112, 90], [126, 102], [140, 112], [154, 122], [168, 132]]) for (let deg = 0; deg < 360; deg += 5) {
     const a = (deg * Math.PI) / 180, x = mid.x + Math.cos(a) * rx, y = mid.y + Math.sin(a) * ry;
     if (!free(x, y)) continue;
     const nest = Math.min(Math.hypot(mid.x - x, mid.y - 50 - y), Math.hypot(mid.x - x, mid.y - 92 - y) + 10);
-    const score = Math.min(clear(x, y), nest - 20);
+    const score = Math.min(clear(x, y), nest - 10);
     if (!wide || score > wide.score) wide = { x, y, score };
   }
   return wide ?? best ?? { x: mid.x + 70, y: mid.y + 40 };
@@ -259,6 +283,7 @@ export function mapSection(app) {
   const at = (n) => path.getPointAtLength((len * n) / TOTAL_STEPS);
   const token = svg.querySelector('.token');
   const samples = Array.from({ length: 420 }, (_, i) => path.getPointAtLength((len * i) / 419));
+  const fine = Array.from({ length: Math.ceil(len / 6) + 1 }, (_, i) => path.getPointAtLength(Math.min(len, i * 6)));   // for the Arena flags: a long trail needs a closer look than 420 points give
   const centers = REGIONS.map((_, i) => at((regionStart(i) + REGION_END[i]) / 2));
 
   // path tile joints and the yellow "stop" tiles that carry the star landmarks
@@ -309,7 +334,7 @@ export function mapSection(app) {
       <circle cx="${mid.x - 5}" cy="${py - 2}" r="2.6" fill="#e8c27a"/><circle cx="${mid.x + 5}" cy="${py - 10}" r="2.2" fill="#e8c27a"/><circle cx="${mid.x + 6}" cy="${py + 1}" r="2" fill="#e8c27a"/>
       <rect x="${mid.x - lw / 2}" y="${py - 52}" width="${lw}" height="23" rx="11.5" fill="#fff" stroke="#ffb21c" stroke-width="2.5"/>
       <text x="${mid.x}" y="${py - 36}" text-anchor="middle" font-size="13.5" font-weight="bold" fill="${INK}">${label}</text></g>`;
-      if (arenaOn()) { const spot = arenaSpot(mid, samples); pins += arenaPin(r, spot.x, spot.y - 8, arenaOpen(profile)); }
+      if (arenaOn()) { const spot = arenaSpot(mid, fine.filter((p) => Math.abs(p.x - mid.x) < 260)); pins += arenaPin(r, spot.x, spot.y - 8, arenaOpen(profile)); }
     }
   });
   svg.querySelector('.layer-regions').innerHTML = regions;

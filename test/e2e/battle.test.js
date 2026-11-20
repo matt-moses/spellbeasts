@@ -304,7 +304,7 @@ test('with the Arena switched off there is no way in: no flags, no Arena or batt
   await context.close();
 });
 
-test('a battle in each of the newest lands: its own backdrop and creature, its tougher hearts, a win that befriends the arena creature', { skip: skip || (REGIONS.length < 12 && 'only with 12 lands'), timeout: 180000 }, async () => {
+test('a battle in each of the newest lands: its own backdrop and creature, its tougher hearts, a win that befriends the arena creature', { skip: skip || (REGIONS.length < 12 && 'only with 12 lands'), timeout: 600000 }, async () => {
   for (const [i, id] of REGIONS.map((r, i) => [i, r.id]).slice(9)) {
     const state = battleState(); state.profiles.p1.map.unlockedRegions = REGIONS.map((r) => r.id);
     const { page, context, errors } = await open({ state, reducedMotion: 'reduce' });

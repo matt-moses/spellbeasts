@@ -1,5 +1,5 @@
-// Sample list: 15 everyday words, then 99 harder ones, with definitions and sentences written for this project.
-// 114 words is enough to master every land's requirement (the last land needs 96 mastered).
+// Sample list: 15 everyday words, then 123 harder ones, with definitions and sentences written for this project.
+// 138 words is enough to master every land's requirement (the last land needs 120 mastered).
 export const SAMPLE_LIST_ID = 'sample';
 export const SAMPLE_LIST_NAME = 'Sample words';
 export const SAMPLE_WORDS = [
@@ -118,4 +118,28 @@ export const SAMPLE_WORDS = [
   ['harmony', 'noun', 'Musical notes or people fitting together well.', 'The choir sang in perfect harmony.'],
   ['victorious', 'adjective', 'Having won a contest.', 'The victorious team cheered.'],
   ['celebrate', 'verb', 'To do something fun for a special day or event.', 'We celebrate birthdays with cake.'],
+  ['dessert', 'noun', 'A sweet food eaten at the end of a meal.', 'We had apple pie for dessert.'],
+  ['caramel', 'noun', 'A sweet, sticky treat made from melted sugar.', 'She dipped the apple in warm caramel.'],
+  ['delicious', 'adjective', 'Tasting or smelling very good.', 'The soup smelled delicious.'],
+  ['fossil', 'noun', 'The mark or bones of a plant or animal from long ago, turned to stone.', 'We found a fossil of a fern in the rock.'],
+  ['dinosaur', 'noun', 'A large reptile that lived millions of years ago.', 'The dinosaur skeleton filled the museum hall.'],
+  ['skeleton', 'noun', 'All the bones that hold up a body.', 'A whale skeleton hung from the ceiling.'],
+  ['iceberg', 'noun', 'A huge chunk of ice floating in the sea.', 'Most of an iceberg is hidden under the water.'],
+  ['penguin', 'noun', 'A black and white bird that swims but cannot fly.', 'The penguin slid across the ice on its belly.'],
+  ['glacier', 'noun', 'A very slow river of ice.', 'The glacier carved a valley over thousands of years.'],
+  ['orchard', 'noun', 'A field of fruit trees.', 'We picked apples in the orchard.'],
+  ['harvest', 'noun', 'The gathering of crops when they are ripe.', 'The farmers finished the harvest before the frost.'],
+  ['blossom', 'noun', 'A flower, especially on a fruit tree.', 'Each blossom became a tiny pear.'],
+  ['dictionary', 'noun', 'A book that tells what words mean and how to spell them.', 'I looked up the word in the dictionary.'],
+  ['vocabulary', 'noun', 'All the words a person knows.', 'Reading a lot will grow your vocabulary.'],
+  ['alphabet', 'noun', 'The letters of a language in their order.', 'She sang the alphabet song.'],
+  ['syllable', 'noun', 'A beat in a word, with one vowel sound.', 'The word "table" has two syllables.'],
+  ['author', 'noun', 'A person who writes books or stories.', 'The author signed my copy of the book.'],
+  ['imagination', 'noun', 'The power to picture things that are not there.', 'Her imagination turned the box into a rocket.'],
+  ['lullaby', 'noun', 'A soft song sung to help a child sleep.', 'Mom hummed a lullaby at bedtime.'],
+  ['pajamas', 'noun', 'Loose clothes worn in bed.', 'I put on my pajamas and brushed my teeth.'],
+  ['slumber', 'noun', 'Sleep.', 'The kitten was deep in slumber.'],
+  ['peaceful', 'adjective', 'Calm and quiet.', 'The beach was peaceful at sunrise.'],
+  ['drowsy', 'adjective', 'Sleepy and slow.', 'The warm room made us drowsy.'],
+  ['twilight', 'noun', 'The soft light just after the sun goes down.', 'Fireflies came out at twilight.'],
 ].map(([word, partOfSpeech, definition, sentence]) => ({ id: word, word, partOfSpeech, definition, sentence }));

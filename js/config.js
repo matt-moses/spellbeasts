@@ -14,8 +14,8 @@ export const SPELL_MASTER_ENABLED = false;
 export const ARENA_ENABLED = true;
 export const arenaOn = () => globalThis.SPELLBEASTS_ARENA ?? ARENA_ENABLED;
 
-// How many lands are live (js/logic/species.js, world.js). The data holds 21 and all 21 are live; the count stays a switch so
-// the game can be run (and the test suite checked) with the original 9, 12 or 15. Tests force a count with globalThis.SPELLBEASTS_LANDS.
-// Only 9, 12, 15 or 21 are supported: the map is drawn for one of those three shapes (js/ui/map.js).
-export const LAND_COUNT = 21;
+// How many lands are live (js/logic/species.js, world.js). The data holds 27 and all 27 are live; the count stays a switch so
+// the game can be run (and the test suite checked) with the original 9, 12, 15 or 21. Tests force a count with globalThis.SPELLBEASTS_LANDS.
+// Only 9, 12, 15, 21 or 27 are supported: the map is drawn for one of those three shapes (js/ui/map.js).
+export const LAND_COUNT = 27;
 export const landCount = () => globalThis.SPELLBEASTS_LANDS ?? LAND_COUNT;
