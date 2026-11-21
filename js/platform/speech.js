@@ -41,6 +41,7 @@ export function rateFor(slow, rate = DEFAULT_RATE) {
 export function createSpeaker({ synth = globalThis.speechSynthesis, Utterance = globalThis.SpeechSynthesisUtterance, getSettings = () => ({}) } = {}) {
   const available = !!(synth && Utterance);
   const voices = () => (available ? synth.getVoices() : []);
+  let timer = 0;
   return {
     get available() { return available && voices().length > 0; },
     voices,
@@ -51,15 +52,20 @@ export function createSpeaker({ synth = globalThis.speechSynthesis, Utterance = 
     speak(text, { slow = false } = {}) {
       if (!available || !text) return false;
       const s = getSettings();
+      clearTimeout(timer);
+      // Browsers (Chrome, Safari) can swallow or badly delay an utterance spoken in the same tick as cancel(), and can be
+      // left paused after the previous one. So un-pause, and if something was speaking or queued, give cancel() a moment.
+      const busy = !!(synth.speaking || synth.pending);
       synth.cancel();
+      if (synth.paused) synth.resume();
       const u = new Utterance(text);
       const v = pickVoice(voices(), s.voiceURI);
       if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-US';
       u.rate = rateFor(slow, s.rate ?? DEFAULT_RATE);
-      synth.speak(u);
+      if (busy) timer = setTimeout(() => synth.speak(u), 60); else synth.speak(u);
       return true;
     },
-    cancel() { if (available) synth.cancel(); },
+    cancel() { if (available) { clearTimeout(timer); synth.cancel(); } },
     // Voices often load late; call cb when the list changes.
     onVoicesChanged(cb) { if (available && 'onvoiceschanged' in synth) synth.onvoiceschanged = cb; },
   };

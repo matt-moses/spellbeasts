@@ -30,6 +30,33 @@ function smooth(pts) {
   return d;
 }
 const TRAIL = smooth(POINTS);
+
+// The trail never changes, so measure it once here in plain JS (the same Catmull-Rom curves smooth() writes) instead of
+// asking the browser with path.getPointAtLength() on every visit to Home: that call walks the whole long path and was taking
+// ~12 s per Home visit for 27 lands. Each curve is flattened into short straight pieces with a running length.
+const FLAT = (() => {
+  const pts = [POINTS[0]], cum = [0];
+  const STEPS = 48;
+  for (let i = 0; i < POINTS.length - 1; i++) {
+    const p0 = POINTS[i - 1] ?? POINTS[i], p1 = POINTS[i], p2 = POINTS[i + 1], p3 = POINTS[i + 2] ?? p2;
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    for (let k = 1; k <= STEPS; k++) {
+      const t = k / STEPS, u = 1 - t;
+      const q = [0, 1].map((a) => u * u * u * p1[a] + 3 * u * u * t * c1[a] + 3 * u * t * t * c2[a] + t * t * t * p2[a]);
+      const last = pts[pts.length - 1];
+      pts.push(q); cum.push(cum[cum.length - 1] + Math.hypot(q[0] - last[0], q[1] - last[1]));
+    }
+  }
+  return { pts, cum, len: cum[cum.length - 1] };
+})();
+function trailPointAt(l) {
+  const { pts, cum, len } = FLAT;
+  const d = Math.min(len, Math.max(0, l));
+  let lo = 0, hi = cum.length - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (cum[mid] <= d) lo = mid; else hi = mid; }
+  const span = cum[hi] - cum[lo] || 1, f = (d - cum[lo]) / span;
+  return { x: pts[lo][0] + (pts[hi][0] - pts[lo][0]) * f, y: pts[lo][1] + (pts[hi][1] - pts[lo][1]) * f };
+}
 const COLORS = ['#8fd45f', '#4fb39d', '#e5784d', '#9a8ee0', '#5cbfe8', '#d3e2f6', '#b9a7e8', '#f0cf86', '#6f8de8', '#e8a24a', '#e08fa8', '#9fb59a', '#8fd0ec', '#2fb5a8', '#7a74e0', '#8a9ac8', '#c9a06a', '#6f6ab0', '#7fc78a', '#e6cf94', '#b79be6', '#f2a5c8', '#cfb27a', '#a8dcee', '#a7c96a', '#a47a52', '#6a68b8'].slice(0, REGIONS.length);
 const INK = '#1d2433';
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -278,12 +305,11 @@ export function mapSection(app) {
   <p class="map-hint">Drag, swipe or use the arrows to explore new lands.</p>`;
   const svg = wrapEl.querySelector('svg.map');
   const scroller = wrapEl.querySelector('.map-scroll');
-  const path = svg.querySelector('.trail');
-  const len = path.getTotalLength();
-  const at = (n) => path.getPointAtLength((len * n) / TOTAL_STEPS);
+  const len = FLAT.len;
+  const at = (n) => trailPointAt((len * n) / TOTAL_STEPS);
   const token = svg.querySelector('.token');
-  const samples = Array.from({ length: 420 }, (_, i) => path.getPointAtLength((len * i) / 419));
-  const fine = Array.from({ length: Math.ceil(len / 6) + 1 }, (_, i) => path.getPointAtLength(Math.min(len, i * 6)));   // for the Arena flags: a long trail needs a closer look than 420 points give
+  const samples = Array.from({ length: 420 }, (_, i) => trailPointAt((len * i) / 419));
+  const fine = Array.from({ length: Math.ceil(len / 6) + 1 }, (_, i) => trailPointAt(i * 6));   // for the Arena flags: a long trail needs a closer look than 420 points give
   const centers = REGIONS.map((_, i) => at((regionStart(i) + REGION_END[i]) / 2));
 
   // path tile joints and the yellow "stop" tiles that carry the star landmarks

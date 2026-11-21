@@ -70,6 +70,16 @@ test('speech: speak uses voice and slow rate; reports no-voice help', () => {
   assert.match(none.helpMessage, /voice/i);
   assert.equal(createSpeaker({ synth: undefined, Utterance: undefined }).speak('x'), false);
 });
+test('speech: after a busy/paused engine, resumes and speaks only the latest word shortly after cancel', async () => {
+  const log = [];
+  const synth = { getVoices: () => voices, speaking: true, paused: true, cancel: () => log.push('cancel'), resume: () => log.push('resume'), speak: (u) => log.push(u.text) };
+  class U { constructor(t) { this.text = t; } }
+  const sp = createSpeaker({ synth, Utterance: U });
+  sp.speak('one'); sp.speak('two');
+  assert.deepEqual(log, ['cancel', 'resume', 'cancel', 'resume']);   // nothing spoken in the same tick as cancel
+  await new Promise((r) => setTimeout(r, 120));
+  assert.deepEqual(log.slice(4), ['two']);
+});
 
 function fakeCtx() {
   const made = [];

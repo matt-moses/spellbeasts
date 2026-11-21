@@ -123,6 +123,10 @@ fieldset { border:3px solid #e3edfa; border-radius:16px; display:flex; gap:1rem;
 .correct-word .ok { color:var(--good); }
 .toast { position:fixed; left:50%; bottom:1.5rem; transform:translateX(-50%); background:var(--ink); color:#fff; padding:.5rem 1.1rem; border-radius:999px; opacity:0; pointer-events:none; z-index:20; }
 .toast.show { animation:toast 1.4s; }
+/* confetti when a word is mastered (js/ui/confetti.js) */
+.confetti { position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:30; }
+.confetti i { position:absolute; top:-14px; width:10px; height:14px; opacity:0; animation:confetti-fall 1.8s ease-in forwards; }
+@keyframes confetti-fall { 0% { opacity:1; transform:translate(0,0) rotate(0); } 100% { opacity:1; transform:translate(var(--dx),105vh) rotate(var(--rot)); } }
 @keyframes toast { 0%{opacity:0} 10%,70%{opacity:1} 100%{opacity:0} }
 
 /* ---------- summary / celebrations ---------- */

@@ -2,6 +2,7 @@ import { h, icon, fill as setKids } from './dom.js';
 import { companionSvg } from './art.js';
 import { makeInteractive } from './pet.js';
 import { spokenWord, spokenSentence } from '../logic/pronounce.js';
+import { confetti } from './confetti.js';
 
 export function practiceView(app) {
   if (!app.session) { queueMicrotask(() => app.go('/home')); return h('div'); }
@@ -111,6 +112,7 @@ const sentenceBtn = buttons.querySelector('#say-sentence');
         if (!scene.quiet) audio.play('correct');
         scene.correct(r);
         say(`${scene.toast?.(r) ?? '✓ Correct!'}  +${r.reward.crickets} 🦗${r.newlyMastered ? '  Mastered!' : ''}`);
+        if (r.newlyMastered) confetti();
         ask();
       } else { if (!scene.quiet) audio.play('gentle'); scene.miss(r); const t = scene.toast?.(r); if (t) say(t); showMiss(r); refresh(); }
     } else if (s.mode === 'correcting') {
