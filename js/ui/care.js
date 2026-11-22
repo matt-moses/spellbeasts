@@ -262,7 +262,7 @@ export function playView(app, creatureId) {
     fill(root, h('h1', {}, title),
       h('div', { class: 'panel', id: 'game-result' }, lines.map((l) => h('p', { class: 'lead' }, l)),
         h('p', { id: 'game-spent' }, refund ? `That game cost ${cost} crickets, and you got ${refund} back for playing so well!` : `That game cost ${cost} crickets. Play really well to get one back!`),
-        rec ? h('p', { id: 'game-best', class: rec.isNew ? 'lead' : 'small' }, rec.isNew ? `🏆 New best on ${DIFFICULTY_LABEL[difficultyOf(profile)]}!` : `Your best on ${DIFFICULTY_LABEL[difficultyOf(profile)]}: ${rec.best} ${GAMES[game].unit}`) : null,
+        rec && rec.best != null ? h('p', { id: 'game-best', class: rec.isNew ? 'lead' : 'small' }, rec.isNew ? `🏆 New best on ${DIFFICULTY_LABEL[difficultyOf(profile)]}!` : `Your best on ${DIFFICULTY_LABEL[difficultyOf(profile)]}: ${rec.best} ${GAMES[game].unit}`) : null,
         h('p', {}, `${name} had so much fun!`), extra ? h('p', { class: 'bubble' }, extra) : null),
       h('div', { class: 'actions' }, canPlay(profile) ? h('button', { class: 'primary big', id: 'game-again', onclick: again }, icon('play'), 'Play again') : h('button', { class: 'primary big', id: 'game-practice', onclick: practiceFirst }, icon('play'), 'Practice words to play more'),
         h('button', { class: 'secondary', id: 'game-menu', onclick: menu }, 'Choose another game'),
