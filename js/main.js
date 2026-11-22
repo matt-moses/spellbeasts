@@ -10,6 +10,7 @@ import { practiceView } from './ui/practice.js';
 import { battleView } from './ui/battle.js';
 import { arenaView } from './ui/arena.js';
 import { summaryView } from './ui/summary.js';
+import { chestView } from './ui/chest.js';
 import { trophiesView } from './ui/trophies.js';
 import { wordsView } from './ui/words.js';
 import { learnView } from './ui/learn.js';
@@ -40,7 +41,7 @@ const app = {
   choose(id) { this.profileId = id; this.battle = null; this.go('/home'); },
 };
 
-const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, trophies: trophiesView, words: wordsView, ...(SPELL_MASTER_ENABLED ? { learn: learnView } : {}), nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView, care: careView, play: playView, settings: settingsView, ...(arenaOn() ? { arena: arenaView, battle: battleView } : {}) };
+const routes = { '': profilesView, home: homeView, practice: practiceView, summary: summaryView, chest: chestView, trophies: trophiesView, words: wordsView, ...(SPELL_MASTER_ENABLED ? { learn: learnView } : {}), nest: nestView, sanctuary: sanctuaryView, book: bookView, parent: parentView, care: careView, play: playView, settings: settingsView, ...(arenaOn() ? { arena: arenaView, battle: battleView } : {}) };
 installGarland(applySeason());      // Thanksgiving and Christmas looks (js/logic/season.js, css/main.css)
 const root = document.getElementById('app');
 

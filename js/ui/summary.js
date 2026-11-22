@@ -8,6 +8,7 @@ import { creatureSvg } from './art.js';
 import { arenaOn } from '../config.js';
 import { ARENA_LEVEL } from '../logic/battle.js';
 import { startSession } from '../logic/session.js';
+import { chestsPending } from '../logic/chest.js';
 
 const CHAMPION_AT = 10;
 // The result of a battle, shown above the usual practice summary.
@@ -56,6 +57,7 @@ export function summaryView(app) {
       h('li', {}, `Crickets earned: 🦗 ${s.crickets}`),
       h('li', {}, `XP earned: ${s.xp}`),
       s.berries ? h('li', {}, `Berries found: ${s.berries}`) : null),
+    chestsPending(app.profile) ? h('div', { class: 'panel chest-banner', role: 'status' }, h('p', { class: 'lead' }, '🎁 You earned a treasure chest!'), h('button', { class: 'primary', id: 'summary-chest', onclick: () => app.go('/chest') }, 'Open it')) : null,
     s.unlocked.length ? h('p', { class: 'region-unlocked', role: 'status' }, `🗺️ New region unlocked: ${s.unlocked.map((id) => REGIONS.find((r) => r.id === id).name).join(', ')}!`) : null,
     arenaOn() && s.startLevel < ARENA_LEVEL && s.level >= ARENA_LEVEL ? h('p', { class: 'region-unlocked arena-open', role: 'status' }, 'The Arena is open! Look for the Arena flags on the map to battle wild creatures.') : null,
     s.trophies.length ? h('div', { class: 'new-trophies' }, h('h2', {}, 'New trophies!'),

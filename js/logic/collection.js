@@ -127,3 +127,12 @@ export function awardTrophies(profile, today, extra = {}) {
 
 export const companionOf = (profile) => profile.creatures.find((c) => c.id === profile.companion) ?? profile.creatures[0] ?? null;
 export const speciesName = (id) => speciesById(id)?.name ?? id;
+
+// A free egg (a treasure chest reward) from a land the trainer has open. Same egg as a bought one, just not paid for.
+export function grantEgg(profile, regionId) {
+  const i = regionIndex(regionId);
+  if (i < 0 || !profile.map.unlockedRegions.includes(regionId)) return null;
+  const egg = { id: newId('e', profile), regionId, progress: 0, needed: eggNeeded(i) };
+  profile.eggs.push(egg);
+  return egg;
+}

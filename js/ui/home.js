@@ -1,4 +1,5 @@
 import { SPELL_MASTER_ENABLED } from '../config.js';
+import { chestsPending, wordsToNextChest } from '../logic/chest.js';
 import { spellMasterSvg } from '../assets/spellmaster.js';
 import { h, icon } from './dom.js';
 import { companionSvg } from './art.js';
@@ -54,10 +55,12 @@ export function homeView(app) {
           h('span', { class: 'pill berries', id: 'berries-pill' }, '🍓', ` ${profile.berries ?? 0} berries`)),
         h('progress', { class: 'xpbar', max: lp.needed, value: lp.into, 'aria-label': `Experience: ${lp.into} of ${lp.needed}` }),
         h('small', {}, ` ${lp.into}/${lp.needed} XP to level ${lp.level + 1}`))),
+    chestsPending(profile) ? h('button', { class: 'tile t-yellow chest-tile', id: 'chest-tile', onclick: () => app.go('/chest') }, icon('trophy'), `Treasure chest! (${chestsPending(profile)})`) : null,
     readyEggs(profile).length ? h('p', { class: 'bubble ready-egg', role: 'status' }, '🥚', ' An egg is ready to hatch!') : null,
     hungry ? h('p', { class: 'bubble hungry', role: 'status' }, 'Your creatures are hungry! Practice to feed them.') : null,
     Object.keys(store.state.wordLists).length > 1 ? h('p', { class: 'small', id: 'list-name' }, `Word list: ${list.name}`) : null,
     h('p', { class: 'due' }, `${due} word${due === 1 ? '' : 's'} due today · ${fresh} new word${fresh === 1 ? '' : 's'} to learn`),
+    h('p', { class: 'small', id: 'chest-progress' }, `${wordsToNextChest(profile)} more mastered word${wordsToNextChest(profile) === 1 ? '' : 's'} for your next treasure chest`),
     h('div', { class: 'actions' },
       h('button', { class: 'primary big', id: 'practice', onclick: () => start(false) }, icon('play'), 'Practice'),
       bonusBtn),
