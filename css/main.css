@@ -615,3 +615,23 @@ html[data-season="christmas"] body::after {
 .pad-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:.8rem; max-width:420px; margin:.8rem auto; }
 .pad { aspect-ratio:1.4; border-radius:26px; background:var(--pad); color:#fff; font-size:1.4rem; font-weight:bold; opacity:.6; box-shadow:0 6px 0 rgba(0,0,0,.25); }
 .pad.lit { opacity:1; filter:brightness(1.25); outline:5px solid #fff; }
+.patch-grid { display:grid; gap:.35rem; max-width:480px; margin:.6rem auto; }
+.patch-tile { aspect-ratio:1; padding:0; border-radius:12px; font-size:1.5rem; font-weight:bold; background:#4fc254; color:#fff; box-shadow:0 4px 0 #2f9a3a; }
+.patch-tile.open { background:#f3e3c3; box-shadow:0 4px 0 #cdb98f; color:#5a4630; }
+.patch-tile.boom { background:#ffd9d9; box-shadow:0 4px 0 #e5a0a0; }
+.patch-tile.flag { background:#ffe27a; box-shadow:0 4px 0 #d9b93c; }
+.patch-tile.n1 { color:#2563eb; } .patch-tile.n2 { color:#15803d; } .patch-tile.n3 { color:#dc2626; } .patch-tile.n4 { color:#7c3aed; }
+#patch-hearts { display:inline-flex; gap:.15rem; } #patch-hearts .ico svg { width:26px; height:26px; } #patch-hearts .lost svg { filter:grayscale(1) opacity(.3); }
+#patch-flag.on { background:#ffe27a; }
+.space-field { background:#14163a; cursor:default; }
+.ship.bumped { opacity:.5; }
+#space-hearts { display:inline-flex; gap:.15rem; } #space-hearts .ico svg { width:26px; height:26px; } #space-hearts .lost svg { filter:grayscale(1) opacity(.3); }
+.space-pad button { touch-action:none; user-select:none; }
+.snake-field { background:#c9f0c0; cursor:default; }
+.snake-pad button { touch-action:manipulation; min-width:3.4rem; }
+.hang-word { display:flex; flex-wrap:wrap; gap:.4rem; justify-content:center; margin:1rem 0; }
+.slot { width:2.4rem; height:3rem; display:inline-flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:bold; border-bottom:5px solid var(--blue); }
+#hang-lives { display:inline-flex; flex-wrap:wrap; gap:.1rem; } #hang-lives .ico svg { width:22px; height:22px; } #hang-lives .lost svg { filter:grayscale(1) opacity(.3); }
+.keyboard { display:grid; grid-template-columns:repeat(auto-fit, minmax(2.6rem, 1fr)); gap:.4rem; max-width:560px; margin:.6rem auto; }
+.keyboard .key { padding:.5rem 0; border-radius:12px; font-weight:bold; }
+.keyboard .key.miss { opacity:.35; }

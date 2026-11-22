@@ -23,9 +23,9 @@ async function open(patch = () => {}, viewport = { width: 900, height: 1000 }) {
 }
 const saved = async (page) => Object.values((await page.evaluate(() => JSON.parse(localStorage.getItem('spellbeasts.v1')))).profiles)[0];
 
-test('the games menu offers six games and a way back to the pet', { skip }, async () => {
+test('the games menu offers ten games and a way back to the pet', { skip }, async () => {
   const { page, context } = await open();
-  assert.equal(await page.locator('.game-card').count(), 6);
+  assert.equal(await page.locator('.game-card').count(), 10);
   assert.match(await page.textContent('h1'), /Play with Little Burrowby/);
   await page.click('#game-pet'); await page.waitForSelector('#care-feed');
   await context.close();
@@ -562,6 +562,42 @@ test('Sky Flap and Pattern Parrot start, can be exited, and Pattern Parrot ends 
   // pads are random: keep pressing the same pad each round; it is wrong within a few rounds
   for (let i = 0; i < 60 && !(await page.locator('#game-result').count()); i++) { await page.click('#pad-0'); await page.clock.runFor(4000); }
   await page.waitForSelector('#game-result');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('Berry Patch can be dug and flagged; Star Drift moves and zaps without errors', { skip }, async () => {
+  const { page, context, errors } = await open();
+  await page.click('#diff-easy');
+  await page.evaluate(() => { let n = 0; Math.random = () => ((n += 0.137) % 1); });   // a fixed board, so the test is repeatable
+  await page.click('#game-patch'); await page.waitForSelector('.patch-tile');
+  assert.equal(await page.locator('.patch-tile').count(), 25);
+  await page.click('.patch-tile[data-index="12"]');
+  assert.ok(await page.locator('.patch-tile.open').count() >= 1, 'the first tap opens tiles');
+  await page.click('#patch-flag');
+  await page.locator('.patch-tile.hidden, .patch-tile[data-state="hidden"]').first().click();
+  assert.equal(await page.locator('.patch-tile[data-state="flag"]').count(), 1);
+  await page.click('#game-exit'); await page.waitForSelector('#game-space');
+  await page.click('#game-space'); await page.waitForSelector('.space-field');
+  await page.keyboard.down('ArrowRight'); await page.clock.runFor(600); await page.keyboard.up('ArrowRight');
+  await page.keyboard.down('ArrowUp'); await page.clock.runFor(600); await page.keyboard.up('ArrowUp');
+  await page.click('#space-fire'); await page.clock.runFor(300);
+  assert.ok(await page.locator('.rock').count() >= 3);
+  await page.keyboard.press('Escape'); await page.waitForSelector('#game-catch');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('Caterpillar turns and Hangman takes guesses without errors', { skip }, async () => {
+  const { page, context, errors } = await open();
+  await page.click('#game-snake'); await page.waitForSelector('.snake-field');
+  await page.keyboard.press('ArrowUp'); await page.clock.runFor(800);
+  await page.click('#game-exit'); await page.waitForSelector('#game-hangman');
+  await page.click('#game-hangman'); await page.waitForSelector('#hang-word');
+  const slots = await page.locator('.slot').count(); assert.ok(slots >= 3);
+  await page.keyboard.press('e'); await page.keyboard.press('a');
+  assert.equal(await page.locator('.key[data-letter="e"]').isDisabled(), true);
+  await page.keyboard.press('Escape'); await page.waitForSelector('#game-catch');
   assert.deepEqual(errors, []);
   await context.close();
 });

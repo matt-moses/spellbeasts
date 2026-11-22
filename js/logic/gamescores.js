@@ -9,6 +9,10 @@ export const GAMES = {
   flap: { title: 'Sky Flap', unit: 'gates', better: 'high' },
   pop: { title: 'Critter Pop', unit: 'critters', better: 'high' },
   pattern: { title: 'Pattern Parrot', unit: 'rounds', better: 'high' },
+  patch: { title: 'Berry Patch', unit: 'seconds', better: 'low' },
+  space: { title: 'Star Drift', unit: 'rocks', better: 'high' },
+  snake: { title: 'Caterpillar', unit: 'berries', better: 'high' },
+  hangman: { title: 'Hangman', unit: 'words', better: 'high' },
 };
 export const HANDS = ['left', 'right'];
 export const handOf = (settings) => (HANDS.includes(settings?.hand) ? settings.hand : 'left');

@@ -8,7 +8,7 @@ import { TROPHIES } from '../logic/trophies.js';
 import { stageName } from '../logic/species.js';
 import { makeInteractive } from './pet.js';
 import { runnerGame, memoryGame } from './games.js';
-import { flapGame, popGame, patternGame } from './games-more.js';
+import { flapGame, popGame, patternGame, patchGame, spaceGame, snakeGame, hangmanGame } from './games-more.js';
 import { DIFFICULTIES, DIFFICULTY_LABEL, GAMES, difficultyOf, setDifficulty, recordScore, bestText, handOf } from '../logic/gamescores.js';
 import { startSession } from '../logic/session.js';
 
@@ -229,7 +229,11 @@ export function playView(app, creatureId) {
         card('game-memory', 'memory', 'Find the matching creature pairs.', icon('star'), () => start(memoryGame)),
         card('game-flap', 'flap', 'Flap through the gates in the sky.', icon('play'), () => start(flapGame)),
         card('game-pop', 'pop', 'Tap the critters before they duck.', icon('heart'), () => start(popGame)),
-        card('game-pattern', 'pattern', 'Watch, listen, and repeat the pattern.', icon('gamepad'), () => start(patternGame))),
+        card('game-pattern', 'pattern', 'Watch, listen, and repeat the pattern.', icon('gamepad'), () => start(patternGame)),
+        card('game-patch', 'patch', 'Dig for berries and dodge the skunks.', icon('map'), () => start(patchGame)),
+        card('game-space', 'space', 'Zap space rocks as you drift.', icon('star'), () => start(spaceGame)),
+        card('game-snake', 'snake', 'Grow a caterpillar by eating berries.', icon('berry'), () => start(snakeGame)),
+        card('game-hangman', 'hangman', 'Guess the letters of your spelling words.', icon('book'), () => start(hangmanGame))),
       h('div', { class: 'actions' }, h('button', { class: 'secondary', id: 'game-pet', onclick: toCare }, `Back to ${name}`)));
   }
 
