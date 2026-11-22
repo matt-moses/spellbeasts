@@ -2,8 +2,9 @@
 import { h, fill } from './dom.js';
 import * as P from '../logic/parent.js';
 import { spokenWord } from '../logic/pronounce.js';
-import { formatDuration, recentTotals } from '../logic/playtime.js';
+import { formatDuration, recentTotals, learnShare } from '../logic/playtime.js';
 import { localDateString } from '../logic/leitner.js';
+import { BUILD_VERSION } from '../logic/build.js';
 
 const TABS = [['words', 'Word lists'], ['stats', 'Stats'], ['trainers', 'Trainers'], ['backup', 'Backup']];
 const WARN = "Contains your word list. Don't post it publicly.";
@@ -157,11 +158,13 @@ export function parentView(app) {
     out.append(h('div', { class: 'panel row' }, h('label', {}, 'Trainer ', h('select', { id: 'stats-profile', onchange: (e) => { ui.profileId = e.target.value; redraw(); } },
       profiles.map(([id, p]) => h('option', { value: id, selected: id === ui.profileId }, p.name)))), h('span', {}, `Practicing “${list.name}”`)));
     const time = profile.time ?? {}, week = recentTotals(profile.time, app.today(), 7);
+    const balanceLine = (t, label) => { const b = learnShare(t.practiceMs, t.gameMs); return h('p', { class: 'balance', 'data-row': label === 'All time' ? 'total' : 'week' }, b ? `${label}: ${b.learn}% learning, ${b.games}% games` : `${label}: no practice or game time yet`); };
     out.append(h('div', { class: 'panel time-spent' }, h('h2', {}, 'Time spent'),
       h('table', { class: 'time-table' }, h('thead', {}, h('tr', {}, ['', 'In the game', 'Practicing words', 'Playing games'].map((t) => h('th', {}, t)))),
         h('tbody', {},
           h('tr', { 'data-row': 'week' }, h('th', { scope: 'row' }, 'Last 7 days'), h('td', { class: 'play' }, formatDuration(week.playMs)), h('td', { class: 'practice' }, formatDuration(week.practiceMs)), h('td', { class: 'games' }, formatDuration(week.gameMs))),
           h('tr', { 'data-row': 'total' }, h('th', { scope: 'row' }, 'All time'), h('td', { class: 'play' }, formatDuration(time.playMs)), h('td', { class: 'practice' }, formatDuration(time.practiceMs)), h('td', { class: 'games' }, formatDuration(time.gameMs))))),
+      balanceLine(week, 'Last 7 days'), balanceLine(time, 'All time'),
       h('p', { class: 'small' }, 'Counted while the game is open and being used. Time in this Parent area is not counted. “Practicing” covers practice sessions, battles and the learn screen; “Playing games” is time in the mini-games.')));
     const rows = P.statsRows(profile, list);
     const mastered = rows.filter((r) => r.mastered).length;
@@ -201,20 +204,45 @@ export function parentView(app) {
   }
 
   // ---------------------------------------------------------------- Backup
+  function download(text, name) {
+    const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: name });
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
   function backupTab() {
     const out = h('div', { class: 'tab-body' });
     const msg = h('p', { class: 'note', role: 'status', id: 'backup-msg' });
     out.append(h('div', { class: 'panel' }, h('h2', {}, 'Export'), h('p', { class: 'warn' }, WARN),
       h('button', { class: 'primary', id: 'export', onclick: () => {
-        const blob = new Blob([P.exportJson(st())], { type: 'application/json' });
-        const a = h('a', { href: URL.createObjectURL(blob), download: `spellbeasts-backup-${localDateString()}.json` });
-        document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        download(P.exportJson(st()), `spellbeasts-backup-${localDateString()}.json`);
         msg.textContent = 'Backup file created. Keep it somewhere private.';
       } }, 'Download backup')));
+    // One trainer: a file to carry a single trainer's game to another machine (added there as a new trainer).
+    const trainers = Object.entries(st().profiles);
+    out.append(h('div', { class: 'panel' }, h('h2', {}, 'Move one trainer'),
+      h('p', { class: 'small' }, 'Download one trainer\'s game to carry to another computer or tablet. Importing it there adds the trainer as a new one and never replaces anyone.'),
+      trainers.length ? h('div', { class: 'row' }, trainers.map(([id, p]) => h('button', { class: 'secondary', id: `export-trainer-${id}`, type: 'button', onclick: () => {
+        download(P.exportTrainer(st(), id), `spellbeasts-${p.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() || 'trainer'}-${localDateString()}.json`);
+        msg.textContent = `${p.name}'s game was downloaded. Keep it somewhere private.`;
+      } }, `Download ${p.name}`))) : h('p', { class: 'small' }, 'No trainers yet.')));
+
     const holder = h('div');
     const file = h('input', { type: 'file', id: 'backup-file', accept: '.json,application/json', onchange: async (e) => {
       const f = e.target.files[0]; if (!f) return;
-      const r = P.parseBackup(await f.text());
+      const text = await f.text();
+      let kind = null; try { kind = JSON.parse(text)?.format; } catch { /* parse errors are reported below */ }
+      if (kind === P.TRAINER_FORMAT) {
+        const t = P.parseTrainer(text);
+        if (!t.ok) { holder.replaceChildren(h('p', { class: 'err', role: 'alert' }, t.error)); return; }
+        const pr = t.bundle.profile;
+        holder.replaceChildren(h('div', { class: 'confirm', role: 'alert' }, `Add ${pr.name} (level ${pr.level ?? 1}, ${(pr.creatures ?? []).length} creatures) as a new trainer here? Nobody is replaced. `,
+          h('button', { class: 'primary yes', id: 'confirm-trainer', onclick: () => {
+            const r = P.importTrainer(st(), t.bundle);
+            if (!r.ok) { holder.replaceChildren(h('p', { class: 'err', role: 'alert' }, r.error)); return; }
+            save(); file.value = ''; holder.replaceChildren(); say(`${r.name} was added as a new trainer.`); redraw();
+          } }, 'Yes, add trainer'), ' ', h('button', { class: 'secondary', onclick: () => { holder.replaceChildren(); file.value = ''; } }, 'Cancel')));
+        return;
+      }
+      const r = P.parseBackup(text);
       if (!r.ok) { holder.replaceChildren(h('p', { class: 'err', role: 'alert' }, r.error)); return; }
       const n = Object.keys(r.state.profiles).length;
       holder.replaceChildren(h('div', { class: 'confirm', role: 'alert' }, `This backup has ${n} trainer${n === 1 ? '' : 's'} and ${Object.keys(r.state.wordLists).length} word list(s). Importing will REPLACE everything in this browser. `,
@@ -224,7 +252,19 @@ export function parentView(app) {
           say('Backup restored.'); redraw();
         } }, 'Yes, replace everything'), ' ', h('button', { class: 'secondary', onclick: () => { holder.replaceChildren(); file.value = ''; } }, 'Cancel')));
     } });
-    out.append(h('div', { class: 'panel' }, h('h2', {}, 'Import'), h('p', {}, 'Choose a backup file made with “Download backup”.'), file, holder), msg);
+    out.append(h('div', { class: 'panel' }, h('h2', {}, 'Import'), h('p', {}, 'Choose a backup file (replaces everything) or a trainer file (adds one trainer).'), file, holder));
+
+    // A report to hand over when something looks wrong or you want the numbers analysed.
+    const hide = h('input', { type: 'checkbox', id: 'debug-hide', checked: true });
+    const report = () => P.debugReport(st(), { hideNames: hide.checked, appVersion: BUILD_VERSION, userAgent: navigator.userAgent });
+    out.append(h('div', { class: 'panel' }, h('h2', {}, 'Debug report'),
+      h('p', { class: 'small' }, 'A snapshot of the whole game with a short summary on top. Send it (or paste it) when you want help finding a problem or looking at the numbers.'),
+      h('label', { class: 'toggle' }, hide, ' Hide trainer names'),
+      h('p', { class: 'row' },
+        h('button', { class: 'primary', id: 'debug-download', type: 'button', onclick: () => { download(report(), `spellbeasts-debug-${localDateString()}.json`); msg.textContent = 'Debug report downloaded.'; } }, 'Download debug report'),
+        h('button', { class: 'secondary', id: 'debug-copy', type: 'button', onclick: async () => {
+          try { await navigator.clipboard.writeText(report()); msg.textContent = 'Debug report copied. Paste it into the chat.'; } catch { msg.textContent = 'Could not copy here. Use Download instead.'; }
+        } }, 'Copy to clipboard'))), msg);
     return out;
   }
 

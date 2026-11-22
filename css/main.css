@@ -646,3 +646,6 @@ html[data-season="christmas"] body::after {
 @media (prefers-reduced-motion: reduce) { .chest-tile { animation:none; } }
 .chest-reward { text-align:center; max-width:420px; margin:.6rem auto; }
 .chest-art .ico svg { width:72px; height:72px; }
+
+/* ---------- games: no double-tap zoom or text selection on touch screens (this screen only) ---------- */
+.screen.play, .screen.play * { touch-action:manipulation; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }

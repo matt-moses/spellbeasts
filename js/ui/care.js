@@ -204,6 +204,12 @@ export function playView(app, creatureId) {
   const creature = profile.creatures.find((c) => c.id === creatureId);
   if (!creature) { queueMicrotask(() => app.go('/sanctuary')); return h('div'); }
   const root = h('section', { class: 'screen play', 'data-creature': creature.id });
+  // iPad: no double-tap zoom, pinch zoom or text selection while in the games, and only here. Safari ignores
+  // user-scalable=no, so CSS (touch-action, see .screen.play) covers taps and these cover the pinch gesture.
+  const noZoom = (e) => e.preventDefault();
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, noZoom, { passive: false });
+  root.addEventListener('dblclick', noZoom);
+  app.cleanup.push(() => { for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.removeEventListener(ev, noZoom); });
   const name = stageName(creature.species, creature.stage);
   let stop = () => {};                                                   // cancels whatever game is running
   const toCare = () => { stop(); app.go(`/care/${creature.id}`); };

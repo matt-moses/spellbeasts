@@ -8,6 +8,7 @@ import { awardTrophies, warmEggs } from './collection.js';
 import { advanceTrail, updateUnlocks } from './world.js';
 import { SESSION_BERRIES } from './care.js';
 import { recordPlay } from './streak.js';
+import { credit } from './ledger.js';
 
 export function startSession({ profile, list, today, rng = Math.random, bonus = false, mode: label = null }) {
   const stats = (profile.wordStats[profile.activeListId] ??= {});
@@ -24,6 +25,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
 
   const gain = (crickets, xp) => {
     profile.crickets += crickets; profile.xp += xp;
+    credit(profile, label === 'battle' ? 'battle-words' : 'practice', crickets, today);
     tally.crickets += crickets; tally.xp += xp;
     const lvl = levelForXp(profile.xp);
     if (lvl > profile.level) tally.leveledUp = true;
@@ -91,7 +93,7 @@ export function startSession({ profile, list, today, rng = Math.random, bonus = 
       const sr = sessionReward({ firstSessionOfDay });
       gain(sr.crickets, sr.xp);
       profile.berries = (profile.berries ?? 0) + SESSION_BERRIES;
-      profile.sessions.push({ date: today, mode: label ?? (bonus ? 'bonus' : 'practice'), words: built.words.length, correctFirstTry: tally.correctFirstTry, misses: tally.misses });
+      profile.sessions.push({ date: today, mode: label ?? (bonus ? 'bonus' : 'practice'), words: built.words.length, correctFirstTry: tally.correctFirstTry, misses: tally.misses, crickets: tally.crickets });
       capSessions(profile);
       tally.unlocked.push(...updateUnlocks(profile));
       profile.streak = recordPlay(profile.streak, today);

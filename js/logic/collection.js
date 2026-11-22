@@ -3,6 +3,7 @@ import { eggPrice, eggNeeded, rollEgg, addEggProgress, duplicateCrickets, feedCr
 import { speciesInRegion, regionIndex, speciesById, bookSpecies } from './species.js';
 import { evaluateTrophies } from './trophies.js';
 import { isMastered } from './leitner.js';
+import { credit, debit } from './ledger.js';
 
 export const masteredCount = (profile) => Object.values(profile.wordStats[profile.activeListId] ?? {}).filter(isMastered).length;
 // The words this trainer has mastered in the active list, in list order (words removed from the list are skipped).
@@ -33,7 +34,7 @@ export function buyEgg(profile, regionId) {
   if (i < 0 || !profile.map.unlockedRegions.includes(regionId)) return { ok: false, reason: 'locked' };
   const price = eggPrice(i);
   if (profile.crickets < price) return { ok: false, reason: 'crickets' };
-  profile.crickets -= price;
+  profile.crickets -= price; debit(profile, 'egg', price);
   const egg = { id: newId('e', profile), regionId, progress: 0, needed: eggNeeded(i) };
   profile.eggs.push(egg);
   return { ok: true, egg };
@@ -59,7 +60,7 @@ export function hatchEgg(profile, eggId, rng = Math.random, today = '') {
   let creature, bonus = 0;
   if (duplicate) {
     bonus = duplicateCrickets(i);
-    profile.crickets += bonus;
+    profile.crickets += bonus; credit(profile, 'duplicate-egg', bonus);
     creature = profile.creatures.find((c) => c.species === species);
     creature.hearts += 1;
   } else {
@@ -76,7 +77,7 @@ export function feed(profile, creatureId, amount = 10) {
   const room = FEED_NEEDED[c.stage] - c.fed;
   const spend = Math.max(0, Math.min(amount, room, profile.crickets));
   if (!spend) return 0;
-  profile.crickets -= spend;
+  profile.crickets -= spend; debit(profile, 'feed', spend);
   Object.assign(c, feedCreature(c, spend));
   return spend;
 }

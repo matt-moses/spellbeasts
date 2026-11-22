@@ -1,8 +1,15 @@
 // Parent-area operations (PRD 10.2). Pure functions over the app state; the UI calls these.
 import { parseWordList, mergeWords, pruneStats } from './import.js';
 import { freshProfile, migrate } from './storage-schema.js';
-import { addStarter } from './collection.js';
+import { addStarter, masteredCount } from './collection.js';
 import { isMastered } from './leitner.js';
+import { chestsPending, CHEST_EVERY, REWARD_WEIGHTS, TREAT_GAIN } from './chest.js';
+import { total } from './ledger.js';
+import { CRICKETS } from './rewards.js';
+import { GAME_COST, GAME_REFUND, SPARKLE_CRICKETS, GREAT_TIER } from './care.js';
+import { EGG_PRICES, eggNeeded } from './hatch.js';
+import { battleBonus } from './battle.js';
+import { regionIndex } from './species.js';
 import { SCHEMA_VERSION } from './version.js';
 import { SAMPLE_LIST_ID, SAMPLE_LIST_NAME, SAMPLE_WORDS } from '../../data/sample-words.js';
 
@@ -172,4 +179,94 @@ export function parseBackup(text) {
   const res = migrate(raw);
   if (res.warning) return { ok: false, error: 'That backup is damaged or incomplete.' };
   return { ok: true, state: res.state };
+}
+
+// ---- move one trainer to another machine
+export const TRAINER_FORMAT = 'spellbeasts-trainer';
+const isObj = (x) => x && typeof x === 'object' && !Array.isArray(x);
+
+// One trainer's whole game (progress, creatures, eggs, stats) plus the word lists their progress refers to.
+export function exportTrainer(state, id, { now = new Date().toISOString() } = {}) {
+  const profile = state.profiles[id];
+  if (!profile) return null;
+  const listIds = new Set([profile.activeListId, ...Object.keys(profile.wordStats ?? {})]);
+  const wordLists = Object.fromEntries([...listIds].filter((l) => state.wordLists[l]).map((l) => [l, state.wordLists[l]]));
+  return JSON.stringify({ format: TRAINER_FORMAT, schema: SCHEMA_VERSION, exportedAt: now, profile, wordLists }, null, 2);
+}
+export function parseTrainer(text) {
+  let raw;
+  try { raw = JSON.parse(text); } catch { return { ok: false, error: 'That file is not valid JSON.' }; }
+  if (!isObj(raw) || raw.format !== TRAINER_FORMAT) return { ok: false, error: 'That file is not a Spellbeasts trainer file.' };
+  if (typeof raw.schema !== 'number' || raw.schema > SCHEMA_VERSION) return { ok: false, error: 'That trainer file is from a newer version of the game.' };
+  if (!isObj(raw.profile) || typeof raw.profile.name !== 'string' || !isObj(raw.wordLists)) return { ok: false, error: 'That trainer file is damaged or incomplete.' };
+  return { ok: true, bundle: raw };
+}
+// Add the trainer as a NEW trainer (nothing existing is replaced). Word lists they use are added, or merged by word if
+// this machine already has a list with that id, so their progress still lines up.
+export function importTrainer(state, bundle) {
+  const base = { version: SCHEMA_VERSION, settings: {}, wordLists: bundle.wordLists, profiles: { in: bundle.profile } };
+  const res = migrate(base);
+  if (res.warning) return { ok: false, error: 'That trainer file is damaged or incomplete.' };
+  const profile = res.state.profiles.in;
+  let listsAdded = 0, listsMerged = 0;
+  for (const [id, list] of Object.entries(res.state.wordLists)) {
+    if (!Array.isArray(list?.words)) continue;
+    if (!state.wordLists[id]) { state.wordLists[id] = { name: list.name ?? id, words: list.words }; listsAdded += 1; }
+    else { state.wordLists[id].words = mergeWords(state.wordLists[id].words, list.words, 'add'); listsMerged += 1; }
+  }
+  if (!state.wordLists[profile.activeListId]) profile.activeListId = state.wordLists.sample ? 'sample' : Object.keys(state.wordLists)[0];
+  const id = `p${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+  state.profiles[id] = profile;
+  return { ok: true, id, name: profile.name, listsAdded, listsMerged };
+}
+
+// ---- a report to hand over for debugging or analysis
+export const DEBUG_FORMAT = 'spellbeasts-debug';
+// The game's cricket rules as they are in this build, so a saved report can be judged without the code to hand.
+export const economyRules = () => ({
+  practice: { ...CRICKETS, note: 'per correct word: firstTry (or retry) + streakBonus on a streak; per finished session: session (+ firstSessionOfDay)' },
+  games: { cost: GAME_COST, refund: GAME_REFUND, refundFromTier: GREAT_TIER },
+  eggs: { prices: EGG_PRICES, wordsToHatch: EGG_PRICES.map((_, i) => eggNeeded(i)), duplicateRefund: 'half the egg price' },
+  sparkle: SPARKLE_CRICKETS,
+  landmarkStar: '5 to 15 crickets',
+  battleWinCrickets: EGG_PRICES.map((_, i) => battleBonus(i)),
+  chest: { everyMasteredWords: CHEST_EVERY, weights: REWARD_WEIGHTS, treatMeterGain: TREAT_GAIN, crickets: '30% to 60% of the newest land egg price, in steps of 5, minimum 10' },
+});
+
+// What the ledger says about one trainer's economy: income by source, spending by sink, and a few ratios to judge it by.
+function economyOf(p) {
+  const l = p.ledger ?? { earned: {}, spent: {}, days: {} };
+  const days = Object.entries(l.days ?? {}).sort(([a], [b]) => a.localeCompare(b));
+  const practiceDays = days.filter(([, d]) => (d.earned?.practice ?? 0) + (d.earned?.['battle-words'] ?? 0) > 0);
+  const recent = days.slice(-14);
+  const earnedRecent = recent.reduce((n, [, d]) => n + total(d.earned), 0);
+  const practiceEarned = practiceDays.reduce((n, [, d]) => n + (d.earned.practice ?? 0) + (d.earned['battle-words'] ?? 0), 0);
+  const avgPerPracticeDay = practiceDays.length ? Math.round(practiceEarned / practiceDays.length) : null;
+  const top = Math.max(0, ...(p.map?.unlockedRegions ?? []).map(regionIndex));
+  const nextEgg = EGG_PRICES[Math.min(top, EGG_PRICES.length - 1)];
+  const earned = total(l.earned), spent = total(l.spent);
+  const sess = (p.sessions ?? []).filter((x) => Number.isFinite(x.crickets));
+  return {
+    trackedSince: days[0]?.[0] ?? null, daysTracked: days.length, practiceDaysTracked: practiceDays.length,
+    earnedBySource: l.earned, spentBySink: l.spent, totalEarned: earned, totalSpent: spent,
+    gameSpendShareOfEarned: earned ? Math.round((100 * (l.spent.game ?? 0)) / earned) / 100 : null,
+    avgEarnedPerPracticeDay: avgPerPracticeDay, earnedLast14Days: earnedRecent,
+    newestLandEggPrice: nextEgg, practiceDaysToAffordNewestEgg: avgPerPracticeDay ? Math.ceil(nextEgg / avgPerPracticeDay) : null,
+    avgCricketsPerSession: sess.length ? Math.round(sess.reduce((n, x) => n + x.crickets, 0) / sess.length) : null,
+    cricketsNow: p.crickets,
+  };
+}
+
+export function debugReport(state, { hideNames = true, appVersion = '', userAgent = '', now = new Date().toISOString() } = {}) {
+  const copy = JSON.parse(JSON.stringify(state));
+  const names = {};
+  Object.keys(copy.profiles).forEach((id, i) => { names[id] = hideNames ? `Trainer ${i + 1}` : copy.profiles[id].name; if (hideNames) copy.profiles[id].name = names[id]; });
+  const summary = Object.entries(state.profiles).map(([id, p]) => ({
+    trainer: names[id], level: p.level, xp: p.xp, crickets: p.crickets, berries: p.berries, activeList: p.activeListId,
+    creatures: p.creatures.length, eggs: p.eggs.length, landsOpen: p.map?.unlockedRegions?.length, trailStep: p.map?.trailStep,
+    masteredWords: masteredCount(p), chestsOpened: p.chestsOpened ?? 0, chestsWaiting: chestsPending(p),
+    streak: p.streak?.current, sessions: p.sessions?.length, time: p.time, gameDifficulty: p.gameDifficulty ?? 'normal', gameBest: p.gameBest ?? {}, gamesPlayed: p.care?.games ?? 0, eggsHatched: p.eggsHatched ?? 0,
+    economy: economyOf(p),
+  }));
+  return JSON.stringify({ format: DEBUG_FORMAT, generatedAt: now, appVersion, schema: SCHEMA_VERSION, userAgent, namesHidden: hideNames, economyRules: economyRules(), summary, state: copy }, null, 2);
 }

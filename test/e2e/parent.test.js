@@ -299,3 +299,23 @@ test('two trainers, two lists: assign in the Parent area, each practises only th
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test('backup: one trainer can be downloaded and added as a new trainer, and a debug report is offered', { skip }, async () => {
+  const { page, context, errors } = await open((p) => { p.crickets = 77; p.name = 'Ada'; });
+  await tab(page, 'backup');
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#export-trainer-p1')]);
+  assert.match(dl.suggestedFilename(), /^spellbeasts-ada-\d{4}-\d{2}-\d{2}\.json$/);
+  const text = await readFile(await dl.path(), 'utf8');
+  assert.equal(JSON.parse(text).format, 'spellbeasts-trainer');
+  await page.setInputFiles('#backup-file', { name: 't.json', mimeType: 'application/json', buffer: Buffer.from(text) });
+  assert.match(await page.textContent('.confirm'), /Add Ada .* as a new trainer/);
+  await page.click('#confirm-trainer'); await page.waitForSelector('#parent-note');
+  const profiles = Object.values((await saved(page)).profiles);
+  assert.equal(profiles.length, 2); assert.deepEqual(profiles.map((p) => p.crickets), [77, 77]);
+  const [dbg] = await Promise.all([page.waitForEvent('download'), page.click('#debug-download')]);
+  const report = JSON.parse(await readFile(await dbg.path(), 'utf8'));
+  assert.equal(report.format, 'spellbeasts-debug'); assert.equal(report.summary.length, 2);
+  assert.ok(!JSON.stringify(report).includes('Ada'), 'names are hidden by default');
+  assert.deepEqual(errors, []);
+  await context.close();
+});

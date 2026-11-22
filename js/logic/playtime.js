@@ -59,3 +59,11 @@ export function recentTotals(time, today, n = 7) {
   }
   return { playMs, practiceMs, gameMs };
 }
+
+// How a stretch of time splits between learning and games, as whole percents of the two together. null when neither has any.
+export function learnShare(practiceMs, gameMs) {
+  const p = num(practiceMs), g = num(gameMs);
+  if (p + g === 0) return null;
+  const learn = Math.round((p / (p + g)) * 100);
+  return { learn, games: 100 - learn };
+}

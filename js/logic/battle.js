@@ -4,6 +4,7 @@
 import { startSession } from './session.js';
 import { adoptCreature, awardTrophies, ownedSpecies } from './collection.js';
 import { speciesInRegion, arenaSpeciesOf, regionIndex, isArenaSpecies } from './species.js';
+import { credit } from './ledger.js';
 
 export const ARENA_LEVEL = 3;              // the Arena opens at this trainer level
 export const HIT_DAMAGE = 1;
@@ -111,7 +112,7 @@ export function startBattle({ profile, list, today, regionId, creatureId = null,
         if (prize.kind === 'befriend') {
           creature = adoptCreature(profile, wild.species);
           if (!profile.arena.befriended.includes(wild.species)) profile.arena.befriended.push(wild.species);
-        } else profile.crickets += prize.crickets;
+        } else { profile.crickets += prize.crickets; credit(profile, 'battle-prize', prize.crickets); }
         profile.battlesWon = (profile.battlesWon ?? 0) + 1;
         profile.arena.wins[regionId] = (profile.arena.wins[regionId] ?? 0) + 1;
         winTrophies = awardTrophies(profile, today);

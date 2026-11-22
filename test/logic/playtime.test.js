@@ -31,7 +31,7 @@ test('day history is capped to the newest days', () => {
   assert.equal(Object.keys(p.time.days).length, DAY_HISTORY_CAP);
   assert.equal(p.time.playMs, (DAY_HISTORY_CAP + 10) * 1000, 'totals keep everything');
 });
-import { isGameRoute } from '../../js/logic/playtime.js';
+import { learnShare, isGameRoute } from '../../js/logic/playtime.js';
 test('only the play route counts as game time', () => { assert.equal(isGameRoute('play'), true); assert.equal(isGameRoute('practice'), false); });
 test('recentTotals sums the last n calendar days, across a month end', () => {
   const t = { playMs: 0, practiceMs: 0, days: { '2026-10-30': { playMs: 1000, practiceMs: 500 }, '2026-11-02': { playMs: 2000, practiceMs: 0 }, '2026-10-20': { playMs: 9999, practiceMs: 9999 } } };
@@ -46,4 +46,11 @@ test('formatDuration', () => {
 test('which routes count as practice', () => {
   for (const r of ['practice', 'battle', 'learn']) assert.ok(isPracticeRoute(r));
   for (const r of ['home', 'map', 'care', 'parent', '']) assert.ok(!isPracticeRoute(r));
+});
+
+test('learnShare splits learning and game time into whole percents', () => {
+  assert.equal(learnShare(0, 0), null);
+  assert.deepEqual(learnShare(3000, 1000), { learn: 75, games: 25 });
+  assert.deepEqual(learnShare(0, 500), { learn: 0, games: 100 });
+  assert.deepEqual(learnShare(1, 2), { learn: 33, games: 67 });
 });

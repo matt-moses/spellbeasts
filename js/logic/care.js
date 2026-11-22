@@ -2,6 +2,7 @@
 // feed berries, give a bath, pet, or play. All low-stakes: nothing ever gets sick or is lost.
 import { daysBetween } from './leitner.js';
 import { playedToday } from './streak.js';
+import { credit, debit } from './ledger.js';
 
 export const MEASURES = ['fed', 'clean', 'loved', 'fun'];
 export const METER_MAX = 5, METER_START = 3, MAX_DAILY_DRIFT = 3;
@@ -67,6 +68,7 @@ export function finishGame(profile, creature, today, caught, tierOverride) {
   const refund = tier >= GREAT_TIER ? GAME_REFUND : 0;
   const cost = Math.min(GAME_COST, profile.crickets ?? 0);
   profile.crickets = (profile.crickets ?? 0) - cost + refund;
+  debit(profile, 'game', cost, today); credit(profile, 'game-refund', refund, today);
   return { cost, refund };
 }
 
@@ -76,6 +78,6 @@ export function claimSparkle(profile, creature, today) {
   const c = careOf(creature, today);
   if (moodOf(c) !== 'sparkling' || c.sparkleDay === today) return { ok: false };
   if (!playedToday(profile.streak, today)) return { ok: false, reason: 'no-practice' };
-  c.sparkleDay = today; profile.crickets += SPARKLE_CRICKETS; stats(profile).sparkles += 1;
+  c.sparkleDay = today; profile.crickets += SPARKLE_CRICKETS; credit(profile, 'sparkle', SPARKLE_CRICKETS, today); stats(profile).sparkles += 1;
   return { ok: true, crickets: SPARKLE_CRICKETS };
 }

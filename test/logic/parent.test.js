@@ -171,3 +171,50 @@ test('lists and trainers: who uses a list, unassigning, and deleting a list move
   assert.ok(a.wordStats.sample.garden, 'others keep their progress');
   assert.equal(deleteList(state, 'nope'), false);
 });
+
+import { exportTrainer, parseTrainer, importTrainer, debugReport } from '../../js/logic/parent.js';
+
+function twoTrainers() {
+  const st = freshState();
+  for (const [id, name] of [['pa', 'Ada'], ['pb', 'Ben']]) { const p = freshProfile({ name, avatarSpecies: 'pip' }); addStarter(p, 'pip'); p.level = id === 'pa' ? 7 : 2; st.profiles[id] = p; }
+  st.profiles.pa.wordStats.sample = { garden: { correctDays: ['a', 'b', 'c'] } };
+  st.profiles.pa.gameBest = { run: { easy: 120 } };
+  return st;
+}
+test('a trainer file carries one trainer and the lists they use, and imports as a NEW trainer', () => {
+  const src = twoTrainers();
+  const text = exportTrainer(src, 'pa');
+  assert.ok(!text.includes('Ben'), 'the other trainer is not in the file');
+  const t = parseTrainer(text); assert.equal(t.ok, true);
+  const dest = freshState(); dest.profiles.pz = freshProfile({ name: 'Zed', avatarSpecies: 'pip' });
+  const r = importTrainer(dest, t.bundle);
+  assert.equal(r.ok, true); assert.equal(Object.keys(dest.profiles).length, 2);
+  assert.ok(dest.profiles.pz, 'nobody is replaced');
+  const got = dest.profiles[r.id];
+  assert.deepEqual([got.name, got.level, got.creatures.length, got.gameBest.run.easy], ['Ada', 7, 1, 120]);
+  assert.equal(got.wordStats.sample.garden.correctDays.length, 3);
+  assert.deepEqual([r.listsAdded, r.listsMerged], [0, 1], 'the sample list already exists there, so it is merged not duplicated');
+  assert.equal(importTrainer(dest, t.bundle).id === r.id, false, 'importing twice adds a second copy, never overwrites');
+});
+test('a trainer with their own word list brings the list along', () => {
+  const src = twoTrainers(); src.wordLists.mine = { name: 'Mine', words: [{ id: 'x', word: 'zebra', partOfSpeech: '', definition: 'd', sentence: 's' }] };
+  src.profiles.pa.activeListId = 'mine'; src.profiles.pa.wordStats.mine = {};
+  const dest = freshState(); const r = importTrainer(dest, parseTrainer(exportTrainer(src, 'pa')).bundle);
+  assert.equal(dest.wordLists.mine.words[0].word, 'zebra'); assert.equal(dest.profiles[r.id].activeListId, 'mine'); assert.equal(r.listsAdded, 1);
+});
+test('trainer files are checked: junk, a full backup, and a newer game are refused', () => {
+  assert.equal(parseTrainer('nope').ok, false);
+  assert.equal(parseTrainer(JSON.stringify(twoTrainers())).ok, false);
+  assert.match(parseTrainer(JSON.stringify({ format: 'spellbeasts-trainer', schema: 99, profile: { name: 'x' }, wordLists: {} })).error, /newer/);
+  assert.equal(parseTrainer(JSON.stringify({ format: 'spellbeasts-trainer', schema: 1, profile: {}, wordLists: {} })).ok, false);
+});
+test('the debug report has a summary, hides names by default, and keeps the numbers', () => {
+  const st = twoTrainers();
+  const hidden = JSON.parse(debugReport(st, { appVersion: '1.2.3', now: '2026-11-22T00:00:00Z' }));
+  assert.deepEqual([hidden.format, hidden.appVersion, hidden.namesHidden], ['spellbeasts-debug', '1.2.3', true]);
+  assert.deepEqual(hidden.summary.map((s) => s.trainer), ['Trainer 1', 'Trainer 2']);
+  assert.equal(hidden.summary[0].level, 7); assert.equal(hidden.summary[0].masteredWords, 1);
+  assert.ok(!JSON.stringify(hidden).includes('Ada') && !JSON.stringify(hidden).includes('Ben'));
+  assert.equal(st.profiles.pa.name, 'Ada', 'the live state is untouched');
+  assert.ok(JSON.stringify(JSON.parse(debugReport(st, { hideNames: false }))).includes('Ada'));
+});

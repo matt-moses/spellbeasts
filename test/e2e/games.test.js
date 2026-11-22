@@ -601,3 +601,14 @@ test('Caterpillar turns and Hangman takes guesses without errors', { skip }, asy
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test('in the games, double-tap and pinch zoom are switched off, and only there', { skip }, async () => {
+  const { page, context } = await open();
+  const probe = () => page.evaluate(() => { const e = new Event('gesturestart', { cancelable: true }); document.dispatchEvent(e); return e.defaultPrevented; });
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.screen.play')).touchAction), 'manipulation');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.screen.play')).userSelect), 'none');
+  assert.equal(await probe(), true, 'pinch is blocked in the games');
+  await page.click('#game-pet'); await page.waitForSelector('#care-feed');
+  assert.equal(await probe(), false, 'and allowed again outside them');
+  await context.close();
+});

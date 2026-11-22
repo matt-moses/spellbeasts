@@ -4,6 +4,7 @@ import { masteredCount, companionOf, grantEgg } from './collection.js';
 import { eggPrice } from './hatch.js';
 import { regionIndex } from './species.js';
 import { careOf, METER_MAX, MEASURES } from './care.js';
+import { credit } from './ledger.js';
 
 export const CHEST_EVERY = 5;
 export const REWARD_WEIGHTS = { crickets: 45, berries: 25, treat: 22, egg: 8 };
@@ -35,7 +36,7 @@ export function openChest(profile, { rng = Math.random, today = '' } = {}) {
   if (kind === 'crickets') {
     const base = eggPrice(top);                                           // so a chest stays worth opening as eggs get dearer
     const amount = Math.max(10, Math.round(base * (0.3 + rng() * 0.3) / 5) * 5);
-    profile.crickets = (profile.crickets ?? 0) + amount; reward = { kind, amount };
+    profile.crickets = (profile.crickets ?? 0) + amount; credit(profile, 'chest', amount, today || undefined); reward = { kind, amount };
   } else if (kind === 'berries') {
     const amount = 3 + Math.floor(rng() * 4);
     profile.berries = (profile.berries ?? 0) + amount; reward = { kind, amount };

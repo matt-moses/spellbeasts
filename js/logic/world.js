@@ -3,6 +3,7 @@ import { REGIONS, regionIndex } from './species.js';
 import { warmEggs, masteredCount } from './collection.js';
 import { STAR_BERRIES } from './care.js';
 import { landCount } from '../config.js';
+import { credit } from './ledger.js';
 
 const ALL_UNLOCKS = [
   { level: 1, mastered: 0 }, { level: 2, mastered: 0 }, { level: 4, mastered: 0 },
@@ -71,7 +72,7 @@ export function claimLandmark(profile, id, rng = Math.random) {
   if (!lm || !isReached(profile, lm) || isClaimed(profile, lm)) return { ok: false };
   profile.map.claimedLandmarks.push(id);
   const crickets = 5 + Math.floor(rng() * 11);
-  profile.crickets += crickets;
+  profile.crickets += crickets; credit(profile, 'landmark', crickets);
   profile.berries = (profile.berries ?? 0) + STAR_BERRIES;
   let boost = 0;
   if (rng() < 0.2 && warmEggs(profile, 3)) boost = 3;
