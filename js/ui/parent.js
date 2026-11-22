@@ -158,11 +158,11 @@ export function parentView(app) {
       profiles.map(([id, p]) => h('option', { value: id, selected: id === ui.profileId }, p.name)))), h('span', {}, `Practicing “${list.name}”`)));
     const time = profile.time ?? {}, week = recentTotals(profile.time, app.today(), 7);
     out.append(h('div', { class: 'panel time-spent' }, h('h2', {}, 'Time spent'),
-      h('table', { class: 'time-table' }, h('thead', {}, h('tr', {}, ['', 'In the game', 'Practicing words'].map((t) => h('th', {}, t)))),
+      h('table', { class: 'time-table' }, h('thead', {}, h('tr', {}, ['', 'In the game', 'Practicing words', 'Playing games'].map((t) => h('th', {}, t)))),
         h('tbody', {},
-          h('tr', { 'data-row': 'week' }, h('th', { scope: 'row' }, 'Last 7 days'), h('td', { class: 'play' }, formatDuration(week.playMs)), h('td', { class: 'practice' }, formatDuration(week.practiceMs))),
-          h('tr', { 'data-row': 'total' }, h('th', { scope: 'row' }, 'All time'), h('td', { class: 'play' }, formatDuration(time.playMs)), h('td', { class: 'practice' }, formatDuration(time.practiceMs))))),
-      h('p', { class: 'small' }, 'Counted while the game is open and being used. Time in this Parent area is not counted. “Practicing” covers practice sessions, battles and the learn screen.')));
+          h('tr', { 'data-row': 'week' }, h('th', { scope: 'row' }, 'Last 7 days'), h('td', { class: 'play' }, formatDuration(week.playMs)), h('td', { class: 'practice' }, formatDuration(week.practiceMs)), h('td', { class: 'games' }, formatDuration(week.gameMs))),
+          h('tr', { 'data-row': 'total' }, h('th', { scope: 'row' }, 'All time'), h('td', { class: 'play' }, formatDuration(time.playMs)), h('td', { class: 'practice' }, formatDuration(time.practiceMs)), h('td', { class: 'games' }, formatDuration(time.gameMs))))),
+      h('p', { class: 'small' }, 'Counted while the game is open and being used. Time in this Parent area is not counted. “Practicing” covers practice sessions, battles and the learn screen; “Playing games” is time in the mini-games.')));
     const rows = P.statsRows(profile, list);
     const mastered = rows.filter((r) => r.mastered).length;
     out.append(h('p', { class: 'summary-line' }, `${mastered} of ${rows.length} words mastered.`));

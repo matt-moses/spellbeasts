@@ -8,8 +8,10 @@ export const DAY_HISTORY_CAP = 60;
 // Routes where the player is working on words (spelling, battles that ask for spellings, the learn screen).
 const PRACTICE_ROUTES = new Set(['practice', 'battle', 'learn']);
 export const isPracticeRoute = (route) => PRACTICE_ROUTES.has(route);
+// The mini-games (Berry Catch, Hop Run and the rest) live under /play.
+export const isGameRoute = (route) => route === 'play';
 
-export const freshTime = () => ({ playMs: 0, practiceMs: 0, days: {} });
+export const freshTime = () => ({ playMs: 0, practiceMs: 0, gameMs: 0, days: {} });
 
 const num = (x) => (Number.isFinite(x) && x > 0 ? x : 0);
 
@@ -17,19 +19,20 @@ const num = (x) => (Number.isFinite(x) && x > 0 ? x : 0);
 export function normalizeTime(t) {
   const days = {};
   if (t && typeof t.days === 'object' && t.days && !Array.isArray(t.days)) {
-    for (const [d, v] of Object.entries(t.days)) if (/^\d{4}-\d{2}-\d{2}$/.test(d)) days[d] = { playMs: num(v?.playMs), practiceMs: num(v?.practiceMs) };
+    for (const [d, v] of Object.entries(t.days)) if (/^\d{4}-\d{2}-\d{2}$/.test(d)) days[d] = { playMs: num(v?.playMs), practiceMs: num(v?.practiceMs), gameMs: num(v?.gameMs) };
   }
-  return { playMs: num(t?.playMs), practiceMs: num(t?.practiceMs), days };
+  return { playMs: num(t?.playMs), practiceMs: num(t?.practiceMs), gameMs: num(t?.gameMs), days };
 }
 
 // Add `elapsedMs` to a profile. Returns the milliseconds actually counted.
-export function addTime(profile, elapsedMs, { practicing, date }) {
+export function addTime(profile, elapsedMs, { practicing, gaming = false, date }) {
   const ms = Math.min(num(elapsedMs), TICK_CAP_MS);
   if (!ms) return 0;
   const t = (profile.time = normalizeTime(profile.time));
-  const day = (t.days[date] ??= { playMs: 0, practiceMs: 0 });
+  const day = (t.days[date] ??= { playMs: 0, practiceMs: 0, gameMs: 0 });
   t.playMs += ms; day.playMs += ms;
   if (practicing) { t.practiceMs += ms; day.practiceMs += ms; }
+  if (gaming) { t.gameMs += ms; day.gameMs += ms; }
   const keys = Object.keys(t.days).sort();
   for (const k of keys.slice(0, Math.max(0, keys.length - DAY_HISTORY_CAP))) delete t.days[k];
   return ms;
@@ -48,11 +51,11 @@ export function formatDuration(ms) {
 export function recentTotals(time, today, n = 7) {
   const t = normalizeTime(time);
   const [y, mo, d] = today.split('-').map(Number);
-  let playMs = 0, practiceMs = 0;
+  let playMs = 0, practiceMs = 0, gameMs = 0;
   for (let i = 0; i < n; i++) {
     const dt = new Date(Date.UTC(y, mo - 1, d - i));
     const v = t.days[dt.toISOString().slice(0, 10)];
-    if (v) { playMs += v.playMs; practiceMs += v.practiceMs; }
+    if (v) { playMs += v.playMs; practiceMs += v.practiceMs; gameMs += v.gameMs; }
   }
-  return { playMs, practiceMs };
+  return { playMs, practiceMs, gameMs };
 }

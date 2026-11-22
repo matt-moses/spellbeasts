@@ -23,7 +23,7 @@ import { startUpdateWatch } from './ui/update.js';
 import { BUILD_VERSION } from './logic/build.js';
 import { applySeason } from './logic/season.js';
 import { installGarland } from './ui/garland.js';
-import { addTime, isPracticeRoute, IDLE_MS } from './logic/playtime.js';
+import { addTime, isPracticeRoute, isGameRoute, IDLE_MS } from './logic/playtime.js';
 import { loadAnalytics } from './platform/analytics.js';
 
 const store = createStore();
@@ -78,7 +78,7 @@ function trackTime() {
   lastTick = now;
   const route = location.hash.replace(/^#\/?/, '').split('/')[0];
   if (document.hidden || !app.profile || now - lastInput > IDLE_MS || route === 'parent') return;
-  const counted = addTime(app.profile, elapsed, { practicing: isPracticeRoute(route), date: localDateString() });
+  const counted = addTime(app.profile, elapsed, { practicing: isPracticeRoute(route), gaming: isGameRoute(route), date: localDateString() });
   if (counted) unsaved = true;
   if (unsaved && now - lastSave >= 15000) flushTime();
 }
