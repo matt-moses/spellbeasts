@@ -24,3 +24,4 @@ export function flip(g, i) {
 export function settle(g) { if (g.mismatch) { g.mismatch.forEach((c) => { c.state = 'down'; }); g.mismatch = null; } }
 // 3 berries for a near-perfect game, 2 for a good one, 1 for finishing.
 export const prizeFor = (g) => (g.moves <= g.pairCount + 2 ? 3 : g.moves <= g.pairCount * 2 ? 2 : 1);
+export const PAIRS = { easy: 4, normal: 6, hard: 8 };

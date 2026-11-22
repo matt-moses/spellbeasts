@@ -8,6 +8,8 @@ import { TROPHIES } from '../logic/trophies.js';
 import { stageName } from '../logic/species.js';
 import { makeInteractive } from './pet.js';
 import { runnerGame, memoryGame } from './games.js';
+import { flapGame, popGame, patternGame } from './games-more.js';
+import { DIFFICULTIES, DIFFICULTY_LABEL, GAMES, difficultyOf, setDifficulty, recordScore, bestText, handOf } from '../logic/gamescores.js';
 import { startSession } from '../logic/session.js';
 
 const LABELS = { fed: 'Fed', clean: 'Clean', loved: 'Loved', fun: 'Fun' };
@@ -209,7 +211,8 @@ export function playView(app, creatureId) {
   function menu() {
     stop(); stop = () => {};
     const ok = canPlay(profile);
-    const card = (id, title, text, art, on) => h('button', { class: 'game-card', id, type: 'button', disabled: ok ? null : '', onclick: on }, h('span', { class: 'game-art' }, art), h('strong', {}, title), h('span', { class: 'small' }, text));
+    const d = difficultyOf(profile);
+    const card = (id, key, text, art, on) => h('button', { class: 'game-card', id, type: 'button', disabled: ok ? null : '', onclick: on }, h('span', { class: 'game-art' }, art), h('strong', {}, GAMES[key].title), h('span', { class: 'small' }, text), h('span', { class: 'small best', 'data-best': key }, bestText(profile, key, d)));
     fill(root,
       h('h1', {}, `Play with ${name}`),
       h('p', { class: 'lead' }, ok ? 'Pick a game!' : 'Spell some words to play!'),
@@ -218,10 +221,15 @@ export function playView(app, creatureId) {
         : `Games cost ${GAME_COST} crickets and you have ${profile.crickets}. Practice some words to earn more crickets!`),
       ok ? null : h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'game-practice', onclick: practiceFirst }, icon('play'), 'Practice words')),
       h('p', { class: 'note', id: 'game-note', role: 'status' }),
+      h('div', { class: 'row', role: 'group', 'aria-label': 'Difficulty' }, h('strong', {}, 'Difficulty: '), DIFFICULTIES.map((x) =>
+        h('button', { class: `speed${x === d ? ' on' : ''}`, id: `diff-${x}`, type: 'button', 'aria-pressed': String(x === d), onclick: () => { setDifficulty(profile, x); app.store.save(); menu(); } }, DIFFICULTY_LABEL[x]))),
       h('div', { class: 'game-cards' },
-        card('game-catch', 'Berry Catch', 'Slide to catch falling berries.', icon('berry'), () => berryIntro()),
-        card('game-run', 'Hop Run', 'Hop over logs and rocks as you run.', icon('flame'), () => start(runnerGame)),
-        card('game-memory', 'Memory Match', 'Find the matching creature pairs.', icon('star'), () => start(memoryGame))),
+        card('game-catch', 'catch', 'Slide to catch falling berries.', icon('berry'), () => berryIntro()),
+        card('game-run', 'run', 'Hop over logs and rocks as you run.', icon('flame'), () => start(runnerGame)),
+        card('game-memory', 'memory', 'Find the matching creature pairs.', icon('star'), () => start(memoryGame)),
+        card('game-flap', 'flap', 'Flap through the gates in the sky.', icon('play'), () => start(flapGame)),
+        card('game-pop', 'pop', 'Tap the critters before they duck.', icon('heart'), () => start(popGame)),
+        card('game-pattern', 'pattern', 'Watch, listen, and repeat the pattern.', icon('gamepad'), () => start(patternGame))),
       h('div', { class: 'actions' }, h('button', { class: 'secondary', id: 'game-pet', onclick: toCare }, `Back to ${name}`)));
   }
 
@@ -235,13 +243,16 @@ export function playView(app, creatureId) {
   }
 
   // Shared result screen. Exit and "choose another" never lose anything; only finishing pays out.
-  function result({ title, lines, cost, refund, again }) {
+  function result({ title, lines, cost, refund, again, game, score }) {
     stop(); stop = () => {};
+    const rec = game ? recordScore(profile, game, difficultyOf(profile), score) : null;
+    if (rec?.isNew) app.store.save();
     const extra = afterCare(app, creature, { hint: true });
     audio.play('levelup');
     fill(root, h('h1', {}, title),
       h('div', { class: 'panel', id: 'game-result' }, lines.map((l) => h('p', { class: 'lead' }, l)),
         h('p', { id: 'game-spent' }, refund ? `That game cost ${cost} crickets, and you got ${refund} back for playing so well!` : `That game cost ${cost} crickets. Play really well to get one back!`),
+        rec ? h('p', { id: 'game-best', class: rec.isNew ? 'lead' : 'small' }, rec.isNew ? `🏆 New best on ${DIFFICULTY_LABEL[difficultyOf(profile)]}!` : `Your best on ${DIFFICULTY_LABEL[difficultyOf(profile)]}: ${rec.best} ${GAMES[game].unit}`) : null,
         h('p', {}, `${name} had so much fun!`), extra ? h('p', { class: 'bubble' }, extra) : null),
       h('div', { class: 'actions' }, canPlay(profile) ? h('button', { class: 'primary big', id: 'game-again', onclick: again }, icon('play'), 'Play again') : h('button', { class: 'primary big', id: 'game-practice', onclick: practiceFirst }, icon('play'), 'Practice words to play more'),
         h('button', { class: 'secondary', id: 'game-menu', onclick: menu }, 'Choose another game'),
@@ -251,7 +262,7 @@ export function playView(app, creatureId) {
   // A running game: draws into root, can be exited at any time, never pays out if exited.
   function start(game) {
     const exit = () => { menu(); };
-    const handle = game({ app, creature, root, exit, result, restart: () => start(game), art: (size) => creatureSvg(creature.species, creature.stage, { size }) });
+    const handle = game({ app, creature, root, exit, result, difficulty: difficultyOf(profile), hand: handOf(app.store.state.settings), restart: () => start(game), art: (size) => creatureSvg(creature.species, creature.stage, { size }) });
     stop = handle?.stop ?? (() => {});
     const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); exit(); } };
     document.addEventListener('keydown', onKey);
@@ -269,7 +280,7 @@ export function playView(app, creatureId) {
   }
   function berryCatch({ exit }) {
     const art = creatureSvg(creature.species, creature.stage, { size: 24 });
-    let g = createCatchGame({ rng: Math.random }), raf = 0, last = null, px = 50, pointerX = null;
+    let g = createCatchGame({ rng: Math.random, difficulty: difficultyOf(profile) }), raf = 0, last = null, px = 50, pointerX = null;
     const keys = new Set();
     fill(root,
       h('div', { class: 'game-top' }, h('span', { class: 'pill gold', id: 'game-score' }, '🍓', ' 0'), h('span', { class: 'small' }, '← → or drag'),
@@ -313,7 +324,7 @@ export function playView(app, creatureId) {
         stopAll();
         const best = maxScore(g);
         const paid = finishGame(profile, creature, app.today(), g.caught);
-        return result({ title: g.caught >= best ? 'Perfect catch!' : 'Great game!', lines: [`You caught ${g.caught} of ${best} berries!`], ...paid, again: () => start(berryCatch) });
+        return result({ title: g.caught >= best ? 'Perfect catch!' : 'Great game!', lines: [`You caught ${g.caught} of ${best} berries!`], game: 'catch', score: g.caught, ...paid, again: () => start(berryCatch) });
       }
       raf = requestAnimationFrame(frame);
     }

@@ -6,7 +6,7 @@ import { SAMPLE_LIST_ID, SAMPLE_LIST_NAME, SAMPLE_WORDS } from '../../data/sampl
 
 export const SESSION_HISTORY_CAP = 200;
 
-export const defaultSettings = () => ({ sound: true, music: true, voiceURI: null, rate: 0.9 });
+export const defaultSettings = () => ({ sound: true, music: true, voiceURI: null, rate: 0.9, hand: 'left' });
 
 export function freshState() {
   return {

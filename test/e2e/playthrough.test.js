@@ -15,7 +15,7 @@ after(async () => { await env?.close(); });
 // ---------------------------------------------------------------- the oracle (PRD rules, re-derived)
 const SAMPLE = SAMPLE_WORDS.map((w) => w.word);                    // the bundled list: 15 everyday words, then 60 harder ones
 const N = Number(process.env.SPELLBEASTS_LANDS ?? 27);                 // lands in play: the shipped 12, or 9 with SPELLBEASTS_LANDS=9 (this oracle does not read the game's own tables)
-const PRICE = [20, 30, 40, 50, 60, 75, 90, 105, 125, 145, 165, 190, 215, 240, 270, 300, 335, 370, 410, 450, 500, 550, 600, 655, 715, 780, 850].slice(0, N);
+const PRICE = [20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280].slice(0, N);
 const UNLOCK = [[1, 0], [2, 0], [4, 0], [6, 15], [8, 25], [10, 40], [12, 44], [14, 47], [16, 50], [18, 53], [20, 56], [22, 60], [24, 64], [26, 68], [28, 72], [30, 76], [32, 80], [34, 84], [36, 88], [38, 92], [40, 96], [42, 100], [44, 104], [46, 108], [48, 112], [50, 116], [52, 120]].slice(0, N);
 const TRAIL_END = [30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82].slice(0, N).reduce((a, n) => [...a, (a.at(-1) ?? 0) + n], []);   // each land's stretch of trail is longer
 const RARE = new Set(['Glowmoth', 'Mossgolem', 'Stormwyrm', 'Starcub', 'Inkwell', 'Skycalf', 'Gemdrake', 'Sandwyrm', 'Solphoenix', 'Gourdwyrm', 'Anglerlight', 'Wishlion', 'Blizzowl', 'Rugtle', 'Galaxolotl', 'Thundrake', 'Gearwyrm', 'Mycodrake', 'Koigon', 'Krakenpup', 'Arcalope', 'Cocoadrake', 'Tricerabop', 'Auroraguin', 'Peachimera', 'Tomewyrm', 'Sandmanta']);

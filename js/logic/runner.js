@@ -10,8 +10,10 @@ export const hopLift = (y) => y * HOP_SCALE;
 export const HEARTS = 3, SAFE_TIME = 1.0;
 export const BERRY_EVERY = 200;                     // one berry prize per this many points, up to 5
 
-export function createRunner({ rng = Math.random } = {}) {
-  return { t: 0, y: 0, vy: 0, dist: 0, speed: START_SPEED, hearts: HEARTS, safe: 0, obstacles: [], nextIn: 40, over: false, rng, hits: 0 };
+export const LEVELS = { easy: { hearts: 5, start: 24, max: 42 }, normal: { hearts: HEARTS, start: START_SPEED, max: MAX_SPEED }, hard: { hearts: 3, start: 38, max: 68 } };
+export function createRunner({ rng = Math.random, difficulty = 'normal' } = {}) {
+  const lv = LEVELS[difficulty] ?? LEVELS.normal;
+  return { t: 0, y: 0, vy: 0, dist: 0, speed: lv.start, start: lv.start, max: lv.max, maxHearts: lv.hearts, hearts: lv.hearts, safe: 0, obstacles: [], nextIn: 40, over: false, rng, hits: 0 };
 }
 export const jump = (g) => { if (!g.over && g.y === 0) g.vy = JUMP_V; };
 export const score = (g) => Math.floor(g.dist);
@@ -20,7 +22,7 @@ export const prizeFor = (g) => Math.min(5, Math.floor(score(g) / BERRY_EVERY));
 export function stepRunner(g, dt) {
   if (g.over) return g;
   g.t += dt;
-  g.speed = Math.min(MAX_SPEED, START_SPEED + g.dist / 40);            // gets a little quicker as you go
+  g.speed = Math.min(g.max, g.start + g.dist / 40);            // gets a little quicker as you go
   g.dist += g.speed * dt;
   if (g.y > 0 || g.vy > 0) { g.vy -= GRAVITY * dt; g.y = Math.max(0, g.y + g.vy * dt); if (g.y === 0) g.vy = 0; }
   g.safe = Math.max(0, g.safe - dt);

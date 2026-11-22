@@ -3,7 +3,7 @@
 import { h, icon, fill } from './dom.js';
 import { creatureSvg } from './art.js';
 import { createRunner, stepRunner, jump, score, prizeFor as runPrize, HEARTS, PLAYER_X0, SPRITE_SIZE, GROUND_Y, HOP_SCALE, spriteTop, hopLift } from '../logic/runner.js';
-import { createMemory, flip, settle, prizeFor as memPrize } from '../logic/memory.js';
+import { createMemory, flip, settle, PAIRS as PAIR_COUNT, prizeFor as memPrize } from '../logic/memory.js';
 import { finishGame } from '../logic/care.js';
 import { SPECIES, STARTER_IDS, bookSpecies } from '../logic/species.js';
 
@@ -11,12 +11,12 @@ const SVGNS = 'http://www.w3.org/2000/svg';
 const reduceMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 // ---------------------------------------------------------------- Hop Run
-export function runnerGame({ app, creature, root, exit, result, restart, art }) {
+export function runnerGame({ app, creature, root, exit, result, restart, art, difficulty, hand }) {
   const { audio } = app, profile = app.profile;
-  const g = createRunner({ rng: Math.random });
+  const g = createRunner({ rng: Math.random, difficulty });
   let raf = 0, last = null, lastHearts = g.hearts, jumpHeld = false;
   fill(root,
-    h('div', { class: 'game-top' }, h('span', { class: 'pill gold', id: 'run-score' }, 'Distance 0'), h('span', { class: 'pill', id: 'run-hearts', 'aria-label': `${HEARTS} hearts` }),
+    h('div', { class: 'game-top' }, h('span', { class: 'pill gold', id: 'run-score' }, 'Distance 0'), h('span', { class: 'pill', id: 'run-hearts', 'aria-label': `${g.maxHearts} hearts` }),
       h('button', { class: 'secondary', id: 'game-exit', type: 'button', onclick: exit }, 'Exit game')),
     h('div', { class: 'game-wrap', html: `<svg class="game-field run-field" viewBox="0 0 100 60" role="img" aria-label="Hop Run. Press Space, the up arrow, or tap to hop over the logs and rocks." style="touch-action:none">
       <defs><linearGradient id="rsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#76d3ff"/><stop offset="1" stop-color="#d4f3ff"/></linearGradient></defs>
@@ -24,8 +24,8 @@ export function runnerGame({ app, creature, root, exit, result, restart, art }) 
       <g class="hills"><path d="M0 40Q20 28 40 40T80 38T120 40V50H0Z" fill="#45b84d"/></g>
       <rect y="46" width="100" height="14" fill="#4fc254"/><rect y="46" width="100" height="2.5" fill="#3fb350"/>
       <g class="stripes"></g><g class="obstacles"></g><g class="runner"><g class="runner-art"><g transform="translate(${PLAYER_X0 - 6} ${spriteTop()})">${art(SPRITE_SIZE)}</g></g></g></svg>` }),
-    h('div', { class: 'actions' }, h('button', { class: 'primary big', id: 'run-jump', type: 'button' }, icon('play'), 'Hop!')),
-    h('p', { class: 'small' }, 'Space, ↑ or a tap to hop. Hold on, you have 3 hearts!'));
+    h('div', { class: `actions hand-${hand}` }, h('button', { class: 'primary big', id: 'run-jump', type: 'button' }, icon('play'), 'Hop!')),
+    h('p', { class: 'small' }, `Space, ↑ or a tap to hop. Hold on, you have ${g.maxHearts} hearts!`));
   const svg = root.querySelector('.run-field'), obsLayer = svg.querySelector('.obstacles'), me = svg.querySelector('.runner'), stripes = svg.querySelector('.stripes');
   const hop = () => { if (g.y === 0 && !g.over) audio.play('boing'); jump(g); };
   svg.addEventListener('pointerdown', hop);
@@ -35,7 +35,7 @@ export function runnerGame({ app, creature, root, exit, result, restart, art }) 
   document.addEventListener('keydown', key); document.addEventListener('keyup', keyUp);
   const hearts = () => fillHearts(root.querySelector('#run-hearts'), g.hearts);
   hearts();
-  function fillHearts(el, n) { el.replaceChildren(...Array.from({ length: HEARTS }, (_, i) => { const x = icon('heart'); if (i >= n) x.classList.add('lost'); return x; })); el.setAttribute('aria-label', `${n} hearts`); }
+  function fillHearts(el, n) { el.replaceChildren(...Array.from({ length: g.maxHearts }, (_, i) => { const x = icon('heart'); if (i >= n) x.classList.add('lost'); return x; })); el.setAttribute('aria-label', `${n} hearts`); }
   const stopAll = () => { cancelAnimationFrame(raf); document.removeEventListener('keydown', key); document.removeEventListener('keyup', keyUp); };
 
   function frame(ts) {
@@ -58,7 +58,7 @@ export function runnerGame({ app, creature, root, exit, result, restart, art }) 
     if (g.over) {
       stopAll();
       const paid = finishGame(profile, creature, app.today(), 0, runPrize(g));
-      return result({ title: 'Great run!', lines: [`You ran ${score(g)} steps!`], ...paid, again: restart });
+      return result({ title: 'Great run!', lines: [`You ran ${score(g)} steps!`], game: 'run', score: score(g), ...paid, again: restart });
     }
     raf = requestAnimationFrame(frame);
   }
@@ -67,9 +67,9 @@ export function runnerGame({ app, creature, root, exit, result, restart, art }) 
 }
 
 // ---------------------------------------------------------------- Memory Match
-export function memoryGame({ app, creature, root, exit, result, restart }) {
+export function memoryGame({ app, creature, root, exit, result, restart, difficulty }) {
   const { audio } = app, profile = app.profile;
-  const PAIRS = 6;
+  const PAIRS = PAIR_COUNT[difficulty] ?? 6;
   const owned = [...new Set(profile.creatures.map((c) => c.species))];
   const fillers = [...new Set([...STARTER_IDS, ...bookSpecies().map((s) => s.id)])].filter((id) => !owned.includes(id));   // each creature at most once
   const chosen = [...owned.sort(() => Math.random() - 0.5), ...fillers].slice(0, PAIRS);
@@ -99,7 +99,7 @@ export function memoryGame({ app, creature, root, exit, result, restart }) {
     if (r === 'mismatch') timer = setTimeout(() => { settle(g); draw(); }, reduceMotion() ? 500 : 800);
     if (g.done) {
       const paid = finishGame(profile, creature, app.today(), 0, memPrize(g));
-      setTimeout(() => result({ title: 'You found them all!', lines: [`It took ${g.moves} moves.`], ...paid, again: restart }), 500);
+      setTimeout(() => result({ title: 'You found them all!', lines: [`It took ${g.moves} moves.`], game: 'memory', score: g.moves, ...paid, again: restart }), 500);
     }
   }
   fill(root,

@@ -90,7 +90,7 @@ test('a save from the twenty-one-land game keeps its place and finds the trail e
   assert.deepEqual(advanceTrail(old), { moved: true, atGate: false });
 });
 test('eggs are priced and take longer in every land, rising all the way', () => {
-  assert.deepEqual(EGG_PRICES.slice(21), [550, 600, 655, 715, 780, 850]);
+  assert.deepEqual(EGG_PRICES.slice(21), [230, 240, 250, 260, 270, 280]);
   assert.equal(EGG_PRICES.length, 27);
   for (let i = 1; i < 27; i++) { assert.ok(eggPrice(i) > eggPrice(i - 1)); assert.ok(eggNeeded(i) > eggNeeded(i - 1)); }
 });

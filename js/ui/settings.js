@@ -1,5 +1,6 @@
 // Settings: voice picker (natural voices first, with a preview), speech speed, sound and music.
 import { h, fill } from './dom.js';
+import { HANDS, handOf } from '../logic/gamescores.js';
 import { rankVoices, voiceLabel, pickVoice, PREVIEW_TEXT, RATES, DEFAULT_RATE } from '../platform/speech.js';
 
 export function settingsView(app) {
@@ -31,6 +32,10 @@ export function settingsView(app) {
             r < 0.7 ? 'Slow' : r < 0.85 ? 'Slower' : r === 0.9 ? 'Normal' : r < 1.1 ? 'Quick' : 'Fast')))),
       h('div', { class: 'panel' }, h('h2', {}, 'Sound'),
         toggle('Sound effects', 'sound', 'sound-toggle'), toggle('Background music', 'music', 'music-toggle')),
+      h('div', { class: 'panel' }, h('h2', {}, 'Games'),
+        h('p', { class: 'small' }, 'Which hand do you play with? Games with a button (like Hop Run and Sky Flap) put it on that side.'),
+        h('div', { class: 'row', role: 'group', 'aria-label': 'Playing hand' }, HANDS.map((x) =>
+          h('button', { class: `speed${x === handOf(s()) ? ' on' : ''}`, id: `hand-${x}`, type: 'button', 'aria-pressed': String(x === handOf(s())), onclick: () => { s().hand = x; save(); flash(`${x === 'left' ? 'Left' : 'Right'}-handed layout saved.`); draw(); } }, x === 'left' ? 'Left hand' : 'Right hand')))),
       h('div', { class: 'actions' }, h('button', { class: 'secondary', onclick: () => app.go(app.profile ? '/home' : '/') }, 'Done')));
   }
   function toggle(label, key, id) {

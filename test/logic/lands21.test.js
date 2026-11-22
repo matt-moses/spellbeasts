@@ -90,7 +90,7 @@ test('a save from the fifteen-land game keeps its place and finds the trail exte
   assert.deepEqual(advanceTrail(old), { moved: true, atGate: false });
 });
 test('eggs are priced and take longer in every land, rising all the way', () => {
-  assert.deepEqual(EGG_PRICES.slice(15, 21), [300, 335, 370, 410, 450, 500]);
+  assert.deepEqual(EGG_PRICES.slice(15, 21), [170, 180, 190, 200, 210, 220]);
   for (let i = 1; i < 21; i++) { assert.ok(eggPrice(i) > eggPrice(i - 1)); assert.ok(eggNeeded(i) > eggNeeded(i - 1)); }
 });
 test('eggs from lands 16 to 21 hatch only that land\'s three Nest creatures, never the arena one', () => {

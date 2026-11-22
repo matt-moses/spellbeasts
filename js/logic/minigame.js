@@ -6,20 +6,24 @@ export const HALF_WIDTH = 12;             // how far from the creature's centre 
 export const FALL_SPEED = 30;             // units per second
 export const SPAWN_EVERY = 0.9;           // seconds between berries
 
-export function createCatchGame({ rng = Math.random, count = 15 } = {}) {
-  const items = Array.from({ length: count }, (_, i) => ({ id: i, x: 8 + rng() * 84, y: -6, at: i * SPAWN_EVERY, state: 'waiting', golden: rng() < 0.15 }));
-  return { t: 0, px: 50, items, caught: 0, missed: 0, done: false };
+export const LEVELS = { easy: { count: 12, fall: 22, half: 14, every: 1.1 }, normal: { count: 15, fall: FALL_SPEED, half: HALF_WIDTH, every: SPAWN_EVERY }, hard: { count: 20, fall: 42, half: 10, every: 0.7 } };
+export function createCatchGame({ rng = Math.random, count, difficulty = 'normal' } = {}) {
+  const lv = LEVELS[difficulty] ?? LEVELS.normal;
+  count ??= lv.count;
+  const items = Array.from({ length: count }, (_, i) => ({ id: i, x: 8 + rng() * 84, y: -6, at: i * lv.every, state: 'waiting', golden: rng() < 0.15 }));
+  return { t: 0, px: 50, items, caught: 0, missed: 0, done: false, fall: lv.fall, half: lv.half };
 }
 
 export function stepCatchGame(g, dt, px) {
   if (g.done) return g;
   g.px = Math.max(HALF_WIDTH / 2, Math.min(FIELD - HALF_WIDTH / 2, px));
+  const fall = g.fall ?? FALL_SPEED, half = g.half ?? HALF_WIDTH;
   g.t += dt;
   for (const it of g.items) {
     if (it.state === 'waiting' && g.t >= it.at) it.state = 'falling';
     if (it.state !== 'falling') continue;
-    it.y += FALL_SPEED * dt;
-    if (it.y >= CATCH_Y && it.y <= FLOOR_Y && Math.abs(it.x - g.px) <= HALF_WIDTH) { it.state = 'caught'; g.caught += it.golden ? 2 : 1; }
+    it.y += fall * dt;
+    if (it.y >= CATCH_Y && it.y <= FLOOR_Y && Math.abs(it.x - g.px) <= half) { it.state = 'caught'; g.caught += it.golden ? 2 : 1; }
     else if (it.y > FLOOR_Y) { it.state = 'missed'; g.missed += 1; }
   }
   g.done = g.items.every((it) => it.state === 'caught' || it.state === 'missed');

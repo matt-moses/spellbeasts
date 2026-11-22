@@ -23,9 +23,9 @@ async function open(patch = () => {}, viewport = { width: 900, height: 1000 }) {
 }
 const saved = async (page) => Object.values((await page.evaluate(() => JSON.parse(localStorage.getItem('spellbeasts.v1')))).profiles)[0];
 
-test('the games menu offers three games and a way back to the pet', { skip }, async () => {
+test('the games menu offers six games and a way back to the pet', { skip }, async () => {
   const { page, context } = await open();
-  assert.equal(await page.locator('.game-card').count(), 3);
+  assert.equal(await page.locator('.game-card').count(), 6);
   assert.match(await page.textContent('h1'), /Play with Little Burrowby/);
   await page.click('#game-pet'); await page.waitForSelector('#care-feed');
   await context.close();
@@ -509,6 +509,59 @@ test('Memory Match: a keyboard-only player can finish it, and keeps their place 
   await solveMemory(page, flip, { async onMismatch(a, b) { await page.clock.runFor(1000); assert.equal(await onIndex(), String(b), 'focus survives the flip back'); } });
   assert.match(await page.textContent('#game-result'), /It took \d+ moves/);
   assert.equal((await saved(page)).care.games, 1);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('the games menu has a difficulty choice that sticks, and shows each game\'s best', { skip }, async () => {
+  const { page, context, errors } = await open((p) => { p.gameBest = { run: { hard: 321 } }; });
+  assert.equal(await page.getAttribute('#diff-normal', 'aria-pressed'), 'true');
+  assert.equal(await page.textContent('[data-best="run"]'), 'No best yet');
+  await page.click('#diff-hard');
+  assert.equal(await page.textContent('[data-best="run"]'), 'Best: 321 steps');
+  assert.equal((await saved(page)).gameDifficulty, 'hard');
+  await page.click('#game-memory'); await page.waitForSelector('.mem-card');
+  assert.equal(await page.locator('.mem-card').count(), 16, 'hard Memory Match has 8 pairs');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('the Hop Run button follows the hand setting (left by default, right on request)', { skip }, async () => {
+  const { page, context } = await open();
+  await page.click('#game-run'); await page.waitForSelector('#run-jump');
+  const left = await page.locator('#run-jump').boundingBox();
+  await page.click('#game-exit');
+  const play = await page.evaluate(() => location.hash);
+  await page.evaluate(() => { location.hash = '#/settings'; });
+  await page.click('#hand-right'); assert.equal((await page.evaluate(() => JSON.parse(localStorage.getItem('spellbeasts.v1')).settings.hand)), 'right');
+  await page.evaluate((h) => { location.hash = h; }, play); await page.waitForSelector('#game-run');
+  await page.click('#game-run'); await page.waitForSelector('#run-jump');
+  const right = await page.locator('#run-jump').boundingBox();
+  assert.ok(right.x > left.x + 200, `button moved right (${left.x} -> ${right.x})`);
+  await context.close();
+});
+
+test('Critter Pop pays out, and a finished game records a best', { skip }, async () => {
+  const { page, context, errors } = await open();
+  await page.click('#game-pop'); await page.waitForSelector('.pop-hole');
+  for (let i = 0; i < 70; i++) { await page.clock.runFor(500); const up = page.locator('.pop-hole[data-up="true"]'); if (await up.count()) await up.first().dispatchEvent('click'); if (await page.locator('#game-result').count()) break; }
+  await page.waitForSelector('#game-result');
+  assert.match(await page.textContent('#game-best'), /New best on Normal/);
+  assert.ok((await saved(page)).gameBest.pop.normal > 0);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('Sky Flap and Pattern Parrot start, can be exited, and Pattern Parrot ends on a wrong pad', { skip }, async () => {
+  const { page, context, errors } = await open();
+  await page.click('#game-flap'); await page.waitForSelector('.flap-field');
+  await page.clock.runFor(1000); await page.click('#flap-btn'); await page.click('#game-exit'); await page.waitForSelector('#game-pattern');
+  await page.click('#game-pattern'); await page.waitForSelector('#pad-0');
+  await page.clock.runFor(3000);
+  assert.match(await page.textContent('#pattern-say'), /Your turn/);
+  // pads are random: keep pressing the same pad each round; it is wrong within a few rounds
+  for (let i = 0; i < 60 && !(await page.locator('#game-result').count()); i++) { await page.click('#pad-0'); await page.clock.runFor(4000); }
+  await page.waitForSelector('#game-result');
   assert.deepEqual(errors, []);
   await context.close();
 });
