@@ -612,3 +612,23 @@ test('in the games, double-tap and pinch zoom are switched off, and only there',
   assert.equal(await probe(), false, 'and allowed again outside them');
   await context.close();
 });
+
+test('favorite a game with its star and it moves to a Favorites section at the top, and stays after a reload', { skip }, async () => {
+  const { page, context, errors } = await open();
+  assert.equal(await page.locator('#favorites').count(), 0, 'no section until there is a favorite');
+  assert.equal(await page.locator('.game-card').count(), 10);
+  await page.click('#fav-snake'); await page.click('#fav-hangman');
+  assert.deepEqual(await page.$$eval('#favorites .game-tile', (t) => t.map((x) => x.dataset.game)), ['snake', 'hangman']);
+  assert.equal(await page.locator('#all-games .game-tile').count(), 8, 'favorites are not repeated below');
+  assert.equal(await page.locator('.game-card').count(), 10);
+  assert.equal(await page.getAttribute('#fav-snake', 'aria-pressed'), 'true');
+  assert.deepEqual((await saved(page)).gameFavorites, ['snake', 'hangman']);
+  await page.click('#game-snake'); await page.waitForSelector('.snake-field'); await page.click('#game-exit'); await page.waitForSelector('#favorites');   // a favorite still plays
+  await page.click('#fav-snake');
+  assert.deepEqual(await page.$$eval('#favorites .game-tile', (t) => t.map((x) => x.dataset.game)), ['hangman']);
+  await page.click('#fav-hangman');
+  assert.equal(await page.locator('#favorites').count(), 0, 'the section goes away with its last favorite');
+  assert.deepEqual((await saved(page)).gameFavorites, []);
+  assert.deepEqual(errors, []);
+  await context.close();
+});

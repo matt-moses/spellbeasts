@@ -9,7 +9,7 @@ import { stageName } from '../logic/species.js';
 import { makeInteractive } from './pet.js';
 import { runnerGame, memoryGame } from './games.js';
 import { flapGame, popGame, patternGame, patchGame, spaceGame, snakeGame, hangmanGame } from './games-more.js';
-import { DIFFICULTIES, DIFFICULTY_LABEL, GAMES, difficultyOf, setDifficulty, recordScore, bestText, handOf } from '../logic/gamescores.js';
+import { DIFFICULTIES, DIFFICULTY_LABEL, GAMES, difficultyOf, setDifficulty, recordScore, bestText, handOf, favoritesOf, isFavorite, toggleFavorite } from '../logic/gamescores.js';
 import { startSession } from '../logic/session.js';
 
 const LABELS = { fed: 'Fed', clean: 'Clean', loved: 'Loved', fun: 'Fun' };
@@ -218,7 +218,27 @@ export function playView(app, creatureId) {
     stop(); stop = () => {};
     const ok = canPlay(profile);
     const d = difficultyOf(profile);
-    const card = (id, key, text, art, on) => h('button', { class: 'game-card', id, type: 'button', disabled: ok ? null : '', onclick: on }, h('span', { class: 'game-art' }, art), h('strong', {}, GAMES[key].title), h('span', { class: 'small' }, text), h('span', { class: 'small best', 'data-best': key }, bestText(profile, key, d)));
+    const cardButton = (id, key, text, art, on) => h('button', { class: 'game-card', id, type: 'button', disabled: ok ? null : '', onclick: on }, h('span', { class: 'game-art' }, art), h('strong', {}, GAMES[key].title), h('span', { class: 'small' }, text), h('span', { class: 'small best', 'data-best': key }, bestText(profile, key, d)));
+    // Each game is a tile: the card to play it, and a star to make it a favorite (favorites move to the top).
+    const card = (id, key, text, art, on) => {
+      const fav = isFavorite(profile, key);
+      const star = h('button', { class: `fav-star${fav ? ' on' : ''}`, id: `fav-${key}`, type: 'button', 'aria-pressed': String(fav), 'aria-label': `${fav ? 'Remove' : 'Add'} ${GAMES[key].title} ${fav ? 'from' : 'to'} favorites`, title: fav ? 'Favorite' : 'Make a favorite',
+        onclick: () => { toggleFavorite(profile, key); app.store.save(); menu(); root.querySelector(`#fav-${key}`)?.focus(); } }, fav ? '★' : '☆');
+      return { key, el: h('div', { class: 'game-tile', 'data-game': key }, cardButton(id, key, text, art, on), star) };
+    };
+    const tiles = [      card('game-catch', 'catch', 'Slide to catch falling berries.', icon('berry'), () => berryIntro()),
+      card('game-run', 'run', 'Hop over logs and rocks as you run.', icon('flame'), () => start(runnerGame)),
+      card('game-memory', 'memory', 'Find the matching creature pairs.', icon('star'), () => start(memoryGame)),
+      card('game-flap', 'flap', 'Flap through the gates in the sky.', icon('play'), () => start(flapGame)),
+      card('game-pop', 'pop', 'Tap the critters before they duck.', icon('heart'), () => start(popGame)),
+      card('game-pattern', 'pattern', 'Watch, listen, and repeat the pattern.', icon('gamepad'), () => start(patternGame)),
+      card('game-patch', 'patch', 'Dig for berries and dodge the skunks.', icon('map'), () => start(patchGame)),
+      card('game-space', 'space', 'Zap space rocks as you drift.', icon('star'), () => start(spaceGame)),
+      card('game-snake', 'snake', 'Grow a caterpillar by eating berries.', icon('berry'), () => start(snakeGame)),
+      card('game-hangman', 'hangman', 'Guess the letters of your spelling words.', icon('book'), () => start(hangmanGame)),
+    ];
+    const favs = favoritesOf(profile);
+    const favTiles = favs.map((k) => tiles.find((t) => t.key === k)).filter(Boolean), restTiles = tiles.filter((t) => !favs.includes(t.key));
     fill(root,
       h('h1', {}, `Play with ${name}`),
       h('p', { class: 'lead' }, ok ? 'Pick a game!' : 'Spell some words to play!'),
@@ -229,17 +249,8 @@ export function playView(app, creatureId) {
       h('p', { class: 'note', id: 'game-note', role: 'status' }),
       h('div', { class: 'row', role: 'group', 'aria-label': 'Difficulty' }, h('strong', {}, 'Difficulty: '), DIFFICULTIES.map((x) =>
         h('button', { class: `speed${x === d ? ' on' : ''}`, id: `diff-${x}`, type: 'button', 'aria-pressed': String(x === d), onclick: () => { setDifficulty(profile, x); app.store.save(); menu(); } }, DIFFICULTY_LABEL[x]))),
-      h('div', { class: 'game-cards' },
-        card('game-catch', 'catch', 'Slide to catch falling berries.', icon('berry'), () => berryIntro()),
-        card('game-run', 'run', 'Hop over logs and rocks as you run.', icon('flame'), () => start(runnerGame)),
-        card('game-memory', 'memory', 'Find the matching creature pairs.', icon('star'), () => start(memoryGame)),
-        card('game-flap', 'flap', 'Flap through the gates in the sky.', icon('play'), () => start(flapGame)),
-        card('game-pop', 'pop', 'Tap the critters before they duck.', icon('heart'), () => start(popGame)),
-        card('game-pattern', 'pattern', 'Watch, listen, and repeat the pattern.', icon('gamepad'), () => start(patternGame)),
-        card('game-patch', 'patch', 'Dig for berries and dodge the skunks.', icon('map'), () => start(patchGame)),
-        card('game-space', 'space', 'Zap space rocks as you drift.', icon('star'), () => start(spaceGame)),
-        card('game-snake', 'snake', 'Grow a caterpillar by eating berries.', icon('berry'), () => start(snakeGame)),
-        card('game-hangman', 'hangman', 'Guess the letters of your spelling words.', icon('book'), () => start(hangmanGame))),
+      favTiles.length ? h('section', { class: 'game-section', id: 'favorites', 'aria-label': 'Favorite games' }, h('h2', {}, '★ Favorites'), h('div', { class: 'game-cards' }, favTiles.map((t) => t.el))) : null,
+      h('section', { class: 'game-section', id: 'all-games', 'aria-label': favTiles.length ? 'More games' : 'All games' }, favTiles.length ? h('h2', {}, 'More games') : null, h('div', { class: 'game-cards' }, restTiles.map((t) => t.el))),
       h('div', { class: 'actions' }, h('button', { class: 'secondary', id: 'game-pet', onclick: toCare }, `Back to ${name}`)));
   }
 

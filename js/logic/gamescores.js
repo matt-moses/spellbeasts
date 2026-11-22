@@ -32,3 +32,15 @@ export function recordScore(profile, game, d, score) {
   return { best: beats ? score : previous, previous, isNew: beats };
 }
 export const bestText = (profile, game, d) => { const b = bestOf(profile, game, d); return b == null ? 'No best yet' : `Best: ${b} ${GAMES[game].unit}`; };
+
+// Favorite games, per trainer. A favorite shows in its own section at the top of the games menu.
+export const favoritesOf = (profile) => (Array.isArray(profile?.gameFavorites) ? profile.gameFavorites.filter((k) => GAMES[k]) : []);
+export const isFavorite = (profile, game) => favoritesOf(profile).includes(game);
+// Toggle one game. Returns whether it is now a favorite.
+export function toggleFavorite(profile, game) {
+  if (!GAMES[game]) return false;
+  const favs = favoritesOf(profile);
+  const on = !favs.includes(game);
+  profile.gameFavorites = on ? [...favs, game] : favs.filter((k) => k !== game);
+  return on;
+}

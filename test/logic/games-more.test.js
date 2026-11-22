@@ -152,3 +152,14 @@ test('Caterpillar: eats, grows, cannot reverse, wraps on Easy, hits walls and it
   move(e); assert.equal(e.over, false); assert.deepEqual(e.body[0], { x: 0, y: 3 });
   const t = createSnake({ rng: seeded(8), difficulty: 'hard' }); stepSnake(t, 0.5); assert.equal(t.body[0].x, 8);
 });
+
+import { favoritesOf, isFavorite, toggleFavorite } from '../../js/logic/gamescores.js';
+test('favorites toggle per trainer, keep the order they were added in, and ignore unknown games', () => {
+  const p = {};
+  assert.deepEqual(favoritesOf(p), []);
+  assert.equal(toggleFavorite(p, 'snake'), true); assert.equal(toggleFavorite(p, 'catch'), true);
+  assert.deepEqual(favoritesOf(p), ['snake', 'catch']); assert.equal(isFavorite(p, 'snake'), true);
+  assert.equal(toggleFavorite(p, 'snake'), false); assert.deepEqual(favoritesOf(p), ['catch']);
+  assert.equal(toggleFavorite(p, 'nonsense'), false); assert.deepEqual(favoritesOf(p), ['catch']);
+  assert.deepEqual(favoritesOf({ gameFavorites: ['run', 'gone', 7] }), ['run'], 'a damaged list is cleaned up');
+});
